@@ -1,6 +1,6 @@
 {
-  "save_dir": "D:/alternate_update/",
-  "log_fn": "log_alternate_update.txt",
+  "save_dir": "./simple_model/",
+  "log_fn": "log_simple_model.txt",
   "save_fn": "model_results.pkl",
   "test_save_fn": "test_results.pkl",
   "save_train_out": true,
@@ -8,15 +8,15 @@
   "rep_num": 3,
   "rep": 0,
 
-  "batch_size": 1024,
-  "num_iterations": 5000,
-  "test_batch_size": 100,
-  "num_test_iterations": 10,
-  "iters_between_outputs": 100,
+  "batch_size": 10,
+  "num_iterations": 5,
+  "test_batch_size": 10,
+  "num_test_iterations": 1,
+  "iters_between_outputs": 1,
   "learning_rate_li": [3e-4],
   "learning_rate": 3e-4,
-  "regularization": false,
-  "noisy_weight_update": true,
+  "regularization": true,
+  "noisy_weight_update": false,
   "noisy_weight_coef": 0.0001,
 
   "synapse_config": "full",
@@ -25,6 +25,10 @@
   "connection_prob": 1.0,
   "dt": 20,
   "membrane_time_constant": 100,
+
+  "within_rf_conn_prob": 0.6,
+  "cross_rf_conn_prob": 0.3,
+  "cross_module_conn_prob": 0.1,
 
   "num_motion_tuned": 36,
   "num_fix_tuned": 0,
@@ -37,38 +41,10 @@
   "RF_projector_perc": [0.33333, 0.33333, 0.33333],
   "module_sizes": [300, 300],
 
-  "within_rf_conn_prob": 0.6,
-  "cross_rf_conn_prob": 0.1,
-  "between_module_rf_conn_prob": 0.3,
-  "between_module_conn_prob": 0.05,
-
-  "interneuron_m1": false,
-  "interneuron_m2": true,
-  "interneuron_num": 5,
-  "interneuron_eff_prop": 0.05,
-
-  "cross_target_input": false,
-  "motion_input_to_m1_target": true,
-  "motion_input_to_m2_target": true,
-  "input_conn_prob": 0.5,
-  "color_in_minor_perc": 0.25,
-  "motion_to_m1_target_prob": 0.1,
-  "motion_to_m2_target_prob": 0.1,
-  "cross_target_input_prob": 0.0,
-
   "output_conn_prob": 0.4,
   "stim_proj": 0.0,
   "cross_target_output_prob": 0,
   "m1_output_perc": 0.25,
-
-  "input_to_intersec_inh": true,
-  "inh_conn_from_intersec": true,
-  "inh_conn_to_intersec": true,
-  "stim_intersec_conn": false,
-  "intersec_input_prob": 0.4,
-  "intersec_self_conn_prob": 0.6,
-  "intersec_output_prob": 0.4,
-  "intersec_inh_prop": 1,
 
   "tau_fast": 200,
   "tau_slow": 1500,
@@ -81,8 +57,7 @@
   "noise_rnn_sd": 0.5,
   "dynamic_input_noise": false,
 
-  "num_motion_dirs_MDC": 10,
-  "num_motion_dirs_MDD": 2,
+  "num_motion_dirs": 2,
   "tuning_height": 1,
   "kappa": 2,
 
@@ -93,19 +68,15 @@
   "lambda_omega": 2,
   "lambda_weight": 1,
 
-  "task_list": ["MDD"],
-  "trial_type": "MDD",
-  "mixed_train": false,
-  "time_fixation": 0,
+  "time_fixation": 500,
   "time_target": 400,
   "time_stim": 500,
   "test_cost_multiplier": 2.0,
   "var_delay": false,
   "num_targets": 2,
-  "coherence_levels": [1.0],
-  "train_coherence_levels": [1.0],
-  "test_coherence_levels": [0.25, 0.5, 1, 0],
+  "coherence_levels": [0, 0.13, 0.25, 0.5],
+  "train_coherence_levels": [0, 0.13, 0.25, 0.5],
+  "test_coherence_levels": [0, 0.13, 0.25, 0.5],
   "decision_threshold": 0.98,
-  "n_level_scale": 3,
-  "pure_noise_perc": 0
+  "n_level_scale": 3
 }

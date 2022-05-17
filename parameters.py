@@ -1,19 +1,18 @@
 import numpy as np
 import json
-import torch
 from itertools import combinations, permutations
 from math import ceil
 
-with open('./code/params.json', 'r') as par_file:
+with open('./params.json', 'r') as par_file:
     par = json.load(par_file)
 
 
 def calc_parameters():
     """Calculate parameters"""
-    par['trial_length'] = par['time_fixation'] + \
+    trial_length = par['time_fixation'] + \
         par['time_target']+par['time_stim']
     # Length of each trial in time steps
-    par['num_time_steps'] = par['trial_length']//par['dt']
+    par['num_time_steps'] = trial_length//par['dt']
     # Number of input neurons
     par['n_input'] = par['num_motion_tuned'] + \
         par['num_fix_tuned'] + par['num_color_tuned']
@@ -24,25 +23,15 @@ def calc_parameters():
     par['target_time_rng'] = np.arange(
         par['time_fixation']//par['dt'], (par['time_fixation']+par['time_target'])//par['dt'])
     par['stim_time_rng'] = np.arange(
-        (par['time_fixation']+par['time_target'])//par['dt'], (par['trial_length'])//par['dt'])
+        (par['time_fixation']+par['time_target'])//par['dt'], trial_length//par['dt'])
     par['n_hidden'] = np.sum(par['module_sizes'])
-    if par['interneuron_m1'] or par['interneuron_m2']:
-        par['n_hidden'] = par['n_hidden'] + 2*par['interneuron_num']
-    num_exc_units = round(par['n_hidden']*par['exc_inh_prop'])
 
     EI_list = np.ones([par['n_hidden']], dtype=np.float32)
     module_bounds = np.cumsum(par['module_sizes'])
     inh_bounds = module_bounds - \
         np.array(par['module_sizes'])*(1-par['exc_inh_prop'])
-    # modify intersection inhibition proportions
-    if len(par['module_sizes']) > 2:
-        inh_bounds[1] = module_bounds[1] - \
-            (par['module_sizes'][1] * par['intersec_inh_prop'])
     ind_inh = np.hstack([np.arange(inh_bounds[i], module_bounds[i])
                          for i in range(len(inh_bounds))]).astype('int')
-    if par['interneuron_m1'] or par['interneuron_m2']:
-        ind_inh = np.hstack(
-            [ind_inh, range(par['n_hidden']-2*par['interneuron_num'], par['n_hidden'])])
     par['ind_inh'] = ind_inh
     EI_list[ind_inh] = -1.
     par['EI_list'] = EI_list
@@ -405,23 +394,32 @@ def generate_in_mask():
     t1r_t1_major, t2r_t1_major, t1r_t2_major, t2r_t2_major, t1r_t1_minor, t2r_t1_minor, t1r_t2_minor, t2r_t2_minor = arrange_color_input(
         m2_blk)
 
-    par['w_in_mask_t1r'][rng_in1[0]:rng_in1[1], np.hstack([t1r_t1_major, t1r_t1_minor])] = 1
-    par['w_in_mask_t2r'][rng_in1[0]:rng_in1[1], np.hstack([t2r_t1_major, t2r_t1_minor])] = 1
-    par['w_in_mask_t1r'][rng_in2[0]:rng_in2[1], np.hstack([t1r_t2_major, t1r_t2_minor])] = 1
-    par['w_in_mask_t2r'][rng_in2[0]:rng_in2[1], np.hstack([t2r_t2_major, t2r_t2_minor])] = 1
+    par['w_in_mask_t1r'][rng_in1[0]:rng_in1[1],
+                         np.hstack([t1r_t1_major, t1r_t1_minor])] = 1
+    par['w_in_mask_t2r'][rng_in1[0]:rng_in1[1],
+                         np.hstack([t2r_t1_major, t2r_t1_minor])] = 1
+    par['w_in_mask_t1r'][rng_in2[0]:rng_in2[1],
+                         np.hstack([t1r_t2_major, t1r_t2_minor])] = 1
+    par['w_in_mask_t2r'][rng_in2[0]:rng_in2[1],
+                         np.hstack([t2r_t2_major, t2r_t2_minor])] = 1
 
-    par['w_in_mask_init'][rng_in1[0]:rng_in1[1], np.hstack([t1r_t1_major, t1r_t1_minor, t1r_t2_major, t1r_t2_minor])]=1
-    par['w_in_mask_init'][rng_in1[0]:rng_in1[1], np.hstack([t2r_t1_major, t2r_t1_minor, t2r_t2_major, t2r_t2_minor])]=1
+    par['w_in_mask_init'][rng_in1[0]:rng_in1[1], np.hstack(
+        [t1r_t1_major, t1r_t1_minor, t1r_t2_major, t1r_t2_minor])] = 1
+    par['w_in_mask_init'][rng_in1[0]:rng_in1[1], np.hstack(
+        [t2r_t1_major, t2r_t1_minor, t2r_t2_major, t2r_t2_minor])] = 1
 
-    par['t1r_in_idx_m1'] = np.unique(np.hstack([range(stim_in_rng_m1[0], stim_in_rng_m1[1]), t1r_t1_minor, t1r_t2_minor]))
-    par['t2r_in_idx_m1'] = np.unique(np.hstack([range(stim_in_rng_m1[0], stim_in_rng_m1[1]), t2r_t1_minor, t2r_t2_minor]))
-    par['t1r_in_idx_m2'] = np.unique(np.hstack([range(stim_in_rng_m2[0], stim_in_rng_m2[1]), t1r_t1_major, t1r_t2_major]))
-    par['t2r_in_idx_m2'] = np.unique(np.hstack([range(stim_in_rng_m2[0], stim_in_rng_m2[1]), t2r_t1_major, t2r_t2_major]))
-    par['t1r_target_in_idx'] = np.unique(np.hstack([t1r_t1_minor, t1r_t2_minor, t1r_t1_major, t1r_t2_major]))
-    par['t2r_target_in_idx'] = np.unique(np.hstack([t2r_t1_minor, t2r_t2_minor, t2r_t1_major, t2r_t2_major]))
-    
-
-
+    par['t1r_in_idx_m1'] = np.unique(np.hstack(
+        [range(stim_in_rng_m1[0], stim_in_rng_m1[1]), t1r_t1_minor, t1r_t2_minor]))
+    par['t2r_in_idx_m1'] = np.unique(np.hstack(
+        [range(stim_in_rng_m1[0], stim_in_rng_m1[1]), t2r_t1_minor, t2r_t2_minor]))
+    par['t1r_in_idx_m2'] = np.unique(np.hstack(
+        [range(stim_in_rng_m2[0], stim_in_rng_m2[1]), t1r_t1_major, t1r_t2_major]))
+    par['t2r_in_idx_m2'] = np.unique(np.hstack(
+        [range(stim_in_rng_m2[0], stim_in_rng_m2[1]), t2r_t1_major, t2r_t2_major]))
+    par['t1r_target_in_idx'] = np.unique(
+        np.hstack([t1r_t1_minor, t1r_t2_minor, t1r_t1_major, t1r_t2_major]))
+    par['t2r_target_in_idx'] = np.unique(
+        np.hstack([t2r_t1_minor, t2r_t2_minor, t2r_t1_major, t2r_t2_major]))
 
 
 def generate_out_mask():
@@ -458,8 +456,10 @@ def generate_out_mask():
     # the nerons in m2 that receive input cannot output
     par['w_out_mask_t1r'] = w_out_mask_init.copy()
     par['w_out_mask_t2r'] = w_out_mask_init.copy()
-    par['w_out_mask_t1r'][np.intersect1d(range(m2_blk[0][0], m2_blk[-1][-1]), np.append(par['t1r_in_idx_m1'], par['t1r_in_idx_m2'])), :] = 0
-    par['w_out_mask_t2r'][np.intersect1d(range(m2_blk[0][0], m2_blk[-1][-1]), np.append(par['t2r_in_idx_m1'], par['t2r_in_idx_m2'])), :] = 0
+    par['w_out_mask_t1r'][np.intersect1d(range(
+        m2_blk[0][0], m2_blk[-1][-1]), np.append(par['t1r_in_idx_m1'], par['t1r_in_idx_m2'])), :] = 0
+    par['w_out_mask_t2r'][np.intersect1d(range(
+        m2_blk[0][0], m2_blk[-1][-1]), np.append(par['t2r_in_idx_m1'], par['t2r_in_idx_m2'])), :] = 0
     par['w_out_mask_init'] = w_out_mask_init
 
 
@@ -493,4 +493,3 @@ def initialize_weights():
         size=[par['n_hidden'], par['n_output']], shape=0.1, scale=1.).astype(np.float32)
     par['b_rnn0'] = np.zeros((1, par['n_hidden']), dtype=np.float32)
     par['b_out0'] = np.zeros((1, par['n_output']), dtype=np.float32)
-
