@@ -43,10 +43,11 @@ class Stimulus:
             self.move_dirs, size=(par['batch_size'],))
 
         # fill in correct color choice according to stimulus directions
-        trial_info['desired_output'][trial_info['stim_dir']
-                                     == 135][:, stim_time_rng, 0] = 1
-        trial_info['desired_output'][trial_info['stim_dir']
-                                     == 315][:, stim_time_rng, 1] = 1
+
+        trial_info['desired_output'][np.reshape(np.where(trial_info['stim_dir']
+                                     == 135), (-1, 1)), stim_time_rng, 0] = 1
+        trial_info['desired_output'][np.reshape(np.where(trial_info['stim_dir']
+                                     == 315), (-1, 1)), stim_time_rng, 1] = 1
 
         # generate random target arrangement and desired choice location
         trial_info['targ_loc'] = np.random.choice(
@@ -151,7 +152,7 @@ class Stimulus:
                        aspect='auto', interpolation='none')
 
         ax.set_xticks([t0, t1, t2])
-        ax.set_xticklabels(['-900', '-500', '0'])
+        ax.set_xticklabels(['-900', '-400', '0'])
         f.colorbar(im, orientation='vertical')
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
