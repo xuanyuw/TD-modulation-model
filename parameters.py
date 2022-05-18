@@ -51,43 +51,53 @@ def calc_parameters():
 
 
 def update_synaptic_config():
+    # 1 = facilitating, -1 =  depressing, 0 = static
+    # synaptic_configurations = {
+    #     'full': [1 if i % 2 == 0 else -1 for i in range(par['n_hidden'])],
+    #     'fac': [1] * par['n_hidden'],
+    #     'dep': [-1] * par['n_hidden'],
+    #     'exc_fac': [1 if par['EI_list'][i] == 1 else 0 for i in range(par['n_hidden'])],
+    #     'exc_dep': [-1 if par['EI_list'][i] == 1 else 0 for i in range(par['n_hidden'])],
+    #     'inh_fac': [1 if par['EI_list'][i] == -1 else 0 for i in range(par['n_hidden'])],
+    #     'inh_dep': [-1 if par['EI_list'][i] == -1 else 0 for i in range(par['n_hidden'])],
+    #     'exc_dep_inh_fac': [-1 if par['EI_list'][i] == 1 else 1 for i in range(par['n_hidden'])],
+    #     'none': [0] * par['n_hidden']
+    # }
 
-    synaptic_configurations = {
-        'full': ['facilitating' if i % 2 == 0 else 'depressing' for i in range(par['n_hidden'])],
-        'fac': ['facilitating' for i in range(par['n_hidden'])],
-        'dep': ['depressing' for i in range(par['n_hidden'])],
-        'exc_fac': ['facilitating' if par['EI_list'][i] == 1 else 'static' for i in range(par['n_hidden'])],
-        'exc_dep': ['depressing' if par['EI_list'][i] == 1 else 'static' for i in range(par['n_hidden'])],
-        'inh_fac': ['facilitating' if par['EI_list'][i] == -1 else 'static' for i in range(par['n_hidden'])],
-        'inh_dep': ['depressing' if par['EI_list'][i] == -1 else 'static' for i in range(par['n_hidden'])],
-        'exc_dep_inh_fac': ['depressing' if par['EI_list'][i] == 1 else 'facilitating' for i in range(par['n_hidden'])],
-        'none': [None for i in range(par['n_hidden'])]
-    }
+    # need to be filled if use other configurations
+    if par['synaptic_config'] == 'full':
+        synaptic_configurations = [1 if i % 2 ==
+                                   0 else -1 for i in range(par['n_hidden'])]
+    else:
+        synaptic_configurations = [0] * par['n_hidden']
 
-    # initialize synaptic values
-    par['alpha_stf'] = np.ones((1, par['n_hidden']), dtype=np.float32)
-    par['alpha_std'] = np.ones((1, par['n_hidden']), dtype=np.float32)
-    par['U'] = np.ones((1, par['n_hidden']), dtype=np.float32)
+    # initialize synaptic values d
+    fac_idx = synaptic_configurations == 1
+    dep_idx = synaptic_configurations == -1
+
+    par['alpha_stf'] = np.ones(size=(par['n_hidden'],), dtype=np.float32)
+    par['alpha_stf'][fac_idx] = par['dt']/par['tau_slow']
+    par['alpha_stf'][dep_idx] = par['dt']/par['tau_fast']
+
+    par['alpha_std'] = np.ones(size=(par['n_hidden'],), dtype=np.float32)
+    par['alpha_std'][fac_idx] = par['dt']/par['tau_fast']
+    par['alpha_std'][dep_idx] = par['dt']/par['tau_slow']
+
+    par['U'] = np.ones(size=(par['n_hidden'],), dtype=np.float32)
+    par['U'][fac_idx] = 0.15
+    par['U'][dep_idx] = 0.45
+
     par['syn_x_init'] = np.ones(
         (par['batch_size'], par['n_hidden']), dtype=np.float32)
+
     par['syn_u_init'] = 0.3 * \
         np.ones((par['batch_size'], par['n_hidden']), dtype=np.float32)
-    par['dynamic_synapse'] = np.zeros((1, par['n_hidden']), dtype=np.float32)
+    par['syn_u_init'][:, fac_idx] = par['U'][fac_idx]
+    par['syn_u_init'][:, dep_idx] = par['U'][dep_idx]
 
-    for i in range(par['n_hidden']):
-        if synaptic_configurations[par['synapse_config']][i] == 'facilitating':
-            par['alpha_stf'][0, i] = par['dt']/par['tau_slow']
-            par['alpha_std'][0, i] = par['dt']/par['tau_fast']
-            par['U'][0, i] = 0.15
-            par['syn_u_init'][:, i] = par['U'][0, i]
-            par['dynamic_synapse'][0, i] = 1
-
-        elif synaptic_configurations[par['synapse_config']][i] == 'depressing':
-            par['alpha_stf'][0, i] = par['dt']/par['tau_fast']
-            par['alpha_std'][0, i] = par['dt']/par['tau_slow']
-            par['U'][0, i] = 0.45
-            par['syn_u_init'][:, i] = par['U'][0, i]
-            par['dynamic_synapse'][0, i] = 1
+    par['dynamic_synapse'] = np.zeros((par['n_hidden'],), dtype=np.float32)
+    par['dynamic_synapse'][fac_idx] = 1
+    par['dynamic_synapse'][dep_idx] = 1
 
 
 def update_parameters(updates):
@@ -172,64 +182,6 @@ def generate_rf_module_conn(rfs, comb, cross_mod=False):
                                   ] = generate_random_mask(tup[1], tup[0], self_conn_prob)
 
 
-def generate_intersection(md_blk, m1_blk, m2_blk):
-    # TODO: only support m1 and m2 has same sizes
-    # TODO: simplify the code if the intersection is inhibitory only
-    rng = (md_blk[0][0], md_blk[1][1])
-    par['conn_mask_init'][:, rng[0]:rng[1]] = generate_random_mask(
-        (0, sum(par['module_sizes'])), rng, par['intersec_input_prob'])
-    par['conn_mask_init'][rng[0]:rng[1], :] = generate_random_mask(
-        rng, (0, sum(par['module_sizes'])), par['intersec_input_prob'])
-
-    temp_rng = (rng[1]-round(par['module_sizes'][1]
-                * par['intersec_inh_prop']), rng[1])
-    if not par['input_to_intersec_inh']:
-        par['conn_mask_init'][:, temp_rng[0]:temp_rng[1]] = 0
-
-    if not par['inh_conn_from_intersec']:
-        par['conn_mask_init'][temp_rng[0]:temp_rng[1], :] = 0
-
-    if not par['inh_conn_to_intersec']:
-        par['conn_mask_init'][par['ind_inh'], rng[0]:rng[1]] = 0
-
-    if not par['stim_intersec_conn']:
-        stim_idx = np.hstack([np.arange(m1_blk[0][0], m1_blk[0][1]), np.arange(
-            m1_blk[3][0], m1_blk[3][1]), np.arange(m2_blk[0][0], m2_blk[0][1]), np.arange(m2_blk[3][0], m2_blk[3][1])])
-        par['conn_mask_init'][stim_idx, rng[0]:rng[1]] = 0
-        par['conn_mask_init'][rng[0]:rng[1], stim_idx] = 0
-
-    # intersection self connections
-    par['conn_mask_init'][rng[0]:rng[1], rng[0]:rng[1]
-                          ] = generate_random_mask(rng, rng, par['intersec_self_conn_prob'])
-
-
-def add_interneurons(blk, inter1_idx, inter2_idx):
-    t1_exc, t2_exc = blk[1], blk[2]
-
-    # t1 inh to t2 exc
-    eff_size_t1 = round(par['interneuron_eff_prop']*(t2_exc[1]-t2_exc[0]))
-    eff_size_t2 = round(par['interneuron_eff_prop']*(t1_exc[1]-t1_exc[0]))
-
-    t2_rec_idx = np.random.choice(range(t2_exc[0], t2_exc[1]), size=(
-        par['interneuron_num'], eff_size_t1), replace=True)
-    for i in range(par['interneuron_num']):
-        par['conn_mask_init'][inter1_idx[i], t2_rec_idx[i, :]] = 1
-    t1_proj_idx = np.random.choice(range(t1_exc[0], t1_exc[1]), size=(
-        par['interneuron_num'], eff_size_t2), replace=True)
-    for i in range(par['interneuron_num']):
-        par['conn_mask_init'][t1_proj_idx[i, :], inter1_idx[i]] = 1
-    # t2 inh to t1 exc
-    t1_rec_idx = np.random.choice(range(t1_exc[0], t1_exc[1]), size=(
-        par['interneuron_num'], eff_size_t2), replace=True)
-    for i in range(par['interneuron_num']):
-        par['conn_mask_init'][inter2_idx[i], t1_rec_idx[i, :]] = 1
-    t2_proj_idx = np.random.choice(range(t2_exc[0], t2_exc[1]), size=(
-        par['interneuron_num'], eff_size_t1), replace=True)
-    for i in range(par['interneuron_num']):
-        par['conn_mask_init'][t2_proj_idx[i, :], inter2_idx[i]] = 1
-    par['conn_mask_init']
-
-
 def generate_rnn_mask():
     """Generates mask for RNN with RF"""
     par['conn_mask_init'] = np.zeros((par['n_hidden'], par['n_hidden']))
@@ -258,9 +210,6 @@ def generate_rnn_mask():
     rng += sum(par['module_sizes'][:-1])
     par['conn_mask_init'][rng[0]:rng[1], m1_blk[0][0]:m1_blk[-1][-1]] = 0
 
-    # intersection connections
-    if len(par['module_sizes']) > 2:
-        generate_intersection(md_blk, m1_blk, m2_blk)
     # increase same module exc-inh connection probability
     for i in range(par['num_receptive_fields']):
         m1_to = m1_blk[i]
@@ -275,16 +224,6 @@ def generate_rnn_mask():
                               ] = generate_random_mask(m1_to, m1_from, par['within_rf_conn_prob'])
         par['conn_mask_init'][m2_to[0]:m2_to[1], m2_from[0]:m2_from[1]
                               ] = generate_random_mask(m2_to, m2_from, par['within_rf_conn_prob'])
-
-    if par['interneuron_m1'] or par['interneuron_m2']:
-        orig_size = np.sum(par['module_sizes'])
-        inter1_idx = range(orig_size, orig_size + par['interneuron_num'])
-        inter2_idx = range(
-            orig_size + par['interneuron_num'], par['conn_mask_init'].shape[1])
-        if par['interneuron_m1']:
-            add_interneurons(m1_blk, inter1_idx, inter2_idx)
-        if par['interneuron_m2']:
-            add_interneurons(m2_blk, inter1_idx, inter2_idx)
 
     # set diagnal to 0
     np.fill_diagonal(par['conn_mask_init'], 0)
