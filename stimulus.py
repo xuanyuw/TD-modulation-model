@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from parameters import *
+from calc_params import par
 
 
 class Stimulus:

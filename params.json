@@ -22,13 +22,14 @@
   "synapse_config": "full",
 
   "exc_inh_prop": 0.8,
-  "connection_prob": 1.0,
   "dt": 20,
   "membrane_time_constant": 100,
 
   "within_rf_conn_prob": 0.6,
   "cross_rf_conn_prob": 0.3,
   "cross_module_conn_prob": 0.1,
+  "input_conn_prob": 1.0,
+  "output_conn_prob": 0.4,
 
   "num_motion_tuned": 36,
   "num_fix_tuned": 0,
@@ -37,14 +38,8 @@
   "n_output": 20,
   "output_fixation": false,
   "num_receptive_fields": 3,
-  "RF_receiver_perc": [0.33333, 0.33333, 0.33333],
-  "RF_projector_perc": [0.33333, 0.33333, 0.33333],
-  "module_sizes": [300, 300],
-
-  "output_conn_prob": 0.4,
-  "stim_proj": 0.0,
-  "cross_target_output_prob": 0,
-  "m1_output_perc": 0.25,
+  "RF_perc": [0.33333, 0.33333, 0.33333],
+  "n_hidden": 300,
 
   "tau_fast": 200,
   "tau_slow": 1500,
