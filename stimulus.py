@@ -159,5 +159,5 @@ class Stimulus:
         ax.set_ylabel('Input Neurons')
         ax.set_xlabel('Time relative to sample onset (ms)')
         ax.set_title('Neural input')
-        plt.show()
         plt.savefig('stimulus.pdf', format='pdf')
+        plt.show()
