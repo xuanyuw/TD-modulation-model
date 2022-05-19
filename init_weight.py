@@ -41,14 +41,14 @@ def generate_rnn_mask():
     temp_probs = np.array([[h_prob, m_prob, l_prob],
                            [m_prob, h_prob, l_prob],
                            [l_prob, l_prob, h_prob]])
-    conn_probs = np.matlib.repmat(temp_probs, 2, 2)
+    conn_probs = np.tile(temp_probs, (2, 2))
     rf_rngs = calculate_rf_rngs()
     rnn_mask_init = fill_mask(rf_rngs, conn_probs, rnn_mask_init)
     return rnn_mask_init
 
 
 def generate_in_mask():
-    in_mask_init = np.zeros(par['n_input'], par['n_hidden'])
+    in_mask_init = np.zeros((par['n_input'], par['n_hidden']))
     rf_rngs = calculate_rf_rngs()
     in_rngs = [(0, par['num_motion_tuned']), (par['num_motion_tuned'], par['num_motion_tuned'] +
                                               par['num_color_tuned']//2), (par['n_input'] -
@@ -72,6 +72,7 @@ def generate_out_mask():
     sz = (rf_rngs[2][1] - rf_rngs[1][0], par['n_output'])
     out_mask_init[rf_rngs[1][0]:rf_rngs[2][1], :] = np.random.choice(
         [0, 1], size=sz, p=(1-par['output_conn_prob'], par['output_conn_prob']))
+    return out_mask_init
 
 
 def generate_raw_weights():
@@ -118,5 +119,6 @@ def initialize_weights():
                    'w_out0': w_out0,
                    'b_rnn0': b_rnn0,
                    'b_out0': b_out0}
-    with open('./weights.json', 'w') as w_file:
-        json.dump(all_weights, w_file)
+    with open('weights.npy', 'wb') as f:
+        np.save(f, all_weights)
+    return all_weights

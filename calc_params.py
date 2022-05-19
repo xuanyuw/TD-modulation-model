@@ -26,7 +26,7 @@ def calc_parameters():
     # EI matrix
     par['EI_list'] = np.ones([par['n_hidden']], dtype=np.float32)
     par['ind_inh'] = np.arange(
-        par['n_hidden']*par['exc_inh_prop'], par['n_hidden'])
+        par['n_hidden']*par['exc_inh_prop'], par['n_hidden']).astype(int)
     par['EI_list'][par['ind_inh']] = -1
     par['EI_matrix'] = np.diag(par['EI_list'])
     # Membrane time constant of RNN neurons
@@ -57,7 +57,7 @@ def update_synaptic_config():
     # }
 
     # need to be filled if use other configurations
-    if par['synaptic_config'] == 'full':
+    if par['synapse_config'] == 'full':
         synaptic_configurations = [1 if i % 2 ==
                                    0 else -1 for i in range(par['n_hidden'])]
     else:
@@ -67,15 +67,15 @@ def update_synaptic_config():
     fac_idx = synaptic_configurations == 1
     dep_idx = synaptic_configurations == -1
 
-    par['alpha_stf'] = np.ones(size=(par['n_hidden'],), dtype=np.float32)
+    par['alpha_stf'] = np.ones((par['n_hidden'],), dtype=np.float32)
     par['alpha_stf'][fac_idx] = par['dt']/par['tau_slow']
     par['alpha_stf'][dep_idx] = par['dt']/par['tau_fast']
 
-    par['alpha_std'] = np.ones(size=(par['n_hidden'],), dtype=np.float32)
+    par['alpha_std'] = np.ones((par['n_hidden'],), dtype=np.float32)
     par['alpha_std'][fac_idx] = par['dt']/par['tau_fast']
     par['alpha_std'][dep_idx] = par['dt']/par['tau_slow']
 
-    par['U'] = np.ones(size=(par['n_hidden'],), dtype=np.float32)
+    par['U'] = np.ones((par['n_hidden'],), dtype=np.float32)
     par['U'][fac_idx] = 0.15
     par['U'][dep_idx] = 0.45
 
