@@ -27,8 +27,8 @@ def plot_weights(weights, title, show_rnn_weights=False):
     ax.set_ylabel('From')
     ax.set_xlabel('T0')
     ax.set_title(title)
-    plt.show()
     plt.savefig(title+'.pdf', format='pdf')
+    plt.show()
 
 
 plot_weights(all_weights['in_mask_init'], 'Input_Mask')
