@@ -1,7 +1,8 @@
 from calc_params import par
 from math import ceil
 import numpy as np
-import json
+from os.path import exists
+from numpy import load
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -122,3 +123,10 @@ def initialize_weights():
     with open('weights.npy', 'wb') as f:
         np.save(f, all_weights)
     return all_weights
+
+if exists('weights.npy'):
+    with open('weights.npy', 'rb') as f:
+        all_weights = load(f, allow_pickle=True)
+        all_weights = all_weights.item()
+else:
+    all_weights = initialize_weights()

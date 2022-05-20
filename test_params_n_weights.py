@@ -1,16 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-from init_weight import initialize_weights
-from os.path import exists
-from numpy import load
-
-# if exists('weights.npy'):
-#     with open('weights.npy', 'rb') as f:
-#         all_weights = load(f, allow_pickle=True)
-#         all_weights = all_weights.item()
-# else:
-#     all_weights = initialize_weights()
-all_weights = initialize_weights()
+from init_weight import all_weights
 
 
 def plot_weights(weights, title, show_rnn_weights=False):
