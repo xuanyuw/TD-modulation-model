@@ -1,8 +1,6 @@
 from calc_params import par
 from math import ceil
 import numpy as np
-from os.path import exists
-from numpy import load
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -84,49 +82,43 @@ def generate_raw_weights():
 
     w_in0 = np.random.gamma(
         size=[par['n_input'], par['n_hidden']], shape=0.1, scale=1.).astype('float32')
-    w_rnn_base0 = np.random.gamma(
+    w_rnn0 = np.random.gamma(
         size=(par['n_hidden'], par['n_hidden']), scale=1., shape=0.1).astype('float32')
-    w_rnn_base0[:, par['ind_inh']] = np.random.gamma(
+    w_rnn0[:, par['ind_inh']] = np.random.gamma(
         size=(par['n_hidden'], len(par['ind_inh'])), scale=1., shape=0.2)
-    w_rnn_base0[par['ind_inh'], :] = np.random.gamma(
+    w_rnn0[par['ind_inh'], :] = np.random.gamma(
         size=(len(par['ind_inh']), par['n_hidden']), scale=1., shape=0.2)
     # # set negative weights to 0
-    # par['w_rnn_base0'][par['w_rnn_base0'] < 0] = 0
-    # par['w_rnn_base0'] = np.multiply(par['w_rnn_base0'], par['rnn_mask_init'])
+    # par['w_rnn0'][par['w_rnn0'] < 0] = 0
+    # par['w_rnn0'] = np.multiply(par['w_rnn0'], par['rnn_mask_init'])
 
     # Effective synaptic weights are stronger when no short-term synaptic plasticity
     # is used, so the strength of the recurrent weights is reduced to compensate
-    if par['synapse_config'] is 'none':
-        w_rnn_base0 = w_rnn_base0/3.
+    if par['synapse_config'] == 'none':
+        w_rnn0 = w_rnn0/3.
 
     w_out0 = np.random.gamma(
         size=[par['n_hidden'], par['n_output']], shape=0.1, scale=1.).astype(np.float32)
     b_rnn0 = np.zeros((1, par['n_hidden']), dtype=np.float32)
     b_out0 = np.zeros((1, par['n_output']), dtype=np.float32)
-    return w_in0, w_rnn_base0, w_out0, b_rnn0, b_out0
+    return w_in0, w_rnn0, w_out0, b_rnn0, b_out0
 
 
 def initialize_weights():
+    print('Initializing Weights...')
     in_mask_init = generate_in_mask()
     rnn_mask_init = generate_rnn_mask()
     out_mask_init = generate_out_mask()
-    w_in0, w_rnn_base0, w_out0, b_rnn0, b_out0 = generate_raw_weights()
+    w_in0, w_rnn0, w_out0, b_rnn0, b_out0 = generate_raw_weights()
 
     all_weights = {'in_mask_init': in_mask_init,
                    'rnn_mask_init': rnn_mask_init,
                    'out_mask_init': out_mask_init,
                    'w_in0': w_in0,
-                   'w_rnn_base0': w_rnn_base0,
+                   'w_rnn0': w_rnn0,
                    'w_out0': w_out0,
                    'b_rnn0': b_rnn0,
                    'b_out0': b_out0}
-    with open('weights.npy', 'wb') as f:
-        np.save(f, all_weights)
     return all_weights
 
-if exists('weights.npy'):
-    with open('weights.npy', 'rb') as f:
-        all_weights = load(f, allow_pickle=True)
-        all_weights = all_weights.item()
-else:
-    all_weights = initialize_weights()
+ 

@@ -1,11 +1,11 @@
 {
-  "save_dir": "./simple_model/",
-  "log_fn": "log_simple_model.txt",
+  "save_dir": "./toy_model/",
+  "log_fn": "log_toy_model.txt",
   "save_fn": "model_results.pkl",
   "test_save_fn": "test_results.pkl",
   "save_train_out": true,
   "log_test": true,
-  "rep_num": 3,
+  "rep_num": 1,
   "rep": 0,
 
   "batch_size": 10,
@@ -35,7 +35,7 @@
   "num_fix_tuned": 0,
   "num_color_tuned": 36,
   "n_choices": 2,
-  "n_output": 20,
+  "n_output": 2,
   "output_fixation": false,
   "num_receptive_fields": 3,
   "RF_perc": [0.33333, 0.33333, 0.33333],
