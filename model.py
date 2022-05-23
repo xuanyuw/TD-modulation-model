@@ -2,6 +2,7 @@ from init_weight import initialize_weights
 import brainpy as bp
 import brainpy.math as bm
 from numpy import load
+from numpy.random import normal
 from os.path import join
 bp.math.set_platform('cpu')
 
@@ -94,7 +95,7 @@ class Model(bp.layers.Module):
         # Update the hidden state. Only use excitatory projections from input layer to RNN
         # All input and RNN activity will be non-negative
         state = self.alpha * (input @ bm.relu(self.w_in) + h_post @ self.w_rnn +
-                              self.b_rnn) + bm.random.normal(0, self.noise_rnn, self.h.shape)
+                              self.b_rnn) + normal(0, self.noise_rnn, self.h.shape)
         self.h.value = bm.relu(state) + self.h * (1 - self.alpha)
         self.y.value = self.h @ bm.relu(self.w_out) + self.b_out
 

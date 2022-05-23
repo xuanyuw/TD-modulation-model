@@ -1,6 +1,6 @@
 {
   "save_dir": "./toy_model/",
-  "log_fn": "log_toy_model.txt",
+  "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
   "log_test": true,
@@ -12,8 +12,8 @@
   "test_batch_size": 1024,
   "num_test_iterations": 10,
   "iters_between_outputs": 1,
-  "learning_rate_li": [1e-3],
-  "learning_rate": 1e-3,
+  "learning_rate_li": [5e-3, 1e-3],
+  "learning_rate": 2e-2,
   "regularization": true,
   "noisy_weight_update": false,
   "noisy_weight_coef": 0.0001,

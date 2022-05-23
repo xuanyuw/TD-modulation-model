@@ -2,6 +2,7 @@ from calc_params import par
 from math import ceil
 import numpy as np
 import brainpy.math as bm
+from jax import checking_leaks
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -76,8 +77,7 @@ def generate_out_mask():
 
 
 def initialize(gamma_shape, size):
-    w = bm.random.gamma(gamma_shape, size=size)
-    return bm.asarray(w, dtype=bm.float32)
+    return np.random.gamma(gamma_shape, size=size).astype(np.float32)
 
 def generate_raw_weights():
     """

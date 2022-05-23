@@ -24,15 +24,13 @@ for syn_config in synaptic_configs:
         for rep in np.arange(par['rep_num']):
             update_parameters({'synapse_config': syn_config,
                                'rep': rep,
-                               'save_fn': 'model_results_%s_%d.pkl' % (syn_config, rep),
-                               'weight_fn': 'weight_%s_%d.pth' % (syn_config, rep),
+                               'save_fn': 'model_results_%d_lr%f.pkl' % (rep, lr),
+                               'weight_fn': 'weight_%d_lr%f.pth' % (rep, lr),
                                'learning_rate': lr})
             try_model(par, True)
             update_parameters({'synapse_config': syn_config,
                                'rep': rep,
                                'save_fn': 'test_results_%s_%d.pkl' % (syn_config, rep),
-                               'weight_fn': 'weight_%s_%d.pth' % (syn_config, rep),
-                               'learning_rate': lr,
                                'batch_size': par['test_batch_size'],
                                'num_iterations': par['num_test_iterations'],
                                'coherence_levels': par['test_coherence_levels']
