@@ -4,7 +4,7 @@ from analysis import get_perf, get_reaction_time
 from os.path import dirname, exists, join
 from os import makedirs
 from pickle import dump
-from numpy import save
+from numpy import save, mean
 import brainpy as bp
 import brainpy.math as bm
 
@@ -84,7 +84,8 @@ def trial(par, train=True, save_results=True,):
                       f' | Perf loss {model.perf_loss[0]:0.4f}' +
                       f' | Spike loss {model.spike_loss[0]:0.4f}' +
                       f' | Weight loss {model.weight_loss[0]:0.4f}' +
-                      f' | Mean activity {bm.mean(model.h):0.4f}')
+                      f' | Mean activity {bm.mean(model.h):0.4f}' +
+                      f' | RT {rt:0.4f}')
                 print(f'Separated Accuracy:' +
                       f' | H {H_acc:0.4f}' +
                       f' | M {M_acc:0.4f}' +

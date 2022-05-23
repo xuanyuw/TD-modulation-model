@@ -5,7 +5,7 @@ Functions used to save model data and to perform analysis
 import numpy as np
 import jax.numpy as jnp
 from os.path import join
-from brainpy.math import relu
+from brainpy.math import relu, softmax
 
 
 def get_perf(target, output, mask, stim_level):
@@ -48,10 +48,10 @@ def get_reaction_time(y_output, par):
     #reaciton_time = np.zeros((par['batch_size'], ))
     rt_mask = np.zeros(
         ((par['time_fixation'] + par['time_target'] + par['time_stim'])//par['dt'], 1))
-    rt_mask[:, -par['time_stim']//par['dt']:] = 1
+    rt_mask[-par['time_stim']//par['dt']:, :] = 1
     rt_mask = np.repeat(rt_mask, par['batch_size'], axis=1)
-    abs_diff = abs(y_output[:, :, 0] - y_output[:, :, 1])
-    diff = rt_mask.T @ relu(abs_diff - par['decision_threshold'])
+    abs_diff = abs(softmax(y_output[:, :, 0] - y_output[:, :, 1]))
+    diff = rt_mask * relu(abs_diff - par['decision_threshold'])
     diff_nonzero = np.count_nonzero(diff, axis=0)
     reaction_time = y_output.shape[0] - diff_nonzero - start_t
     return reaction_time
