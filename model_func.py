@@ -7,6 +7,7 @@ from pickle import dump
 from numpy import save, mean
 import brainpy as bp
 import brainpy.math as bm
+import matplotlib.pyplot as plt
 
 
 bp.math.set_platform('cpu')
@@ -43,7 +44,8 @@ def trial(par, train=True, save_results=True,):
 
     # keep track of the model performance across training
     model_performance = {'total_accuracy': [], 'rt': [], 'loss': [], 'perf_loss': [],
-                         'spike_loss': [], 'weight_loss': [], 'iteration': [], 'coh_accuracy': {}}
+                         'spike_loss': [], 'weight_loss': [], 'iteration': [], 'H_acc': [],
+                         'M_acc': [], 'L_acc': [], 'Z_acc': []}
 
     for i in range(num_iterations):
         model.reset()
@@ -61,20 +63,21 @@ def trial(par, train=True, save_results=True,):
         # get metrics
         accuracy, total_accuracy = get_perf(
             targets, model.y_hist, mask, trial_info['stim_level'])
-        rt = get_reaction_time(model.y_hist, par)
+        H_acc = accuracy['H']
+        M_acc = accuracy['M']
+        L_acc = accuracy['L']
+        Z_acc = accuracy['Z']
+        rt = mean(get_reaction_time(model.y_hist, par))
         model_performance['total_accuracy'].append(total_accuracy)
         model_performance['rt'].append(rt)
         model_performance['loss'].append(model.loss)
         model_performance['perf_loss'].append(model.perf_loss)
         model_performance['spike_loss'].append(model.spike_loss)
         model_performance['weight_loss'].append(model.weight_loss)
-        for k in model_performance['coh_accuracy'].keys():
-            model_performance['coh_accuracy'][k].append(accuracy[k])
-
-        H_acc = accuracy['H']
-        M_acc = accuracy['M']
-        L_acc = accuracy['L']
-        Z_acc = accuracy['Z']
+        model_performance['H_acc'].append(H_acc)
+        model_performance['M_acc'].append(M_acc)
+        model_performance['L_acc'].append(L_acc)
+        model_performance['Z_acc'].append(Z_acc)
 
         # Save the network model and output model performance to screen
         if i % iter_between_outputs == 0:
@@ -108,6 +111,10 @@ def trial(par, train=True, save_results=True,):
             makedirs(dirname(par['save_dir']))
 
     if train:
+        plot_curves(model_performance['total_accuracy'], model_performance['H_acc'],
+                    model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'], join(
+                        par['save_dir'], 'Training_Accuracies.pdf'), par['learning_rate'], par['rep'])
+
         # Save model and results
         weights = {}
         w = model.train_vars().unique().dict()
@@ -126,3 +133,18 @@ def trial(par, train=True, save_results=True,):
     for k, v in model_performance.items():
         results[k] = v
     dump(results, open(join(par['save_dir'], par['save_fn']), 'wb'))
+
+
+def plot_curves(all_arr, h_arr, m_arr, l_arr, z_arr, fn, lr, rep):
+    f = plt.figure(figsize=(8, 3))
+    ax = f.add_subplot(1, 1, 1)
+
+    ax.plot(h_arr, '#7CB9E8', alpha=0.6, label='high coh')
+    ax.plot(m_arr, '#007FFF', alpha=0.6, label='mid coh')
+    ax.plot(l_arr, '#00308F', alpha=0.6, label='low coh')
+    ax.plot(z_arr, 'gray', alpha=0.6, label='zero coh')
+    ax.plot(all_arr, 'r', linewidth=2.5, label='total')
+    ax.legend()
+    ax.set_title('Learning Rate = %f, Rep %d' % (lr, rep))
+    plt.savefig(fn, format='pdf')
+    plt.show()
