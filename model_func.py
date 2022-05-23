@@ -16,7 +16,6 @@ def trial(par, train=True, save_results=True,):
     num_iterations = par['num_iterations']
     iter_between_outputs = par['iters_between_outputs']
     stim = Stimulus(par)
-    trial_info = stim.generate_trial()
 
     model = Model(par, train=train)
     opt = bp.optimizers.Adam(par['learning_rate'],
@@ -72,14 +71,36 @@ def trial(par, train=True, save_results=True,):
         for k in model_performance['coh_accuracy'].keys():
             model_performance['coh_accuracy'][k].append(accuracy[k])
 
+        H_acc = accuracy['H']
+        M_acc = accuracy['M']
+        L_acc = accuracy['L']
+        Z_acc = accuracy['Z']
+
         # Save the network model and output model performance to screen
         if i % iter_between_outputs == 0:
-            print(f' Iter {i:4d}' +
-                  f' | Accuracy {total_accuracy:0.4f}' +
-                  f' | Perf loss {model.perf_loss[0]:0.4f}' +
-                  f' | Spike loss {model.spike_loss[0]:0.4f}' +
-                  f' | Weight loss {model.weight_loss[0]:0.4f}' +
-                  f' | Mean activity {bm.mean(model.h):0.4f}')
+            if train:
+                print(f' Iter {i:4d}' +
+                      f' | Accuracy {total_accuracy:0.4f}' +
+                      f' | Perf loss {model.perf_loss[0]:0.4f}' +
+                      f' | Spike loss {model.spike_loss[0]:0.4f}' +
+                      f' | Weight loss {model.weight_loss[0]:0.4f}' +
+                      f' | Mean activity {bm.mean(model.h):0.4f}')
+                print(f'Separated Accuracy:' +
+                      f' | H {H_acc:0.4f}' +
+                      f' | M {M_acc:0.4f}' +
+                      f' | L {L_acc:0.4f}' +
+                      f' | Z {Z_acc:0.4f}')
+                print('--------------------------------------------------------------------------------------------------------------------------------')
+            else:
+                print(f' Iter {i:4d}' +
+                      f' | Accuracy {total_accuracy:0.4f}' +
+                      f' | Mean activity {bm.mean(model.h):0.4f}')
+                print(f'Separated Accuracy:' +
+                      f' | H {H_acc:0.4f}' +
+                      f' | M {M_acc:0.4f}' +
+                      f' | L {L_acc:0.4f}' +
+                      f' | Z {Z_acc:0.4f}')
+                print('--------------------------------------------------------------------------------------------------------------------------------')
 
     if save_results:
         if not exists(dirname(par['save_dir'])):
@@ -100,13 +121,7 @@ def trial(par, train=True, save_results=True,):
 
         with open(join(par['save_dir'], par['weight_fn']), 'wb') as f:
             save(f, weights)
-        results = {}
-        for k, v in model_performance.items():
-            results[k] = v
-        dump(results, open(join(par['save_dir'], par['save_fn']), 'wb'))
-    else:
-        results = {}
-        for k, v in model_performance.items():
-            results[k] = v
-        dump(results, open(
-            join(par['save_dir'], par['test_save_fn']), 'wb'))
+    results = {}
+    for k, v in model_performance.items():
+        results[k] = v
+    dump(results, open(join(par['save_dir'], par['save_fn']), 'wb'))

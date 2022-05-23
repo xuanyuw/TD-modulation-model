@@ -1,12 +1,16 @@
+from turtle import clear
 import numpy as np
 from calc_params import par, update_parameters
 from model_func import trial
 
+# For debugging
+# from jax.config import config
+# config.update("jax_debug_nans", True)
 
-def try_model(par):
+
+def try_model(par, train):
     try:
-        trial(par)
-        trial(par, train=False)  # Run model
+        trial(par, train=train)
 
     except KeyboardInterrupt:
         quit('Quit by KeyboardInterrupt')
@@ -21,10 +25,16 @@ for syn_config in synaptic_configs:
             update_parameters({'synapse_config': syn_config,
                                'rep': rep,
                                'save_fn': 'model_results_%s_%d.pkl' % (syn_config, rep),
-                               'test_save_fn': 'test_results_%s_%d.pkl' % (syn_config, rep),
                                'weight_fn': 'weight_%s_%d.pth' % (syn_config, rep),
                                'learning_rate': lr})
-
-            print('Synaptic configuration:\t', par['synapse_config'], "\n")
-
-            try_model(par)
+            try_model(par, True)
+            update_parameters({'synapse_config': syn_config,
+                               'rep': rep,
+                               'save_fn': 'test_results_%s_%d.pkl' % (syn_config, rep),
+                               'weight_fn': 'weight_%s_%d.pth' % (syn_config, rep),
+                               'learning_rate': lr,
+                               'batch_size': par['test_batch_size'],
+                               'num_iterations': par['num_test_iterations'],
+                               'coherence_levels': par['test_coherence_levels']
+                               })
+            try_model(par, False)

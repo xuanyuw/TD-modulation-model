@@ -1,6 +1,7 @@
 from calc_params import par
 from math import ceil
 import numpy as np
+import brainpy.math as bm
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -74,31 +75,29 @@ def generate_out_mask():
     return out_mask_init
 
 
+def initialize(gamma_shape, size):
+    w = bm.random.gamma(gamma_shape, size=size)
+    return bm.asarray(w, dtype=bm.float32)
+
 def generate_raw_weights():
     """
-    Initialize the weights without multiplying masks and EI matrix
+    Initialize the weights without multiplying masks 
     The masks will be applied later.
     """
-
-    w_in0 = np.random.gamma(
-        size=[par['n_input'], par['n_hidden']], shape=0.1, scale=1.).astype('float32')
-    w_rnn0 = np.random.gamma(
-        size=(par['n_hidden'], par['n_hidden']), scale=1., shape=0.1).astype('float32')
-    w_rnn0[:, par['ind_inh']] = np.random.gamma(
-        size=(par['n_hidden'], len(par['ind_inh'])), scale=1., shape=0.2)
-    w_rnn0[par['ind_inh'], :] = np.random.gamma(
-        size=(len(par['ind_inh']), par['n_hidden']), scale=1., shape=0.2)
-    # # set negative weights to 0
-    # par['w_rnn0'][par['w_rnn0'] < 0] = 0
-    # par['w_rnn0'] = np.multiply(par['w_rnn0'], par['rnn_mask_init'])
+    w_in0 = initialize(0.2, (par['n_input'], par['n_hidden']))
+    w_rnn0 = initialize(0.2, (par['n_hidden'], par['n_hidden']))
+    w_rnn0[:, par['ind_inh']] = initialize(0.2, (par['n_hidden'], len(par['ind_inh'])))
+    w_rnn0[par['ind_inh'], :] = initialize(0.2, (len(par['ind_inh']), par['n_hidden']))
+    w_rnn0 =  bm.relu(w_rnn0) @ par['EI_matrix']
+    # remove self-connections
+    temp_mask = bm.ones((par['n_hidden'], par['n_hidden'])) - bm.eye(par['n_hidden'])
+    w_rnn0 *= temp_mask  
 
     # Effective synaptic weights are stronger when no short-term synaptic plasticity
     # is used, so the strength of the recurrent weights is reduced to compensate
     if par['synapse_config'] == 'none':
         w_rnn0 = w_rnn0/3.
-
-    w_out0 = np.random.gamma(
-        size=[par['n_hidden'], par['n_output']], shape=0.1, scale=1.).astype(np.float32)
+    w_out0 = initialize(0.2, (par['n_hidden'], par['n_output']))
     b_rnn0 = np.zeros((1, par['n_hidden']), dtype=np.float32)
     b_out0 = np.zeros((1, par['n_output']), dtype=np.float32)
     return w_in0, w_rnn0, w_out0, b_rnn0, b_out0
@@ -110,6 +109,9 @@ def initialize_weights():
     rnn_mask_init = generate_rnn_mask()
     out_mask_init = generate_out_mask()
     w_in0, w_rnn0, w_out0, b_rnn0, b_out0 = generate_raw_weights()
+    w_in0 *= in_mask_init
+    w_rnn0 *= rnn_mask_init
+    w_out0 *= out_mask_init
 
     all_weights = {'in_mask_init': in_mask_init,
                    'rnn_mask_init': rnn_mask_init,

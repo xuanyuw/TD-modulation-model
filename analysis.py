@@ -3,6 +3,7 @@ Functions used to save model data and to perform analysis
 """
 
 import numpy as np
+import jax.numpy as jnp
 from os.path import join
 from brainpy.math import relu
 
@@ -10,6 +11,10 @@ from brainpy.math import relu
 def get_perf(target, output, mask, stim_level):
     """ Calculate task accuracy by comparing the actual network output to the desired output
         only examine time points when test stimulus is on, e.g. when y[:,:,0] = 0 """
+
+    target = target.numpy()
+    output = output.numpy()
+    mask = mask.numpy()
 
     mask_full = np.float32(mask > 0)
     target_max = np.argmax(target, axis=2)
@@ -28,10 +33,10 @@ def get_perf(target, output, mask, stim_level):
             accuracy['L'].append(batch_accuracy)
         else:
             accuracy['Z'].append(batch_accuracy)
-    accuracy['H'] = np.array(accuracy['H'])
-    accuracy['M'] = np.array(accuracy['M'])
-    accuracy['L'] = np.array(accuracy['L'])
-    accuracy['Z'] = np.array(accuracy['Z'])
+    accuracy['H'] = np.mean(accuracy['H'])
+    accuracy['M'] = np.mean(accuracy['M'])
+    accuracy['L'] = np.mean(accuracy['L'])
+    accuracy['Z'] = np.mean(accuracy['Z'])
     total_accuracy = np.sum(np.float32(
         target_max == output_max)*mask_full)/np.sum(mask_full)
 

@@ -117,7 +117,7 @@ class Stimulus:
                     for i in range(len(self.move_dirs)):
                         d = np.cos(
                             (self.move_dirs[i] - pref_dirs[n])/180*np.pi)
-                        motion_tuning[n, i] = np.exp(
+                        motion_tuning[n, i] += np.exp(
                             self.par['kappa']*d)/np.exp(self.par['kappa'])
             all_motion_tunings.append(motion_tuning)
 
@@ -132,9 +132,9 @@ class Stimulus:
         color_tuning = np.zeros((self.par['n_input'],))
         cell_per_rf = self.par['num_color_tuned']//(
             self.par['num_receptive_fields']-1)
-        green_val = self.par['tuning_height'] * 0.3
+        green_val = 0.3
         # arbitrary value, just to make red, green, and fix different
-        red_val = self.par['tuning_height'] * 0.8
+        red_val = 0.8
         if targ_loc:
             # red in contralateral rf
             color_tuning[self.par['num_motion_tuned']
