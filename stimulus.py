@@ -8,7 +8,7 @@ class Stimulus:
         self.par = par
 
     def generate_trial(self):
-        print('Initializing Stimuli...')
+        # print('Initializing Stimuli...')
         self.move_dirs = [135, 315]
         self.all_motion_tunings, self.fix_tuning = self.create_tuning_functions(
             self.par['coherence_levels'])

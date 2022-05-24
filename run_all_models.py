@@ -28,11 +28,11 @@ for syn_config in synaptic_configs:
                                'weight_fn': 'weight_%d_lr%f.pth' % (rep, lr),
                                'learning_rate': lr})
             try_model(par, True)
-            update_parameters({'synapse_config': syn_config,
-                               'rep': rep,
-                               'save_fn': 'test_results_%s_%d.pkl' % (syn_config, rep),
-                               'batch_size': par['test_batch_size'],
-                               'num_iterations': par['num_test_iterations'],
-                               'coherence_levels': par['test_coherence_levels']
-                               })
-            try_model(par, False)
+            # update_parameters({'synapse_config': syn_config,
+            #                    'rep': rep,
+            #                    'save_fn': 'test_results_%s_%d.pkl' % (syn_config, rep),
+            #                    'batch_size': par['test_batch_size'],
+            #                    'num_iterations': par['num_test_iterations'],
+            #                    'coherence_levels': par['test_coherence_levels']
+            #                    })
+            # try_model(par, False)

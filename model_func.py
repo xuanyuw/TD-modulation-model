@@ -136,14 +136,14 @@ def trial(par, train=True, save_results=True,):
 
 
 def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, f_dir, lr, rep):
-    f = plt.figure(figsize=(8, 3))
+    f = plt.figure(figsize=(10, 3))
     ax = f.add_subplot(1, 1, 1)
 
     ax.plot(h_arr, '#7CB9E8', alpha=0.6, label='high coh')
     ax.plot(m_arr, '#007FFF', alpha=0.6, label='mid coh')
     ax.plot(l_arr, '#00308F', alpha=0.6, label='low coh')
     ax.plot(z_arr, 'gray', alpha=0.6, label='zero coh')
-    ax.plot(all_arr, 'r', linewidth=2.5, label='total')
+    ax.plot(all_arr, 'r', linewidth=2, label='total')
     ax.legend()
     ax.set_title('Learning Rate = %f, Rep %d' % (lr, rep))
     plt.savefig(join(f_dir, 'TrainAcc_lr%f_rep%d.pdf' %
