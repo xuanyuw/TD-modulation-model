@@ -138,7 +138,7 @@ def trial(par, train=True, save_results=True,):
 def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, f_dir, lr, rep):
     f = plt.figure(figsize=(10, 3))
     ax = f.add_subplot(1, 1, 1)
-
+    ax.axhline(y=0.9, color='k', linestyle='-')
     ax.plot(h_arr, '#7CB9E8', alpha=0.6, label='high coh')
     ax.plot(m_arr, '#007FFF', alpha=0.6, label='mid coh')
     ax.plot(l_arr, '#00308F', alpha=0.6, label='low coh')
