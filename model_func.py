@@ -112,8 +112,8 @@ def trial(par, train=True, save_results=True,):
 
     if train:
         plot_acc(model_performance['total_accuracy'], model_performance['H_acc'],
-                 model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'],
-                 par['save_dir'], par['learning_rate'], par['rep'])
+                 model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'], 
+                 model_performance['loss'], par['save_dir'], par['learning_rate'], par['rep'])
 
         # Save model and results
         weights = {}
@@ -135,9 +135,9 @@ def trial(par, train=True, save_results=True,):
     dump(results, open(join(par['save_dir'], par['save_fn']), 'wb'))
 
 
-def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, f_dir, lr, rep):
-    f = plt.figure(figsize=(10, 3))
-    ax = f.add_subplot(1, 1, 1)
+def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, loss, f_dir, lr, rep):
+    f = plt.figure(figsize=(10, 6))
+    ax = f.add_subplot(2, 1, 1)
     ax.axhline(y=0.9, color='k', linestyle='--')
     ax.plot(h_arr, '#7CB9E8', alpha=0.6, label='high coh')
     ax.plot(m_arr, '#007FFF', alpha=0.6, label='mid coh')
@@ -146,6 +146,9 @@ def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, f_dir, lr, rep):
     ax.plot(all_arr, 'r', linewidth=2, label='total')
     ax.legend()
     ax.set_title('Learning Rate = %f, Rep %d' % (lr, rep))
+    ax2 = f.add_subplot(2, 1, 2)
+    ax2.plot(loss)
+    ax2.set_title('Loss')
     plt.savefig(join(f_dir, 'TrainAcc_lr%f_rep%d.pdf' %
                 (lr, rep)), format='pdf')
     plt.show()
