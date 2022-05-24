@@ -111,9 +111,9 @@ def trial(par, train=True, save_results=True,):
             makedirs(dirname(par['save_dir']))
 
     if train:
-        plot_curves(model_performance['total_accuracy'], model_performance['H_acc'],
-                    model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'], join(
-                        par['save_dir'], 'Training_Accuracies.pdf'), par['learning_rate'], par['rep'])
+        plot_acc(model_performance['total_accuracy'], model_performance['H_acc'],
+                 model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'],
+                 par['save_dir'], par['learning_rate'], par['rep'])
 
         # Save model and results
         weights = {}
@@ -135,7 +135,7 @@ def trial(par, train=True, save_results=True,):
     dump(results, open(join(par['save_dir'], par['save_fn']), 'wb'))
 
 
-def plot_curves(all_arr, h_arr, m_arr, l_arr, z_arr, fn, lr, rep):
+def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, f_dir, lr, rep):
     f = plt.figure(figsize=(8, 3))
     ax = f.add_subplot(1, 1, 1)
 
@@ -146,5 +146,5 @@ def plot_curves(all_arr, h_arr, m_arr, l_arr, z_arr, fn, lr, rep):
     ax.plot(all_arr, 'r', linewidth=2.5, label='total')
     ax.legend()
     ax.set_title('Learning Rate = %f, Rep %d' % (lr, rep))
-    plt.savefig(fn, format='pdf')
-    plt.show()
+    plt.savefig(join(f_dir, 'TrainAcc_lr%f_rep%d.pdf' %
+                (lr, rep)), format='pdf')
