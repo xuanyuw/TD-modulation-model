@@ -132,9 +132,11 @@ class Stimulus:
         color_tuning = np.zeros((self.par['n_input'],))
         cell_per_rf = self.par['num_color_tuned']//(
             self.par['num_receptive_fields']-1)
-        green_val = 0.3
-        # arbitrary value, just to make red, green, and fix different
-        red_val = 0.8
+        # create red and green tuning
+        green_val = np.zeros((cell_per_rf,))
+        green_val[-cell_per_rf//2:] = 1
+        red_val = np.zeros((cell_per_rf,))
+        red_val[:-cell_per_rf//2] = 1
         if targ_loc:
             # red in contralateral rf
             color_tuning[self.par['num_motion_tuned']

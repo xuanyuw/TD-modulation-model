@@ -45,6 +45,9 @@ def generate_rnn_mask():
     conn_probs = np.tile(temp_probs, (2, 2))
     rf_rngs = calculate_rf_rngs()
     rnn_mask_init = fill_mask(rf_rngs, conn_probs, rnn_mask_init)
+    # remove self_connections
+    temp_mask = bm.ones((par['n_hidden'], par['n_hidden'])) - bm.eye(par['n_hidden'])
+    rnn_mask_init = rnn_mask_init * temp_mask
     return rnn_mask_init
 
 
@@ -60,10 +63,10 @@ def generate_in_mask():
         sz = (in_rngs[i][1] - in_rngs[i][0], rf_rngs[i][1] - rf_rngs[i][0])
         in_mask_init[in_rngs[i][0]:in_rngs[i][1], rf_rngs[i][0]:rf_rngs[i][1]] = np.random.choice(
             [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
-        # inh conn
-        sz = (in_rngs[i][1] - in_rngs[i][0], rf_rngs[i+n][1] - rf_rngs[i+n][0])
-        in_mask_init[in_rngs[i][0]:in_rngs[i][1], rf_rngs[i+n][0]:rf_rngs[i+n][1]] = np.random.choice(
-            [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
+        # # inh conn
+        # sz = (in_rngs[i][1] - in_rngs[i][0], rf_rngs[i+n][1] - rf_rngs[i+n][0])
+        # in_mask_init[in_rngs[i][0]:in_rngs[i][1], rf_rngs[i+n][0]:rf_rngs[i+n][1]] = np.random.choice(
+        #     [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
     return in_mask_init
 
 
@@ -89,9 +92,6 @@ def generate_raw_weights():
     w_rnn0[:, par['ind_inh']] = initialize(0.2, (par['n_hidden'], len(par['ind_inh'])))
     w_rnn0[par['ind_inh'], :] = initialize(0.2, (len(par['ind_inh']), par['n_hidden']))
     w_rnn0 =  bm.relu(w_rnn0) @ par['EI_matrix']
-    # remove self-connections
-    temp_mask = bm.ones((par['n_hidden'], par['n_hidden'])) - bm.eye(par['n_hidden'])
-    w_rnn0 *= temp_mask  
 
     # Effective synaptic weights are stronger when no short-term synaptic plasticity
     # is used, so the strength of the recurrent weights is reduced to compensate
