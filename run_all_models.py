@@ -2,6 +2,8 @@ from turtle import clear
 import numpy as np
 from calc_params import par, update_parameters
 from model_func import trial
+from os import makedirs
+from os.path import dirname, exists
 
 # For debugging
 # from jax.config import config
@@ -27,6 +29,8 @@ for syn_config in synaptic_configs:
                                'save_fn': 'model_results_%d_lr%f.pkl' % (rep, lr),
                                'weight_fn': 'weight_%d_lr%f.pth' % (rep, lr),
                                'learning_rate': lr})
+            if not exists(dirname(par['save_dir'])):
+                makedirs(dirname(par['save_dir']))
             try_model(par, True)
             # update_parameters({'synapse_config': syn_config,
             #                    'rep': rep,

@@ -1,8 +1,8 @@
 from model import Model
 from stimulus import Stimulus
 from analysis import get_perf, get_reaction_time
-from os.path import dirname, exists, join
-from os import makedirs
+from os.path import join
+
 from pickle import dump
 from numpy import save, mean
 import brainpy as bp
@@ -106,9 +106,7 @@ def trial(par, train=True, save_results=True,):
                       f' | Z {Z_acc:0.4f}')
                 print('--------------------------------------------------------------------------------------------------------------------------------')
 
-    if save_results:
-        if not exists(dirname(par['save_dir'])):
-            makedirs(dirname(par['save_dir']))
+       
 
     if train:
         plot_acc(model_performance['total_accuracy'], model_performance['H_acc'],
