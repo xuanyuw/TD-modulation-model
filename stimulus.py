@@ -23,7 +23,8 @@ class Stimulus:
 
         trial_info:
             stim_dir: the moving direction of the random dot stimuli
-            desired_output: correct color choice at every time point (dim3: layer1  = green, layer2 = red)
+            #  desired_output: correct color choice at every time point (dim3: layer1  = green, layer2 = red)
+            desired_output: correct choice location at every time point (dim3: layer1  = contra, layer2 = ipsi)
             targ_loc: the target arrangement (0 = green contralateral, 1 = red contralateral)
             desired_loc: the correct choice location (0 = contra-lateral choice, 1 = ipsi-lateral choice)
             train_mask: the mask determine which self.part of the trial got trained
@@ -46,12 +47,11 @@ class Stimulus:
         trial_info['stim_dir'] = np.random.choice(
             self.move_dirs, size=(self.par['batch_size'],))
 
-        # fill in correct color choice according to stimulus directions
-
-        trial_info['desired_output'][stim_time_rng, np.reshape(np.where(trial_info['stim_dir']
-                                     == 135), (-1, 1)), 0] = 1
-        trial_info['desired_output'][stim_time_rng, np.reshape(np.where(trial_info['stim_dir']
-                                     == 315), (-1, 1)), 1] = 1
+        # # fill in correct color choice according to stimulus directions
+        # trial_info['desired_output'][stim_time_rng, np.reshape(np.where(trial_info['stim_dir']
+        #                              == 135), (-1, 1)), 0] = 1
+        # trial_info['desired_output'][stim_time_rng, np.reshape(np.where(trial_info['stim_dir']
+        #                              == 315), (-1, 1)), 1] = 1
 
         # generate random target arrangement and desired choice location
         trial_info['targ_loc'] = np.random.choice(
@@ -60,6 +60,9 @@ class Stimulus:
         trial_info['desired_loc'] = np.logical_xor(
             trial_info['targ_loc'], temp_stim).astype(int)
 
+        # generate desired output from desired choice loc
+        trial_info['desired_output'][stim_time_rng, np.where(trial_info['desired_loc']==0), 0] = 1 
+        trial_info['desired_output'][stim_time_rng, np.where(trial_info['desired_loc']==1), 1] = 1 
         # generate training mask
         # set the mask equal to zero during the fixation time
         trial_info['train_mask'][fix_time_rng, :] = 0
