@@ -33,9 +33,9 @@ class Model(bp.layers.Module):
         self.spike_loss = bm.Variable(bm.zeros(1))
         self.weight_loss = bm.Variable(bm.zeros(1))
 
-        # weights
+        # weights 
         if train:
-            all_weights = initialize_weights()
+            all_weights = initialize_weights(par['learning_rate'], par['rep'])
         else:
             all_weights = load(
                 join(par['save_dir'], par['weight_fn']), allow_pickle=True)

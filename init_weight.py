@@ -3,6 +3,7 @@ from math import ceil
 import numpy as np
 import brainpy.math as bm
 from jax import checking_leaks
+from os.path import join
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -103,7 +104,7 @@ def generate_raw_weights():
     return w_in0, w_rnn0, w_out0, b_rnn0, b_out0
 
 
-def initialize_weights():
+def initialize_weights(lr=0, rep=0):
     print('Initializing Weights...')
     in_mask_init = generate_in_mask()
     rnn_mask_init = generate_rnn_mask()
@@ -121,6 +122,8 @@ def initialize_weights():
                    'w_out0': w_out0,
                    'b_rnn0': b_rnn0,
                    'b_out0': b_out0}
+    with open(join(par['save_dir'], 'init_weight_%d_lr%f.pth' % (rep, lr)), 'wb') as f:
+        np.save(f, all_weights)
     return all_weights
 
  
