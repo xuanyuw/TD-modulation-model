@@ -61,8 +61,10 @@ class Stimulus:
             trial_info['targ_loc'], temp_stim).astype(int)
 
         # generate desired output from desired choice loc
-        trial_info['desired_output'][stim_time_rng, np.where(trial_info['desired_loc']==0), 0] = 1 
-        trial_info['desired_output'][stim_time_rng, np.where(trial_info['desired_loc']==1), 1] = 1 
+        trial_info['desired_output'][stim_time_rng, np.reshape(np.where(
+            trial_info['desired_loc'] == 0), (-1, 1)), 0] = 1
+        trial_info['desired_output'][stim_time_rng, np.reshape(np.where(
+            trial_info['desired_loc'] == 1), (-1, 1)), 1] = 1
         # generate training mask
         # set the mask equal to zero during the fixation time
         trial_info['train_mask'][fix_time_rng, :] = 0
