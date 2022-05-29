@@ -2,7 +2,7 @@ from model import Model
 from stimulus import Stimulus
 from analysis import get_perf, get_reaction_time
 from os.path import join
-
+import tables
 from pickle import dump
 from numpy import save, mean, where, array
 import brainpy as bp
@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 bp.math.set_platform('cpu')
 
 
-def trial(par, train=True, save_results=True,):
+def trial(par, train=True):
     num_iterations = par['num_iterations']
     iter_between_outputs = par['iters_between_outputs']
     stim = Stimulus(par)
@@ -47,6 +47,10 @@ def trial(par, train=True, save_results=True,):
                          'spike_loss': [], 'weight_loss': [], 'iteration': [], 'H_acc': [],
                          'M_acc': [], 'L_acc': [], 'Z_acc': []}
 
+    if par['save_train_out']:
+        all_y_hist = []
+        all_target = []
+        all_stim_level = []
     for i in range(num_iterations):
         model.reset()
         # generate batch of batch_train_size
@@ -59,6 +63,13 @@ def trial(par, train=True, save_results=True,):
         # Run the model
         if train:
             train_op(inputs, targets, mask)
+
+        # save training output
+        if par['save_train_out']:
+            if i % iter_between_outputs == 0:
+                all_y_hist.append(model.y_hist)
+                all_target.append(targets)
+                all_stim_level.append(trial_info['stim_level'])
 
         # get metrics
         accuracy, total_accuracy = get_perf(
@@ -106,6 +117,18 @@ def trial(par, train=True, save_results=True,):
                       f' | Z {Z_acc:0.4f}')
                 print('--------------------------------------------------------------------------------------------------------------------------------')
 
+    if par['save_train_out']:
+        h5_file = tables.open_file(join(par['save_dir'], 'train_output_lr%f_rep%d.h5' % (
+            par['learning_rate'], par['rep'])), mode='w', title='Training output')
+        for n in range(len(all_y_hist)):
+            h5_file.create_array(
+                '/', 'y_hist_iter{}'.format(n*iter_between_outputs), all_y_hist[n].numpy())
+            h5_file.create_array(
+                '/', 'target_iter{}'.format(n*iter_between_outputs), all_target[n].numpy())
+            h5_file.create_array(
+                '/', 'stim_level_iter{}'.format(n*iter_between_outputs), all_stim_level[n])
+        h5_file.close()
+
     if train:
         plot_acc(model_performance['total_accuracy'], model_performance['H_acc'],
                  model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'],
@@ -145,6 +168,7 @@ def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, loss, f_dir, lr, rep):
     ax2 = f.add_subplot(2, 1, 2)
     ax2.plot(loss)
     ax2.set_ylim(0.5, 2)
+    ax2.set_xlim(0, len(loss)-1)
     ax2.set_title('Loss')
     plt.savefig(join(f_dir, 'TrainAcc_lr%f_rep%d.pdf' %
                 (lr, rep)), format='pdf')
