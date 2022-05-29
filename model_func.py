@@ -4,7 +4,7 @@ from analysis import get_perf, get_reaction_time
 from os.path import join
 
 from pickle import dump
-from numpy import save, mean
+from numpy import save, mean, where, array
 import brainpy as bp
 import brainpy.math as bm
 import matplotlib.pyplot as plt
@@ -106,11 +106,9 @@ def trial(par, train=True, save_results=True,):
                       f' | Z {Z_acc:0.4f}')
                 print('--------------------------------------------------------------------------------------------------------------------------------')
 
-       
-
     if train:
         plot_acc(model_performance['total_accuracy'], model_performance['H_acc'],
-                 model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'], 
+                 model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'],
                  model_performance['loss'], par['save_dir'], par['learning_rate'], par['rep'])
 
         # Save model and results
@@ -146,6 +144,7 @@ def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, loss, f_dir, lr, rep):
     ax.set_title('Learning Rate = %f, Rep %d' % (lr, rep))
     ax2 = f.add_subplot(2, 1, 2)
     ax2.plot(loss)
+    ax2.set_ylim(0.5, 2)
     ax2.set_title('Loss')
     plt.savefig(join(f_dir, 'TrainAcc_lr%f_rep%d.pdf' %
                 (lr, rep)), format='pdf')
