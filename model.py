@@ -96,7 +96,7 @@ class Model(bp.layers.Module):
         # All input and RNN activity will be non-negative
         state = self.alpha * (input @ bm.relu(self.w_in) + h_post @ self.w_rnn +
                               self.b_rnn) + normal(0, self.noise_rnn, self.h.shape)
-        self.h.value = bm.relu(state) + self.h * (1 - self.alpha)
+        self.h.value = bm.relu(state + self.h * (1 - self.alpha))
         self.y.value = self.h @ bm.relu(self.w_out) + self.b_out
 
     def predict(self, inputs):
