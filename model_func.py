@@ -51,6 +51,11 @@ def trial(par, train=True):
         all_y_hist = []
         all_target = []
         all_stim_level = []
+        all_h = []
+        all_neural_in = []
+        all_in_weight = []
+        all_rnn_weight = []
+        all_out_weight = []
     for i in range(num_iterations):
         model.reset()
         # generate batch of batch_train_size
@@ -70,6 +75,11 @@ def trial(par, train=True):
                 all_y_hist.append(model.y_hist)
                 all_target.append(targets)
                 all_stim_level.append(trial_info['stim_level'])
+                all_h.append(model.h)
+                all_neural_in.append(inputs)
+                all_in_weight.append(model.w_in)
+                all_rnn_weight.append(model.w_rnn)
+                all_out_weight.append(model.w_out)
 
         # get metrics
         accuracy, total_accuracy = get_perf(
@@ -127,6 +137,16 @@ def trial(par, train=True):
                 '/', 'target_iter{}'.format(n*iter_between_outputs), all_target[n].numpy())
             h5_file.create_array(
                 '/', 'stim_level_iter{}'.format(n*iter_between_outputs), all_stim_level[n])
+            h5_file.create_array(
+                '/', 'h_iter{}'.format(n*iter_between_outputs), all_h[n])
+            h5_file.create_array(
+                '/', 'neural_in_iter{}'.format(n*iter_between_outputs), all_neural_in[n])
+            h5_file.create_array(
+                '/', 'w_in_iter{}'.format(n*iter_between_outputs), all_in_weight[n])
+            h5_file.create_array(
+                '/', 'w_rnn_iter{}'.format(n*iter_between_outputs), all_rnn_weight[n])
+            h5_file.create_array(
+                '/', 'w_out_iter{}'.format(n*iter_between_outputs), all_out_weight[n])
         h5_file.close()
 
     if train:
