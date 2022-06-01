@@ -50,7 +50,8 @@ def get_reaction_time(y_output, par):
         ((par['time_fixation'] + par['time_target'] + par['time_stim'])//par['dt'], 1))
     rt_mask[-par['time_stim']//par['dt']:, :] = 1
     rt_mask = np.repeat(rt_mask, par['batch_size'], axis=1)
-    abs_diff = abs(softmax(y_output[:, :, 0] - y_output[:, :, 1]))
+    y = softmax(y_output)
+    abs_diff = abs(y[:, :, 0] - y[:, :, 1])
     diff = rt_mask * relu(abs_diff - par['decision_threshold'])
     diff_nonzero = np.count_nonzero(diff, axis=0)
     reaction_time = y_output.shape[0] - diff_nonzero - start_t
