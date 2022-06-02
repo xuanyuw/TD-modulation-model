@@ -75,11 +75,11 @@ def trial(par, train=True):
                 all_y_hist.append(model.y_hist)
                 all_target.append(targets)
                 all_stim_level.append(trial_info['stim_level'])
-                all_h.append(model.h)
-                all_neural_in.append(inputs)
-                all_in_weight.append(model.w_in)
-                all_rnn_weight.append(model.w_rnn)
-                all_out_weight.append(model.w_out)
+                all_h.append(model.h.numpy())
+                all_neural_in.append(inputs.numpy())
+                all_in_weight.append(model.w_in.numpy())
+                all_rnn_weight.append(model.w_rnn.numpy())
+                all_out_weight.append(model.w_out.numpy())
 
         # get metrics
         accuracy, total_accuracy = get_perf(
