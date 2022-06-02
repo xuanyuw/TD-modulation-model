@@ -75,7 +75,7 @@ def trial(par, train=True):
                 all_y_hist.append(model.y_hist)
                 all_target.append(targets)
                 all_stim_level.append(trial_info['stim_level'])
-                all_h.append(model.h)
+                all_h.append(model.h_hist)
                 all_neural_in.append(inputs)
                 all_in_weight.append(model.w_in)
                 all_rnn_weight.append(model.w_rnn)

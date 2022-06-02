@@ -26,6 +26,7 @@ class Model(bp.layers.Module):
             bm.ones((par['batch_size'], par['n_output'])))
         self.y_hist = bm.Variable(
             bm.zeros((par['num_time_steps'], par['batch_size'], par['n_output'])))
+        self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_hidden'])))
 
         # Loss
         self.loss = bm.Variable(bm.zeros(1))
@@ -108,6 +109,7 @@ class Model(bp.layers.Module):
         logits, hist_h = scan(inputs)
         # TODO: softmax y?
         self.y_hist[:] = logits
+        self.h_hist[:] = hist_h
         # self.y_hist = logits
 
         return logits, hist_h
