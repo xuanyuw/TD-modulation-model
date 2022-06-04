@@ -51,6 +51,7 @@ def trial(par, train=True):
         all_y_hist = []
         all_target = []
         all_stim_level = []
+        all_stim_dir = []
         all_h = []
         all_neural_in = []
         all_in_weight = []
@@ -77,6 +78,7 @@ def trial(par, train=True):
                 all_y_hist.append(model.y_hist.numpy())
                 all_target.append(targets.numpy())
                 all_stim_level.append(trial_info['stim_level'])
+                all_stim_dir.append(trial_info['stim_dir'])
                 all_h.append(model.h_hist.numpy())
                 all_neural_in.append(inputs.numpy())
                 all_in_weight.append(model.w_in.numpy())
@@ -105,7 +107,7 @@ def trial(par, train=True):
         model_performance['Z_acc'].append(Z_acc)
 
         # Save the network model and output model performance to screen
-        if i % iter_between_outputs == 0:
+        if i % iter_between_outputs == 0 | i == num_iterations-1:
             if train:
                 print(f' Iter {i:4d}' +
                       f' | Accuracy {total_accuracy:0.4f}' +
@@ -141,6 +143,8 @@ def trial(par, train=True):
                 '/', 'target_iter{}'.format(n*iter_between_outputs), all_target[n])
             h5_file.create_array(
                 '/', 'stim_level_iter{}'.format(n*iter_between_outputs), all_stim_level[n])
+            h5_file.create_array(
+                '/', 'stim_dir_iter{}'.format(n*iter_between_outputs), all_stim_dir[n])
             h5_file.create_array(
                 '/', 'h_iter{}'.format(n*iter_between_outputs), all_h[n])
             h5_file.create_array(
