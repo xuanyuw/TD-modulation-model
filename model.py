@@ -77,7 +77,6 @@ class Model(bp.layers.Module):
         self.perf_loss[:] = 0.
         self.spike_loss[:] = 0.
         self.weight_loss[:] = 0.
-        self.y_hist[:] = 0.
 
     def update(self, input, **kwargs):
         if self.synapse_config != 'none':

@@ -56,6 +56,8 @@ def trial(par, train=True):
         all_in_weight = []
         all_rnn_weight = []
         all_out_weight = []
+        all_b_out = []
+        all_b_rnn = []
     for i in range(num_iterations):
         model.reset()
         # generate batch of batch_train_size
@@ -72,14 +74,16 @@ def trial(par, train=True):
         # save training output
         if par['save_train_out']:
             if i % iter_between_outputs == 0:
-                all_y_hist.append(model.y_hist)
-                all_target.append(targets)
+                all_y_hist.append(model.y_hist.numpy())
+                all_target.append(targets.numpy())
                 all_stim_level.append(trial_info['stim_level'])
                 all_h.append(model.h_hist.numpy())
                 all_neural_in.append(inputs.numpy())
                 all_in_weight.append(model.w_in.numpy())
                 all_rnn_weight.append(model.w_rnn.numpy())
                 all_out_weight.append(model.w_out.numpy())
+                all_b_out.append(model.b_out.numpy())
+                all_b_rnn.append(model.b_rnn.numpy())
 
         # get metrics
         accuracy, total_accuracy = get_perf(
@@ -132,9 +136,9 @@ def trial(par, train=True):
             par['learning_rate'], par['rep'])), mode='w', title='Training output')
         for n in range(len(all_y_hist)):
             h5_file.create_array(
-                '/', 'y_hist_iter{}'.format(n*iter_between_outputs), all_y_hist[n].numpy())
+                '/', 'y_hist_iter{}'.format(n*iter_between_outputs), all_y_hist[n])
             h5_file.create_array(
-                '/', 'target_iter{}'.format(n*iter_between_outputs), all_target[n].numpy())
+                '/', 'target_iter{}'.format(n*iter_between_outputs), all_target[n])
             h5_file.create_array(
                 '/', 'stim_level_iter{}'.format(n*iter_between_outputs), all_stim_level[n])
             h5_file.create_array(
@@ -147,6 +151,10 @@ def trial(par, train=True):
                 '/', 'w_rnn_iter{}'.format(n*iter_between_outputs), all_rnn_weight[n])
             h5_file.create_array(
                 '/', 'w_out_iter{}'.format(n*iter_between_outputs), all_out_weight[n])
+            h5_file.create_array(
+                '/', 'b_out_iter{}'.format(n*iter_between_outputs), all_b_out[n])
+            h5_file.create_array(
+                '/', 'b_rnn_iter{}'.format(n*iter_between_outputs), all_b_rnn[n])
         h5_file.close()
 
     if train:
