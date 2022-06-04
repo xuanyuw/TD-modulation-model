@@ -166,24 +166,21 @@ def trial(par, train=True):
                  model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'],
                  model_performance['loss'], par['save_dir'], par['learning_rate'], par['rep'])
 
-        # Save model and results
-        weights = {}
-        w = model.train_vars().unique().dict()
-        for k, v in w.items():
-            temp = k.split('.')
-            weights[temp[1] + '0'] = v
+        # # Save model and results
+        # weights = {}
+        # w = model.train_vars().unique().dict()
+        # for k, v in w.items():
+        #     temp = k.split('.')
+        #     weights[temp[1] + '0'] = v
 
-        # Save weight masks
-        all_masks = model.get_all_masks()
-        for k in all_masks.keys():
-            weights[k] = all_masks[k]
+        # # Save weight masks
+        # all_masks = model.get_all_masks()
+        # for k in all_masks.keys():
+        #     weights[k] = all_masks[k]
 
-        with open(join(par['save_dir'], par['weight_fn']), 'wb') as f:
-            save(f, weights)
-    results = {}
-    for k, v in model_performance.items():
-        results[k] = v
-    dump(results, open(join(par['save_dir'], par['save_fn']), 'wb'))
+        # with open(join(par['save_dir'], par['weight_fn']), 'wb') as f:
+        #     save(f, weights)
+    dump(model_performance, open(join(par['save_dir'], par['save_fn']), 'wb'))
 
 
 def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, loss, f_dir, lr, rep):
