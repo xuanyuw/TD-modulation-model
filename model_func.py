@@ -195,7 +195,7 @@ def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, loss, f_dir, lr, rep):
     ax.set_title('Learning Rate = %f, Rep %d' % (lr, rep))
     ax2 = f.add_subplot(2, 1, 2)
     ax2.plot(loss)
-    ax2.set_ylim(0.5, 2)
+    ax2.set_ylim(0, 1)
     ax2.set_xlim(0, len(loss)-1)
     ax2.set_title('Loss')
     plt.savefig(join(f_dir, 'TrainAcc_lr%f_rep%d.pdf' %
