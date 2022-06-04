@@ -67,10 +67,9 @@ class Stimulus:
             trial_info['desired_loc'] == 1), (-1, 1)), 1] = 1
         # generate training mask
         # set the mask equal to zero during the fixation time
-        trial_info['train_mask'][fix_time_rng, :] = 0
+        trial_info['train_mask'][np.hstack([fix_time_rng, target_time_rng]), :] = 0
         # can use a greater weight for test period if needed
-        trial_info['train_mask'][np.hstack(
-            [target_time_rng, stim_time_rng]), :] *= self.par['test_cost_multiplier']
+        trial_info['train_mask'][stim_time_rng, :] *= self.par['test_cost_multiplier']
 
         # initialize coherences
         trial_info['coherence'] = np.random.choice(
