@@ -107,7 +107,7 @@ def trial(par, train=True):
         model_performance['Z_acc'].append(Z_acc)
 
         # Save the network model and output model performance to screen
-        if i % iter_between_outputs == 0 | i == num_iterations-1:
+        if i % iter_between_outputs == 0 or i == num_iterations-1:
             if train:
                 print(f' Iter {i:4d}' +
                       f' | Accuracy {total_accuracy:0.4f}' +
