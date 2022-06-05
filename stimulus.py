@@ -67,9 +67,11 @@ class Stimulus:
             trial_info['desired_loc'] == 1), (-1, 1)), 1] = 1
         # generate training mask
         # set the mask equal to zero during the fixation time
-        trial_info['train_mask'][np.hstack([fix_time_rng, target_time_rng]), :] = 0
+        trial_info['train_mask'][np.hstack(
+            [fix_time_rng, target_time_rng]), :] = 0
         # can use a greater weight for test period if needed
-        trial_info['train_mask'][stim_time_rng, :] *= self.par['test_cost_multiplier']
+        trial_info['train_mask'][stim_time_rng,
+                                 :] *= self.par['test_cost_multiplier']
 
         # initialize coherences
         trial_info['coherence'] = np.random.choice(
@@ -114,8 +116,9 @@ class Stimulus:
         # generate list of possible stimulus directions
         for coh in coh_list:
             # initialize with noise
-            motion_tuning = self.par['tuning_height'] * (1-coh) * np.random.normal(
-                self.par['input_mean'], self.par['noise_in'], size=(self.par['n_input'], len(self.move_dirs))).astype(np.float32)
+            motion_tuning = np.zeros((self.par['n_input'], len(self.move_dirs)))
+            motion_tuning[:self.par['num_motion_tuned'], :] = self.par['tuning_height'] * (1-coh) * np.random.normal(
+                self.par['input_mean'], self.par['noise_in'], size=(self.par['num_motion_tuned'], len(self.move_dirs))).astype(np.float32)
             if coh != 0:
                 for n in range(self.par['num_motion_tuned']):
                     for i in range(len(self.move_dirs)):
@@ -134,8 +137,7 @@ class Stimulus:
     def create_color_tuning(self, targ_loc):
         # targ_loc: 0 = green contralateral, 1 = red contralateral
         color_tuning = np.zeros((self.par['n_input'],))
-        cell_per_rf = self.par['num_color_tuned']//(
-            self.par['num_receptive_fields']-1)
+        cell_per_rf = self.par['num_color_tuned']//2
         # create red and green tuning
         green_val = np.zeros((cell_per_rf,))
         green_val[-cell_per_rf//2:] = 1
@@ -143,37 +145,12 @@ class Stimulus:
         red_val[:-cell_per_rf//2] = 1
         if targ_loc:
             # red in contralateral rf
-            color_tuning[self.par['num_motion_tuned']
-                :self.par['num_motion_tuned']+cell_per_rf] = red_val
+            color_tuning[self.par['num_motion_tuned']:self.par['num_motion_tuned']+cell_per_rf] = red_val
             color_tuning[self.par['num_motion_tuned'] +
                          cell_per_rf:self.par['num_motion_tuned']+self.par['num_color_tuned']] = green_val
         else:
             # green in contralateral rf
-            color_tuning[self.par['num_motion_tuned']
-                :self.par['num_motion_tuned']+cell_per_rf] = green_val
+            color_tuning[self.par['num_motion_tuned']:self.par['num_motion_tuned']+cell_per_rf] = green_val
             color_tuning[self.par['num_motion_tuned'] +
                          cell_per_rf:self.par['num_motion_tuned']+self.par['num_color_tuned']] = red_val
         return color_tuning
-
-    def plot_neural_input(self, trial_info):
-
-        print(trial_info['desired_output'][:, 0, :].T)
-        f = plt.figure(figsize=(8, 4))
-        ax = f.add_subplot(1, 1, 1)
-        t = np.arange(self.par['num_time_steps'])
-        t0, t1, t2 = 0, \
-            min(self.par['target_time_rng']), \
-            min(self.par['stim_time_rng'])
-        im = ax.imshow(trial_info['neural_input'][:, 0, :].T,
-                       aspect='auto', interpolation='none')
-
-        ax.set_xticks([t0, t1, t2])
-        ax.set_xticklabels(['-900', '-400', '0'])
-        f.colorbar(im, orientation='vertical')
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.set_ylabel('Input Neurons')
-        ax.set_xlabel('Time relative to sample onset (ms)')
-        ax.set_title('Neural input')
-        plt.savefig('stimulus.pdf', format='pdf')
-        plt.show()
