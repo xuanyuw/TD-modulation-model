@@ -1,3 +1,4 @@
+from glob import has_magic
 from model import Model
 from stimulus import Stimulus
 from analysis import get_perf, get_reaction_time
@@ -53,6 +54,7 @@ def trial(par, train=True):
         all_stim_level = []
         all_stim_dir = []
         all_h = []
+        all_rt = []
         all_neural_in = []
         all_in_weight = []
         all_rnn_weight = []
@@ -80,6 +82,7 @@ def trial(par, train=True):
                 all_stim_level.append(trial_info['stim_level'])
                 all_stim_dir.append(trial_info['stim_dir'])
                 all_h.append(model.h_hist.numpy())
+                all_rt.append(get_reaction_time(model.y_hist, par))
                 all_neural_in.append(inputs.numpy())
                 all_in_weight.append(model.w_in.numpy())
                 all_rnn_weight.append(model.w_rnn.numpy())
@@ -106,8 +109,11 @@ def trial(par, train=True):
         model_performance['L_acc'].append(L_acc)
         model_performance['Z_acc'].append(Z_acc)
 
+        # stop training if all trials with meaningful inputs reaches 95% accuracy
+        cond = (array([H_acc, M_acc, L_acc])>0.95).all()
+
         # Save the network model and output model performance to screen
-        if i % iter_between_outputs == 0 or i == num_iterations-1:
+        if i % iter_between_outputs == 0 or i == num_iterations-1 or cond:
             if train:
                 print(f' Iter {i:4d}' +
                       f' | Accuracy {total_accuracy:0.4f}' +
@@ -132,6 +138,8 @@ def trial(par, train=True):
                       f' | L {L_acc:0.4f}' +
                       f' | Z {Z_acc:0.4f}')
                 print('--------------------------------------------------------------------------------------------------------------------------------')
+        if cond:
+            break
 
     if par['save_train_out']:
         h5_file = tables.open_file(join(par['save_dir'], 'train_output_lr%f_rep%d.h5' % (
@@ -147,6 +155,8 @@ def trial(par, train=True):
                 '/', 'stim_dir_iter{}'.format(n*iter_between_outputs), all_stim_dir[n])
             h5_file.create_array(
                 '/', 'h_iter{}'.format(n*iter_between_outputs), all_h[n])
+            h5_file.create_array(
+                '/', 'rt_iter{}'.format(n*iter_between_outputs), all_rt[n])
             h5_file.create_array(
                 '/', 'neural_in_iter{}'.format(n*iter_between_outputs), all_neural_in[n])
             h5_file.create_array(
