@@ -74,22 +74,6 @@ def trial(par, train=True):
         if train:
             train_op(inputs, targets, mask)
 
-        # save training output
-        if par['save_train_out']:
-            if i % iter_between_outputs == 0:
-                all_y_hist.append(model.y_hist.numpy())
-                all_target.append(targets.numpy())
-                all_stim_level.append(trial_info['stim_level'])
-                all_stim_dir.append(trial_info['stim_dir'])
-                all_h.append(model.h_hist.numpy())
-                all_rt.append(get_reaction_time(model.y_hist, par))
-                all_neural_in.append(inputs.numpy())
-                all_in_weight.append(model.w_in.numpy())
-                all_rnn_weight.append(model.w_rnn.numpy())
-                all_out_weight.append(model.w_out.numpy())
-                all_b_out.append(model.b_out.numpy())
-                all_b_rnn.append(model.b_rnn.numpy())
-
         # get metrics
         accuracy, total_accuracy = get_perf(
             targets, model.y_hist, mask, trial_info['stim_level'])
@@ -109,11 +93,28 @@ def trial(par, train=True):
         model_performance['L_acc'].append(L_acc)
         model_performance['Z_acc'].append(Z_acc)
 
+
+
         # stop training if all trials with meaningful inputs reaches 95% accuracy
         cond = (array([H_acc, M_acc, L_acc])>0.95).all()
 
+
         # Save the network model and output model performance to screen
         if i % iter_between_outputs == 0 or i == num_iterations-1 or cond:
+            # save training output
+            if par['save_train_out']:
+                all_y_hist.append(model.y_hist.numpy())
+                all_target.append(targets.numpy())
+                all_stim_level.append(trial_info['stim_level'])
+                all_stim_dir.append(trial_info['stim_dir'])
+                all_h.append(model.h_hist.numpy())
+                all_rt.append(get_reaction_time(model.y_hist, par))
+                all_neural_in.append(inputs.numpy())
+                all_in_weight.append(model.w_in.numpy())
+                all_rnn_weight.append(model.w_rnn.numpy())
+                all_out_weight.append(model.w_out.numpy())
+                all_b_out.append(model.b_out.numpy())
+                all_b_rnn.append(model.b_rnn.numpy())
             if train:
                 print(f' Iter {i:4d}' +
                       f' | Accuracy {total_accuracy:0.4f}' +
