@@ -61,6 +61,7 @@ def trial(par, train=True):
         all_out_weight = []
         all_b_out = []
         all_b_rnn = []
+        all_idx = []
     for i in range(num_iterations):
         model.reset()
         # generate batch of batch_train_size
@@ -103,6 +104,7 @@ def trial(par, train=True):
         if i % iter_between_outputs == 0 or i == num_iterations-1 or cond:
             # save training output
             if par['save_train_out']:
+                all_idx.append(i)
                 all_y_hist.append(model.y_hist.numpy())
                 all_target.append(targets.numpy())
                 all_stim_level.append(trial_info['stim_level'])
@@ -145,31 +147,31 @@ def trial(par, train=True):
     if par['save_train_out']:
         h5_file = tables.open_file(join(par['save_dir'], 'train_output_lr%f_rep%d.h5' % (
             par['learning_rate'], par['rep'])), mode='w', title='Training output')
-        for n in range(len(all_y_hist)):
+        for n in range(len(all_idx)):
             h5_file.create_array(
-                '/', 'y_hist_iter{}'.format(n*iter_between_outputs), all_y_hist[n])
+                '/', 'y_hist_iter{}'.format(all_idx[n]), all_y_hist[n])
             h5_file.create_array(
-                '/', 'target_iter{}'.format(n*iter_between_outputs), all_target[n])
+                '/', 'target_iter{}'.format(all_idx[n]), all_target[n])
             h5_file.create_array(
-                '/', 'stim_level_iter{}'.format(n*iter_between_outputs), all_stim_level[n])
+                '/', 'stim_level_iter{}'.format(all_idx[n]), all_stim_level[n])
             h5_file.create_array(
-                '/', 'stim_dir_iter{}'.format(n*iter_between_outputs), all_stim_dir[n])
+                '/', 'stim_dir_iter{}'.format(all_idx[n]), all_stim_dir[n])
             h5_file.create_array(
-                '/', 'h_iter{}'.format(n*iter_between_outputs), all_h[n])
+                '/', 'h_iter{}'.format(all_idx[n]), all_h[n])
             h5_file.create_array(
-                '/', 'rt_iter{}'.format(n*iter_between_outputs), all_rt[n])
+                '/', 'rt_iter{}'.format(all_idx[n]), all_rt[n])
             h5_file.create_array(
-                '/', 'neural_in_iter{}'.format(n*iter_between_outputs), all_neural_in[n])
+                '/', 'neural_in_iter{}'.format(all_idx[n]), all_neural_in[n])
             h5_file.create_array(
-                '/', 'w_in_iter{}'.format(n*iter_between_outputs), all_in_weight[n])
+                '/', 'w_in_iter{}'.format(all_idx[n]), all_in_weight[n])
             h5_file.create_array(
-                '/', 'w_rnn_iter{}'.format(n*iter_between_outputs), all_rnn_weight[n])
+                '/', 'w_rnn_iter{}'.format(all_idx[n]), all_rnn_weight[n])
             h5_file.create_array(
-                '/', 'w_out_iter{}'.format(n*iter_between_outputs), all_out_weight[n])
+                '/', 'w_out_iter{}'.format(all_idx[n]), all_out_weight[n])
             h5_file.create_array(
-                '/', 'b_out_iter{}'.format(n*iter_between_outputs), all_b_out[n])
+                '/', 'b_out_iter{}'.format(all_idx[n]), all_b_out[n])
             h5_file.create_array(
-                '/', 'b_rnn_iter{}'.format(n*iter_between_outputs), all_b_rnn[n])
+                '/', 'b_rnn_iter{}'.format(all_idx[n]), all_b_rnn[n])
         h5_file.close()
 
     if train:
