@@ -38,7 +38,11 @@ def fill_mask(rf_rngs, conn_probs, mask):
 
 def generate_rnn_mask():
     rnn_mask_init = np.zeros((par['n_hidden'], par['n_hidden']))
-    h_prob, m_prob = par['within_rf_conn_prob'], par['cross_rf_conn_prob']
+    h_prob, m_prob, l_prob = par['within_rf_conn_prob'], par['cross_rf_conn_prob'], par['cross_module_conn_prob']
+    # temp_probs = np.array([[h_prob, m_prob, l_prob, l_prob],
+    #                        [m_prob, h_prob, l_prob, l_prob],
+    #                        [l_prob, l_prob, h_prob, m_prob],
+    #                        [l_prob, l_prob, m_prob, h_prob]])
     temp_probs = np.array([[h_prob, h_prob, m_prob, m_prob],
                            [h_prob, h_prob, m_prob, m_prob],
                            [m_prob, m_prob, h_prob, h_prob],

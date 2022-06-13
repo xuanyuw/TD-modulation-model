@@ -61,6 +61,7 @@ def trial(par, train=True):
         all_out_weight = []
         all_b_out = []
         all_b_rnn = []
+        all_idx = []
     for i in range(num_iterations):
         model.reset()
         # generate batch of batch_train_size
@@ -73,22 +74,6 @@ def trial(par, train=True):
         # Run the model
         if train:
             train_op(inputs, targets, mask)
-
-        # save training output
-        if par['save_train_out']:
-            if i % iter_between_outputs == 0:
-                all_y_hist.append(model.y_hist.numpy())
-                all_target.append(targets.numpy())
-                all_stim_level.append(trial_info['stim_level'])
-                all_stim_dir.append(trial_info['stim_dir'])
-                all_h.append(model.h_hist.numpy())
-                all_rt.append(get_reaction_time(model.y_hist, par))
-                all_neural_in.append(inputs.numpy())
-                all_in_weight.append(model.w_in.numpy())
-                all_rnn_weight.append(model.w_rnn.numpy())
-                all_out_weight.append(model.w_out.numpy())
-                all_b_out.append(model.b_out.numpy())
-                all_b_rnn.append(model.b_rnn.numpy())
 
         # get metrics
         accuracy, total_accuracy = get_perf(
@@ -109,11 +94,29 @@ def trial(par, train=True):
         model_performance['L_acc'].append(L_acc)
         model_performance['Z_acc'].append(Z_acc)
 
+
+
         # stop training if all trials with meaningful inputs reaches 95% accuracy
         cond = (array([H_acc, M_acc, L_acc])>0.95).all()
 
+
         # Save the network model and output model performance to screen
         if i % iter_between_outputs == 0 or i == num_iterations-1 or cond:
+            # save training output
+            if par['save_train_out']:
+                all_idx.append(i)
+                all_y_hist.append(model.y_hist.numpy())
+                all_target.append(targets.numpy())
+                all_stim_level.append(trial_info['stim_level'])
+                all_stim_dir.append(trial_info['stim_dir'])
+                all_h.append(model.h_hist.numpy())
+                all_rt.append(get_reaction_time(model.y_hist, par))
+                all_neural_in.append(inputs.numpy())
+                all_in_weight.append(model.w_in.numpy())
+                all_rnn_weight.append(model.w_rnn.numpy())
+                all_out_weight.append(model.w_out.numpy())
+                all_b_out.append(model.b_out.numpy())
+                all_b_rnn.append(model.b_rnn.numpy())
             if train:
                 print(f' Iter {i:4d}' +
                       f' | Accuracy {total_accuracy:0.4f}' +
@@ -144,31 +147,31 @@ def trial(par, train=True):
     if par['save_train_out']:
         h5_file = tables.open_file(join(par['save_dir'], 'train_output_lr%f_rep%d.h5' % (
             par['learning_rate'], par['rep'])), mode='w', title='Training output')
-        for n in range(len(all_y_hist)):
+        for n in range(len(all_idx)):
             h5_file.create_array(
-                '/', 'y_hist_iter{}'.format(n*iter_between_outputs), all_y_hist[n])
+                '/', 'y_hist_iter{}'.format(all_idx[n]), all_y_hist[n])
             h5_file.create_array(
-                '/', 'target_iter{}'.format(n*iter_between_outputs), all_target[n])
+                '/', 'target_iter{}'.format(all_idx[n]), all_target[n])
             h5_file.create_array(
-                '/', 'stim_level_iter{}'.format(n*iter_between_outputs), all_stim_level[n])
+                '/', 'stim_level_iter{}'.format(all_idx[n]), all_stim_level[n])
             h5_file.create_array(
-                '/', 'stim_dir_iter{}'.format(n*iter_between_outputs), all_stim_dir[n])
+                '/', 'stim_dir_iter{}'.format(all_idx[n]), all_stim_dir[n])
             h5_file.create_array(
-                '/', 'h_iter{}'.format(n*iter_between_outputs), all_h[n])
+                '/', 'h_iter{}'.format(all_idx[n]), all_h[n])
             h5_file.create_array(
-                '/', 'rt_iter{}'.format(n*iter_between_outputs), all_rt[n])
+                '/', 'rt_iter{}'.format(all_idx[n]), all_rt[n])
             h5_file.create_array(
-                '/', 'neural_in_iter{}'.format(n*iter_between_outputs), all_neural_in[n])
+                '/', 'neural_in_iter{}'.format(all_idx[n]), all_neural_in[n])
             h5_file.create_array(
-                '/', 'w_in_iter{}'.format(n*iter_between_outputs), all_in_weight[n])
+                '/', 'w_in_iter{}'.format(all_idx[n]), all_in_weight[n])
             h5_file.create_array(
-                '/', 'w_rnn_iter{}'.format(n*iter_between_outputs), all_rnn_weight[n])
+                '/', 'w_rnn_iter{}'.format(all_idx[n]), all_rnn_weight[n])
             h5_file.create_array(
-                '/', 'w_out_iter{}'.format(n*iter_between_outputs), all_out_weight[n])
+                '/', 'w_out_iter{}'.format(all_idx[n]), all_out_weight[n])
             h5_file.create_array(
-                '/', 'b_out_iter{}'.format(n*iter_between_outputs), all_b_out[n])
+                '/', 'b_out_iter{}'.format(all_idx[n]), all_b_out[n])
             h5_file.create_array(
-                '/', 'b_rnn_iter{}'.format(n*iter_between_outputs), all_b_rnn[n])
+                '/', 'b_rnn_iter{}'.format(all_idx[n]), all_b_rnn[n])
         h5_file.close()
 
     if train:

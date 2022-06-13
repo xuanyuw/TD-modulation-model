@@ -1,14 +1,14 @@
 {
-  "save_dir": "./toy_model/",
+  "save_dir": "./rf_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
   "log_test": true,
-  "rep_num": 1,
+  "rep_num": 3,
   "rep": 0,
 
-  "batch_size": 5,
-  "num_iterations": 3,
+  "batch_size": 2048,
+  "num_iterations": 1000,
   "test_batch_size": 5,
   "num_test_iterations": 10,
   "iters_between_outputs": 10,
@@ -20,8 +20,8 @@
 
   "synapse_config": "full",
 
-  "within_rf_conn_prob": 0.6,
-  "cross_rf_conn_prob": 0.3,
+  "within_rf_conn_prob": 0.4,
+  "cross_rf_conn_prob": 0.2,
   "cross_module_conn_prob": 0.1,
   "input_conn_prob": 0.4,
   "output_conn_prob": 0.4,
@@ -69,8 +69,8 @@
   "test_cost_multiplier": 2.0,
   "var_delay": false,
   "num_targets": 2,
-  "coherence_levels": [0, 0.13, 0.25, 0.5],
-  "test_coherence_levels": [0, 0.13, 0.25, 0.5],
-  "decision_threshold": 0.98,
+  "coherence_levels": [0, 0.09, 0.27, 0.81],
+  "test_coherence_levels": [0, 0.09, 0.27, 0.81],
+  "decision_threshold": 0.8,
   "n_level_scale": 3
 }
