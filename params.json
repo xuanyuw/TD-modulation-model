@@ -1,5 +1,5 @@
 {
-  "save_dir": "./toy_model/",
+  "save_dir": "./rf_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
@@ -7,12 +7,12 @@
   "rep_num": 3,
   "rep": 0,
 
-  "batch_size": 1024,
+  "batch_size": 2048,
   "num_iterations": 1000,
-  "test_batch_size": 1024,
+  "test_batch_size": 5,
   "num_test_iterations": 10,
   "iters_between_outputs": 10,
-  "learning_rate_li": [5e-3, 1e-2, 2e-2],
+  "learning_rate_li": [2e-2],
   "learning_rate": 2e-2,
   "regularization": true,
   "noisy_weight_update": false,
@@ -20,10 +20,10 @@
 
   "synapse_config": "full",
 
-  "within_rf_conn_prob": 0.6,
-  "cross_rf_conn_prob": 0.3,
+  "within_rf_conn_prob": 0.4,
+  "cross_rf_conn_prob": 0.2,
   "cross_module_conn_prob": 0.1,
-  "input_conn_prob": 1.0,
+  "input_conn_prob": 0.4,
   "output_conn_prob": 0.4,
 
   "num_motion_tuned": 36,
@@ -32,9 +32,11 @@
   "n_choices": 2,
   "n_output": 2,
   "output_fixation": false,
-  "num_receptive_fields": 3,
-  "RF_perc": [0.33333, 0.33333, 0.33333],
-  "n_hidden": 90,
+  "num_receptive_fields": 4,
+  "RF_perc": [0.2, 0.3, 0.2, 0.3],
+  "input_idx": [0, 1, 0, 2],
+  "output_rf": [1, 3],
+  "n_hidden": 200,
 
   "exc_inh_prop": 0.8,
   "dt": 20,
@@ -57,7 +59,7 @@
   "spike_regularization": "L2",
   "spike_cost": 0.02,
   "weight_cost": 0,
-  "clip_max_grad_val": 1,
+  "clip_max_grad_val": 0.1,
   "lambda_omega": 2,
   "lambda_weight": 1,
 
@@ -67,8 +69,8 @@
   "test_cost_multiplier": 2.0,
   "var_delay": false,
   "num_targets": 2,
-  "coherence_levels": [0, 0.13, 0.25, 0.5],
-  "test_coherence_levels": [0, 0.13, 0.25, 0.5],
-  "decision_threshold": 0.98,
+  "coherence_levels": [0, 0.09, 0.27, 0.81],
+  "test_coherence_levels": [0, 0.09, 0.27, 0.81],
+  "decision_threshold": 0.8,
   "n_level_scale": 3
 }

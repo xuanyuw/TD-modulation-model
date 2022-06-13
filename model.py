@@ -26,6 +26,7 @@ class Model(bp.layers.Module):
             bm.ones((par['batch_size'], par['n_output'])))
         self.y_hist = bm.Variable(
             bm.zeros((par['num_time_steps'], par['batch_size'], par['n_output'])))
+        self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_hidden'])))
 
         # Loss
         self.loss = bm.Variable(bm.zeros(1))
@@ -96,7 +97,7 @@ class Model(bp.layers.Module):
         # All input and RNN activity will be non-negative
         state = self.alpha * (input @ bm.relu(self.w_in) + h_post @ self.w_rnn +
                               self.b_rnn) + normal(0, self.noise_rnn, self.h.shape)
-        self.h.value = bm.relu(state) + self.h * (1 - self.alpha)
+        self.h.value = bm.relu(state + self.h * (1 - self.alpha))
         self.y.value = self.h @ bm.relu(self.w_out) + self.b_out
 
     def predict(self, inputs):
@@ -108,6 +109,7 @@ class Model(bp.layers.Module):
         logits, hist_h = scan(inputs)
         # TODO: softmax y?
         self.y_hist[:] = logits
+        self.h_hist[:] = hist_h
         # self.y_hist = logits
 
         return logits, hist_h

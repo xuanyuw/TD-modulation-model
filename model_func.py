@@ -1,10 +1,11 @@
+from glob import has_magic
 from model import Model
 from stimulus import Stimulus
 from analysis import get_perf, get_reaction_time
 from os.path import join
-
+import tables
 from pickle import dump
-from numpy import save, mean
+from numpy import save, mean, where, array
 import brainpy as bp
 import brainpy.math as bm
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 bp.math.set_platform('cpu')
 
 
-def trial(par, train=True, save_results=True,):
+def trial(par, train=True):
     num_iterations = par['num_iterations']
     iter_between_outputs = par['iters_between_outputs']
     stim = Stimulus(par)
@@ -47,6 +48,20 @@ def trial(par, train=True, save_results=True,):
                          'spike_loss': [], 'weight_loss': [], 'iteration': [], 'H_acc': [],
                          'M_acc': [], 'L_acc': [], 'Z_acc': []}
 
+    if par['save_train_out']:
+        all_y_hist = []
+        all_target = []
+        all_stim_level = []
+        all_stim_dir = []
+        all_h = []
+        all_rt = []
+        all_neural_in = []
+        all_in_weight = []
+        all_rnn_weight = []
+        all_out_weight = []
+        all_b_out = []
+        all_b_rnn = []
+        all_idx = []
     for i in range(num_iterations):
         model.reset()
         # generate batch of batch_train_size
@@ -79,8 +94,29 @@ def trial(par, train=True, save_results=True,):
         model_performance['L_acc'].append(L_acc)
         model_performance['Z_acc'].append(Z_acc)
 
+
+
+        # stop training if all trials with meaningful inputs reaches 95% accuracy
+        cond = (array([H_acc, M_acc, L_acc])>0.95).all()
+
+
         # Save the network model and output model performance to screen
-        if i % iter_between_outputs == 0:
+        if i % iter_between_outputs == 0 or i == num_iterations-1 or cond:
+            # save training output
+            if par['save_train_out']:
+                all_idx.append(i)
+                all_y_hist.append(model.y_hist.numpy())
+                all_target.append(targets.numpy())
+                all_stim_level.append(trial_info['stim_level'])
+                all_stim_dir.append(trial_info['stim_dir'])
+                all_h.append(model.h_hist.numpy())
+                all_rt.append(get_reaction_time(model.y_hist, par))
+                all_neural_in.append(inputs.numpy())
+                all_in_weight.append(model.w_in.numpy())
+                all_rnn_weight.append(model.w_rnn.numpy())
+                all_out_weight.append(model.w_out.numpy())
+                all_b_out.append(model.b_out.numpy())
+                all_b_rnn.append(model.b_rnn.numpy())
             if train:
                 print(f' Iter {i:4d}' +
                       f' | Accuracy {total_accuracy:0.4f}' +
@@ -105,32 +141,59 @@ def trial(par, train=True, save_results=True,):
                       f' | L {L_acc:0.4f}' +
                       f' | Z {Z_acc:0.4f}')
                 print('--------------------------------------------------------------------------------------------------------------------------------')
+        if cond:
+            break
 
-       
+    if par['save_train_out']:
+        h5_file = tables.open_file(join(par['save_dir'], 'train_output_lr%f_rep%d.h5' % (
+            par['learning_rate'], par['rep'])), mode='w', title='Training output')
+        for n in range(len(all_idx)):
+            h5_file.create_array(
+                '/', 'y_hist_iter{}'.format(all_idx[n]), all_y_hist[n])
+            h5_file.create_array(
+                '/', 'target_iter{}'.format(all_idx[n]), all_target[n])
+            h5_file.create_array(
+                '/', 'stim_level_iter{}'.format(all_idx[n]), all_stim_level[n])
+            h5_file.create_array(
+                '/', 'stim_dir_iter{}'.format(all_idx[n]), all_stim_dir[n])
+            h5_file.create_array(
+                '/', 'h_iter{}'.format(all_idx[n]), all_h[n])
+            h5_file.create_array(
+                '/', 'rt_iter{}'.format(all_idx[n]), all_rt[n])
+            h5_file.create_array(
+                '/', 'neural_in_iter{}'.format(all_idx[n]), all_neural_in[n])
+            h5_file.create_array(
+                '/', 'w_in_iter{}'.format(all_idx[n]), all_in_weight[n])
+            h5_file.create_array(
+                '/', 'w_rnn_iter{}'.format(all_idx[n]), all_rnn_weight[n])
+            h5_file.create_array(
+                '/', 'w_out_iter{}'.format(all_idx[n]), all_out_weight[n])
+            h5_file.create_array(
+                '/', 'b_out_iter{}'.format(all_idx[n]), all_b_out[n])
+            h5_file.create_array(
+                '/', 'b_rnn_iter{}'.format(all_idx[n]), all_b_rnn[n])
+        h5_file.close()
 
     if train:
         plot_acc(model_performance['total_accuracy'], model_performance['H_acc'],
-                 model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'], 
+                 model_performance['M_acc'], model_performance['L_acc'], model_performance['Z_acc'],
                  model_performance['loss'], par['save_dir'], par['learning_rate'], par['rep'])
 
-        # Save model and results
-        weights = {}
-        w = model.train_vars().unique().dict()
-        for k, v in w.items():
-            temp = k.split('.')
-            weights[temp[1] + '0'] = v
+        # # Save model and results
+        # weights = {}
+        # w = model.train_vars().unique().dict()
+        # for k, v in w.items():
+        #     temp = k.split('.')
+        #     weights[temp[1] + '0'] = v
 
-        # Save weight masks
-        all_masks = model.get_all_masks()
-        for k in all_masks.keys():
-            weights[k] = all_masks[k]
+        # # Save weight masks
+        # all_masks = model.get_all_masks()
+        # for k in all_masks.keys():
+        #     weights[k] = all_masks[k]
 
-        with open(join(par['save_dir'], par['weight_fn']), 'wb') as f:
-            save(f, weights)
-    results = {}
-    for k, v in model_performance.items():
-        results[k] = v
-    dump(results, open(join(par['save_dir'], par['save_fn']), 'wb'))
+        # with open(join(par['save_dir'], par['weight_fn']), 'wb') as f:
+        #     save(f, weights)
+    dump(model_performance, open(join(par['save_dir'], par['save_fn']), 'wb'))
 
 
 def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, loss, f_dir, lr, rep):
@@ -146,6 +209,8 @@ def plot_acc(all_arr, h_arr, m_arr, l_arr, z_arr, loss, f_dir, lr, rep):
     ax.set_title('Learning Rate = %f, Rep %d' % (lr, rep))
     ax2 = f.add_subplot(2, 1, 2)
     ax2.plot(loss)
+    ax2.set_ylim(0, 1)
+    ax2.set_xlim(0, len(loss)-1)
     ax2.set_title('Loss')
     plt.savefig(join(f_dir, 'TrainAcc_lr%f_rep%d.pdf' %
                 (lr, rep)), format='pdf')

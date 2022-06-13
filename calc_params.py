@@ -65,8 +65,8 @@ def update_synaptic_config():
         synaptic_configurations = [0] * par['n_hidden']
 
     # initialize synaptic values d
-    fac_idx = synaptic_configurations == 1
-    dep_idx = synaptic_configurations == -1
+    fac_idx = np.where(np.array(synaptic_configurations) == 1)[0]
+    dep_idx = np.where(np.array(synaptic_configurations) == -1)[0]
 
     par['alpha_stf'] = np.ones((par['n_hidden'],), dtype=np.float32)
     par['alpha_stf'][fac_idx] = par['dt']/par['tau_slow']
