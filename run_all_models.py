@@ -32,11 +32,11 @@ for syn_config in synaptic_configs:
             if not exists(dirname(par['save_dir'])):
                 makedirs(dirname(par['save_dir']))
             try_model(par, True)
-            # update_parameters({'synapse_config': syn_config,
-            #                    'rep': rep,
-            #                    'save_fn': 'test_results_%s_%d.pkl' % (syn_config, rep),
-            #                    'batch_size': par['test_batch_size'],
-            #                    'num_iterations': par['num_test_iterations'],
-            #                    'coherence_levels': par['test_coherence_levels']
-            #                    })
-            # try_model(par, False)
+            update_parameters({'synapse_config': syn_config,
+                               'rep': rep,
+                               'save_fn': 'test_results_%d.pkl' % rep,
+                               'batch_size': par['test_batch_size'],
+                               'num_iterations': par['num_test_iterations'],
+                               'coherence_levels': par['test_coherence_levels']
+                               })
+            try_model(par, False)

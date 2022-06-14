@@ -9,7 +9,7 @@ from matplotlib.colors import TwoSlopeNorm
 import tables
 
 
-fdir = 'correctedOut_lowConn_model'
+fdir = 'correctedOut_rf_model'
 rep = 0
 lr = 0.02
 
@@ -41,7 +41,7 @@ def plot_weights(weights, title, fdir, show_rnn_weights=False):
     ax.set_ylabel('From')
     ax.set_xlabel('T0')
     ax.set_title(title)
-    plt.savefig(join(fdir, title+'.pdf'), format='pdf')
+    plt.savefig(join(fdir, title+'.png'), format='png')
     # plt.show()
 
 w = load(join(fdir, 'init_weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
