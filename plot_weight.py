@@ -9,7 +9,7 @@ from matplotlib.colors import TwoSlopeNorm
 import tables
 
 
-fdir = 'correctedOut_rf_model'
+fdir = 'small_model'
 rep = 0
 lr = 0.02
 
