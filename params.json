@@ -27,7 +27,7 @@
   "input_conn_prob": 0.4,
   "output_conn_prob": 0.4,
 
-  "num_motion_tuned": 36,
+  "num_motion_tuned": 18,
   "num_fix_tuned": 0,
   "num_color_tuned": 4,
   "n_choices": 2,

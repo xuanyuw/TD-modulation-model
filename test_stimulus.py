@@ -1,19 +1,21 @@
 from stimulus import Stimulus
 from calc_params import par
 import matplotlib.pyplot as plt
+from numpy import where
 
 stim = Stimulus(par)
 trial_info = stim.generate_trial()
 
 
-def plot_neural_input(trial_info, trial_idx):
-
+def plot_neural_input(trial_info, coh_level):
+    trial_idx = where(trial_info['coherence'] == coh_level)[0][0]
     print(trial_info['desired_output'][:, trial_idx, :].T)
     f = plt.figure(figsize=(8, 4))
     ax = f.add_subplot(1, 1, 1)
     t0, t1, t2 = 0, \
         min(par['target_time_rng']), \
         min(par['stim_time_rng'])
+
     im = ax.imshow(trial_info['neural_input'][:, trial_idx, :].T,
                    aspect='auto', interpolation='none')
 
@@ -24,9 +26,8 @@ def plot_neural_input(trial_info, trial_idx):
     ax.spines['top'].set_visible(False)
     ax.set_ylabel('Input Neurons')
     ax.set_xlabel('Time relative to sample onset (ms)')
-    ax.set_title('Neural input')
-    # plt.savefig('stimulus.pdf', format='pdf')
+    ax.set_title('Neural input (coherence = %s)'%coh_level)
+    plt.savefig('stimulus_coh%s.png'%(coh_level), format='png')
     plt.show()
 
-
-plot_neural_input(trial_info)
+plot_neural_input(trial_info, 0.6)
