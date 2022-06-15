@@ -2,12 +2,11 @@
 from numpy import load
 from os.path import join, exists
 from os import makedirs
-import brainpy as bp
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import TwoSlopeNorm
 import tables
-
+from calc_params import par
 
 fdir = 'small_model'
 rep = 0
@@ -63,11 +62,10 @@ pic_dir = join(fdir, 'weight_matrices_rep%d_lr%f'%(rep, lr))
 if not exists(pic_dir):
     makedirs(pic_dir)
 
-
 plot_weights(w_in_init*in_mask, 'Input_Weight_Init', pic_dir, show_rnn_weights=False)
 plot_weights(w_out_init*out_mask, 'Output_Weight_Init', pic_dir, show_rnn_weights=False)
-plot_weights(w_rnn_init*rnn_mask, 'RNN_Weight_Init', pic_dir, show_rnn_weights=True)
+plot_weights(par['EI_matrix'] @(w_rnn_init*rnn_mask), 'RNN_Weight_Init', pic_dir, show_rnn_weights=True)
 
 plot_weights(w_in_after*in_mask, 'Input_Weight_After', pic_dir, show_rnn_weights=False)
 plot_weights(w_out_after*out_mask, 'Output_Weight_After', pic_dir, show_rnn_weights=False)
-plot_weights(w_rnn_after*rnn_mask, 'RNN_Weight_After', pic_dir, show_rnn_weights=True)
+plot_weights(par['EI_matrix'] @(w_rnn_after*rnn_mask), 'RNN_Weight_After', pic_dir, show_rnn_weights=True)

@@ -21,6 +21,7 @@ class Model(bp.layers.Module):
         self.alpha_stf = bm.array(par['alpha_stf'])
         self.dynamic_synapse = bm.array(par['dynamic_synapse'])
         self.alpha = bm.array(par['alpha_neuron'])
+        self.EI_matrix = bm.array(par['EI_matrix'])
 
         self.y = bm.Variable(
             bm.ones((par['batch_size'], par['n_output'])))
@@ -95,7 +96,8 @@ class Model(bp.layers.Module):
 
         # Update the hidden state. Only use excitatory projections from input layer to RNN
         # All input and RNN activity will be non-negative
-        state = self.alpha * (input @ bm.relu(self.w_in) + h_post @ self.w_rnn +
+        w_rnn = self.EI_matrix @  bm.relu(self.w_rnn)
+        state = self.alpha * (input @ bm.relu(self.w_in) + h_post @ w_rnn +
                               self.b_rnn) + normal(0, self.noise_rnn, self.h.shape)
         self.h.value = bm.relu(state + self.h * (1 - self.alpha))
         self.y.value = self.h @ bm.relu(self.w_out) + self.b_out
