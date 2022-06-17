@@ -100,22 +100,25 @@ class Model(bp.layers.Module):
         self.h.value = bm.relu(state + self.h * (1 - self.alpha))
         self.y.value = self.h @ bm.relu(self.w_out) + self.b_out
 
-    def predict(self, inputs):
-        self.h[:] = self.init_h
-        # self.h = self.init_h
+    def predict(self, inputs, train):
+        if train:
+            self.h[:] = self.init_h
+        else:
+            self.h = self.init_h
         scan = bm.make_loop(body_fun=self.update,
                             dyn_vars=[self.syn_x, self.syn_u, self.h, self.y],
                             out_vars=[self.y, self.h])
         logits, hist_h = scan(inputs)
         # TODO: softmax y?
-        self.y_hist[:] = logits
-        self.h_hist[:] = hist_h
+        if train:
+            self.y_hist[:] = logits
+            self.h_hist[:] = hist_h
         # self.y_hist = logits
 
         return logits, hist_h
 
     def loss_func(self, inputs, targets, mask):
-        logits, hist_h = self.predict(inputs)
+        logits, hist_h = self.predict(inputs, True)
         # Calculate the performance loss
         perf_loss = bp.losses.cross_entropy_loss(
             bm.softmax(logits), targets, reduction='none') * mask

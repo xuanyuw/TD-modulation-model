@@ -91,7 +91,7 @@ def trial(par, train=True):
             
             # stop training if all trials with meaningful inputs reaches 95% accuracy
             # cond = (array([H_acc, M_acc, L_acc])>0.95).all()
-            cond = total_accuracy > 0.95
+            cond = total_accuracy > 0.9
             # Save the network model and output model performance to screen
             if i % iter_between_outputs == 0 or i == num_iterations-1 or cond:
                 # save training output
@@ -128,8 +128,9 @@ def trial(par, train=True):
 
         else:
             # get metrics
+            logits, h_hist = model.predict(inputs, False)
             accuracy, total_accuracy = get_perf(
-                targets, model.y_hist, mask, trial_info['stim_level'], False)
+                targets, logits, mask, trial_info['stim_level'], False)
             H_acc = accuracy['H']
             M_acc = accuracy['M']
             L_acc = accuracy['L']
@@ -144,11 +145,11 @@ def trial(par, train=True):
             # save test output at every test iteration
             if par['save_test_out']:
                 all_idx.append(i)
-                all_y_hist.append(model.y_hist.numpy())
+                all_y_hist.append(logits.numpy())
                 all_target.append(targets.numpy())
                 all_stim_level.append(trial_info['stim_level'])
                 all_stim_dir.append(trial_info['stim_dir'])
-                all_h.append(model.h_hist.numpy())
+                all_h.append(h_hist.numpy())
                 all_rt.append(get_reaction_time(model.y_hist, par))
                 all_neural_in.append(inputs.numpy())
             print(f' Iter {i:4d}' +
