@@ -31,3 +31,5 @@ def plot_neural_input(trial_info, coh_level):
     plt.show()
 
 plot_neural_input(trial_info, 0.6)
+plot_neural_input(trial_info, 0.3)
+plot_neural_input(trial_info, 0.9)

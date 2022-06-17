@@ -76,9 +76,11 @@ class Stimulus:
         # initialize coherences
         trial_info['coherence'] = np.random.choice(
             self.par['coherence_levels'], size=(self.par['batch_size'],))
-
-        trial_info['stim_level'] = ['Z' if x == self.par['coherence_levels'][0] else 'L' if x == self.par['coherence_levels']
-                                    [1] else 'M' if x == self.par['coherence_levels'][2] else 'H' for x in trial_info['coherence']]
+        if 0 in self.par['coherence_levels']:
+            trial_info['stim_level'] = ['Z' if x == self.par['coherence_levels'][0] else 'L' if x == self.par['coherence_levels']
+                                        [1] else 'M' if x == self.par['coherence_levels'][2] else 'H' for x in trial_info['coherence']]
+        else:
+            trial_info['stim_level'] = ['L' if x == self.par['coherence_levels'][0] else 'M' if x == self.par['coherence_levels'][1] else 'H' for x in trial_info['coherence']]
 
         for t in range(self.par['batch_size']):
 

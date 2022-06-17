@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 
-f_dir = 'test_model'
+f_dir = 'corrected_test_model'
 rep = 0
 lr = 0.02
 
@@ -28,8 +28,8 @@ def main():
     stim_level = test_table['stim_level_iter%d' %max_iter][:]
     stim_dir = test_table['stim_dir_iter%d' %max_iter][:]
     # plot single neural activity
-    for i in range(200):
-        plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, i, True)
+    # for i in range(200):
+    #     plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, i, True)
     # plot population neural activity
     normalized_h = min_max_normalize(h)
     temp_h = normalized_h[:, :, :32]
@@ -201,11 +201,13 @@ def plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, cell_idx, save_plt)
     correct_idx = find_correct_idx(y, desired_out)
 
     # zero coherence stimulus direction is based on the choice color
-    ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], Z_idx, choice_color[-1, :]==0), cell_idx], axis=1), linestyle ='--', color='#000000', label='135, Z')
+    if sum(Z_idx) != 0:
+        ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], Z_idx, choice_color[-1, :]==0), cell_idx], axis=1), linestyle ='--', color='#000000', label='135, Z')
+        ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], Z_idx, choice_color[-1, :]==1), cell_idx], axis=1), color='#000000', label='315, Z')
     ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], L_idx, correct_idx, green_idx), cell_idx], axis=1), color='#046C41', label='135, L')
     ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], M_idx, correct_idx, green_idx), cell_idx], axis=1), color='#1AA33C', label='135, M')
     ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], H_idx, correct_idx, green_idx), cell_idx], axis=1), color='#83D475', label='135, H')
-    ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], Z_idx, correct_idx, choice_color[-1, :]==1), cell_idx], axis=1), color='#000000', label='315, Z')
+    
     ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], L_idx, correct_idx, red_idx), cell_idx], axis=1), color='#910000', label='315, L')
     ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], M_idx, correct_idx, red_idx), cell_idx], axis=1), color='#D32431', label='315, M')
     ax1.plot(np.mean(h[:, combine_idx(ipsi_idx[-1, :], H_idx, correct_idx, red_idx), cell_idx], axis=1), color='#CE5757', label='315, H')
@@ -216,11 +218,13 @@ def plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, cell_idx, save_plt)
     ax1.axvline(x=target_st_time, color='k')
     ax1.axvline(x=stim_st_time, color='k')
 
-    ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], Z_idx, choice_color[-1, :]==0), cell_idx], axis=1), linestyle ='--', color='#000000', label='135, Z')
+    if sum(Z_idx) != 0:
+        ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], Z_idx, choice_color[-1, :]==0), cell_idx], axis=1), linestyle ='--', color='#000000', label='135, Z')
+        ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], Z_idx, choice_color[-1, :]==1), cell_idx], axis=1), color='#000000', label='315, Z')
     ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], L_idx, correct_idx, green_idx), cell_idx], axis=1), color='#046C41', label='135, L')
     ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], M_idx, correct_idx, green_idx), cell_idx], axis=1), color='#1AA33C', label='135, M')
     ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], H_idx, correct_idx, green_idx), cell_idx], axis=1), color='#83D475', label='135, H')
-    ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], Z_idx, choice_color[-1, :]==1), cell_idx], axis=1), color='#000000', label='315, Z')
+    
     ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], L_idx, correct_idx, red_idx), cell_idx], axis=1), color='#910000', label='315, L')
     ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], M_idx, correct_idx, red_idx), cell_idx], axis=1), color='#D32431', label='315, M')
     ax2.plot(np.mean(h[:, combine_idx(contra_idx[-1, :], H_idx, correct_idx, red_idx), cell_idx], axis=1), color='#CE5757', label='315, H')
@@ -266,12 +270,13 @@ def plot_population_activity(h, y, desired_out, stim_level, stim_dir, title, sav
     correct_idx = find_correct_idx(y, desired_out)
 
     # zero coherence stimulus direction is based on the choice color
-    
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='k', label='nonPref, Z')
+    if sum(Z_idx) != 0:
+        ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='k', label='nonPref, Z')
+        ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==1], axis=1), color='k', label='Pref, Z')
     ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='b', label='nonPref, L')
     ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='g', label='nonPref, M')
     ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='r', label='nonPref, H')
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==1], axis=1), color='k', label='Pref, Z')
+    
     ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='b', label='Pref, L')
     ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='g', label='Pref, M')
     ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='r', label='Pref, H')
@@ -281,11 +286,13 @@ def plot_population_activity(h, y, desired_out, stim_level, stim_dir, title, sav
     ax1.axvline(x=target_st_time, color='k')
     ax1.axvline(x=stim_st_time, color='k')
 
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='k', label='nonPref, Z')
+    if sum(Z_idx) != 0:
+        ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='k', label='nonPref, Z')
+        ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==1], axis=1), color='k', label='Pref, Z')
     ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='b', label='nonPref, L')
     ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='g', label='nonPref, M')
     ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='r', label='nonPref, H')
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==1], axis=1), color='k', label='Pref, Z')
+    
     ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='b', label='Pref, L')
     ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='g', label='Pref, M')
     ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='r', label='Pref, H')
@@ -306,5 +313,8 @@ def plot_population_activity(h, y, desired_out, stim_level, stim_dir, title, sav
         plt.close(fig) 
 
 def min_max_normalize(arr):
-    return (arr - np.min(arr,axis=1)[:, None, :])/(np.max(arr,axis=1)[:, None, :] - np.min(arr,axis=1)[:, None, :])   
+    norm_arr = (arr - np.min(np.mean(arr,axis=1), axis=0))/(np.max(np.mean(arr,axis=1), axis=0) - np.min(np.mean(arr,axis=1), axis=0))
+    return norm_arr
+
+
 main()
