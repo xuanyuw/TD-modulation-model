@@ -1,11 +1,11 @@
 {
-  "save_dir": "./corrected_test_model/",
+  "save_dir": "./new_input_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
   "save_test_out": true,
   "log_test": true,
-  "rep_num": 1,
+  "rep_num": 3,
   "rep": 0,
 
   "batch_size": 1024,
@@ -70,7 +70,7 @@
   "test_cost_multiplier": 2.0,
   "var_delay": false,
   "num_targets": 2,
-  "coherence_levels": [0.3, 0.6, 1.0],
+  "coherence_levels": [0.3, 0.6, 0.9],
   "test_coherence_levels": [0, 0.09, 0.18, 0.36],
   "decision_threshold": 0.8,
   "n_level_scale": 3

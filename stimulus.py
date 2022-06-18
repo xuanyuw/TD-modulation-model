@@ -34,9 +34,7 @@ class Stimulus:
         """
         trial_info = {'desired_output':  np.zeros((self.par['num_time_steps'], self.par['batch_size'], self.par['n_choices']), dtype=np.float32),
                       'train_mask':  np.ones((self.par['num_time_steps'], self.par['batch_size']), dtype=np.float32),
-                      # add noise to neural input
-                      'neural_input':  np.random.normal(self.par['input_mean'], self.par['noise_in'], size=(self.par['num_time_steps'], self.par['batch_size'], self.par['n_input'])).astype(np.float32),
-                      # 'neural_input':  np.zeros(shape=(self.par['num_time_steps'], self.par['batch_size'], self.par['n_input'])).astype(np.float32),
+                      'neural_input':  np.zeros(shape=(self.par['num_time_steps'], self.par['batch_size'], self.par['n_input'])).astype(np.float32),
                       }
 
         fix_time_rng = self.par['fix_time_rng']
@@ -102,6 +100,9 @@ class Stimulus:
                 # fixation is always on screen
                 trial_info['neural_input'][np.hstack(
                     [fix_time_rng, target_time_rng, stim_time_rng]), t, :] += self.fix_tuning[:, 0]
+        # add noise to neural input
+        overall_noise = np.random.normal(self.par['input_mean'], self.par['noise_in'], size=(self.par['num_time_steps'], self.par['batch_size'], self.par['n_input'])).astype(np.float32)
+        trial_info['neural_input'] += overall_noise
 
         return trial_info
 
@@ -119,15 +120,19 @@ class Stimulus:
         for coh in coh_list:
             # initialize with noise
             motion_tuning = np.zeros((self.par['n_input'], len(self.move_dirs)))
-            motion_tuning[:self.par['num_motion_tuned'], :] = self.par['tuning_height'] * (1-coh) * np.random.normal(
+            # motion_tuning[:self.par['num_motion_tuned'], :] = self.par['tuning_height'] * (1-coh) * np.random.normal(
+            #     self.par['input_mean'], self.par['noise_in'], size=(self.par['num_motion_tuned'], len(self.move_dirs))).astype(np.float32)
+            motion_tuning[:self.par['num_motion_tuned'], :] = np.random.normal(
                 self.par['input_mean'], self.par['noise_in'], size=(self.par['num_motion_tuned'], len(self.move_dirs))).astype(np.float32)
             if coh != 0:
                 for n in range(self.par['num_motion_tuned']):
                     for i in range(len(self.move_dirs)):
                         d = np.cos(
                             (self.move_dirs[i] - pref_dirs[n])/180*np.pi)
+                        # motion_tuning[n, i] += np.exp(
+                        #     self.par['kappa']*d)/np.exp(self.par['kappa'])
                         motion_tuning[n, i] += np.exp(
-                            self.par['kappa']*d)/np.exp(self.par['kappa'])
+                            self.par['kappa']*d)/np.exp(self.par['kappa']) * coh
             all_motion_tunings.append(motion_tuning)
 
         for n in range(self.par['num_fix_tuned']):

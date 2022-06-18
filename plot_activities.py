@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 
-f_dir = 'corrected_test_model'
+f_dir = 'new_input_model'
 rep = 0
 lr = 0.02
 
@@ -28,8 +28,8 @@ def main():
     stim_level = test_table['stim_level_iter%d' %max_iter][:]
     stim_dir = test_table['stim_dir_iter%d' %max_iter][:]
     # plot single neural activity
-    # for i in range(200):
-    #     plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, i, True)
+    for i in range(200):
+        plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, i, True)
     # plot population neural activity
     normalized_h = min_max_normalize(h)
     temp_h = normalized_h[:, :, :32]

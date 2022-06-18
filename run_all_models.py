@@ -31,6 +31,7 @@ for syn_config in synaptic_configs:
                                'learning_rate': lr})
             if not exists(dirname(par['save_dir'])):
                 makedirs(dirname(par['save_dir']))
+            print('Training model %d'%rep)
             try_model(par, True)
             update_parameters({'synapse_config': syn_config,
                                'rep': rep,
@@ -39,4 +40,5 @@ for syn_config in synaptic_configs:
                                'num_iterations': par['num_test_iterations'],
                                'coherence_levels': par['test_coherence_levels']
                                })
+            print('Testing model %d'%rep)
             try_model(par, False)
