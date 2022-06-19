@@ -70,8 +70,8 @@
   "test_cost_multiplier": 2.0,
   "var_delay": false,
   "num_targets": 2,
-  "coherence_levels": [0.3, 0.6, 0.9],
-  "test_coherence_levels": [0, 0.09, 0.18, 0.36],
+  "coherence_levels": [0.6, 0.9],
+  "test_coherence_levels": [0, 0.15, 0.3, 0.6],
   "decision_threshold": 0.8,
   "n_level_scale": 3
 }
