@@ -13,13 +13,7 @@ stim_st_time = 45
 target_st_time = 25
 
 def main():
-    # with open(os.path.join(f_dir, 'init_weight_%d_lr%f.pth'%(rep, lr)), 'rb') as f:
-    #     w_init = np.load(f,allow_pickle=True)
-    # with open(os.path.join(f_dir, 'model_results_%d_lr%f.pkl'%(rep, lr)), 'rb') as f:
-    #     model_results =  pickle.load(f)
-    # train_output = tables.open_file(os.path.join(f_dir, 'train_output_lr%f_rep%d.h5'%(lr, rep)), mode = 'r')
     test_output = tables.open_file(os.path.join(f_dir, 'test_output_lr%f_rep%d.h5'%(lr, rep)), mode = 'r')
-    # train_table = train_output.root
     test_table = test_output.root
     max_iter = get_max_iter(test_table)
     h = test_table['h_iter%d' %max_iter][:]
@@ -30,26 +24,6 @@ def main():
     # plot single neural activity
     for i in range(200):
         plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, i, True)
-    # plot population neural activity
-    normalized_h = min_max_normalize(h)
-    temp_h = normalized_h[:, :, :32]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Contra_Motion_Exc_Population', True)
-    temp_h = normalized_h[:, :, 32:80]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Contra_Target_Exc_Population', True)
-    temp_h = normalized_h[:, :, 80:112]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Ipsi_Motion_Exc_Population', True)
-    temp_h = normalized_h[:, :, 112:160]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Ipsi_Target_Exc_Population', True)
-
-    temp_h = normalized_h[:, :, 160:168]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Contra_Motion_Inh_Population', True)
-    temp_h = normalized_h[:, :, 168:180]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Contra_Target_Inh_Population', True)
-    temp_h = normalized_h[:, :, 180:188]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Ipsi_Motion_Inh_Population', True)
-    temp_h = normalized_h[:, :, 188:200]
-    plot_population_activity(temp_h, y, desired_out, stim_level, stim_dir, 'Ipsi_Target_Inh_Population', True)
-
 def relu(input):
     return input * (input>0)
 
@@ -243,78 +217,6 @@ def plot_coh_avgAct(h, y, desired_out, stim_level, stim_dir, cell_idx, save_plt)
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir,'cell_%d.png'% cell_idx))
         plt.close(fig)
-
-###################################
-# Plot population neuron activity #
-###################################
-
-def find_pref_dir(stim_dir, h):
-    red_idx = stim_dir==315
-    green_idx = stim_dir==135
-    red_mean = np.mean(h[stim_st_time:, red_idx, :], axis=(0, 1))
-    green_mean = np.mean(h[stim_st_time:, green_idx, :], axis=(0, 1))
-    pref_red = red_mean>green_mean
-    return pref_red
-    
-def plot_population_activity(h, y, desired_out, stim_level, stim_dir, title, save_plt):
-    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize =(10, 4))
-    H_idx, M_idx, L_idx, Z_idx = find_coh_idx(stim_level)
-    # find the trial of preferred direction
-    pref_red = find_pref_dir(stim_dir, h)
-    dir_red = stim_dir==315
-    pref_red_temp = np.tile(pref_red, (len(dir_red), 1))
-    dir_red_temp = np.tile(np.reshape(dir_red, (-1, 1)), (1, len(pref_red)))
-    pref_dir = pref_red_temp == dir_red_temp  
-
-    contra_idx, ipsi_idx = find_sac_idx(y)
-    correct_idx = find_correct_idx(y, desired_out)
-
-    # zero coherence stimulus direction is based on the choice color
-    if sum(Z_idx) != 0:
-        ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='k', label='nonPref, Z')
-        ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==1], axis=1), color='k', label='Pref, Z')
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='b', label='nonPref, L')
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='g', label='nonPref, M')
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='r', label='nonPref, H')
-    
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='b', label='Pref, L')
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='g', label='Pref, M')
-    ax1.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(ipsi_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='r', label='Pref, H')
-    ax1.set_title("Ipsi-lateral Saccade")
-    ax1.set_ylabel("Average activity")
-    ax1.set_xlabel("Time")
-    ax1.axvline(x=target_st_time, color='k')
-    ax1.axvline(x=stim_st_time, color='k')
-
-    if sum(Z_idx) != 0:
-        ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='k', label='nonPref, Z')
-        ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], Z_idx)[:, None], pref_dir.shape))==1], axis=1), color='k', label='Pref, Z')
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='b', label='nonPref, L')
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='g', label='nonPref, M')
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==0], axis=1), linestyle ='--', color='r', label='nonPref, H')
-    
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], L_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='b', label='Pref, L')
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], M_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='g', label='Pref, M')
-    ax2.plot(np.mean(h[:,(pref_dir + np.broadcast_to(combine_idx(contra_idx[-1, :], H_idx, correct_idx)[:, None], pref_dir.shape))==1], axis=1), color='r', label='Pref, H')
-    ax2.set_title("Contra-lateral Saccade")
-    ax2.set_ylabel("Average activity")
-    ax2.set_xlabel("Time")
-    ax2.legend()
-    ax2.axvline(x=target_st_time, color='k')
-    ax2.axvline(x=stim_st_time, color='k')
-
-    plt.suptitle(title)
-
-    if save_plt:
-        pic_dir = os.path.join(f_dir, 'population_neuron_activity_rep%d_lr%f' %(rep, lr))
-        if not os.path.exists(pic_dir):
-            os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir,'%s.png'% title))
-        plt.close(fig) 
-
-def min_max_normalize(arr):
-    norm_arr = (arr - np.min(np.mean(arr,axis=1), axis=0))/(np.max(np.mean(arr,axis=1), axis=0) - np.min(np.mean(arr,axis=1), axis=0))
-    return norm_arr
 
 
 main()
