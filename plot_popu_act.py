@@ -5,15 +5,16 @@ import matplotlib.pyplot as plt
 import os
 
 
-f_dir = 'high_coh_model'
-rep = 1
-lr = 0.02
+f_dir = 'input_high_amp_high_noise_model'
+all_rep = range(5)
+all_lr = [0.02]
 
 stim_st_time = 45
 target_st_time = 25
 
 
-def main():
+
+def main(lr, rep):
 
     # train_output = tables.open_file(os.path.join(f_dir, 'train_output_lr%f_rep%d.h5'%(lr, rep)), mode = 'r')
     test_output = tables.open_file(os.path.join(
@@ -29,14 +30,14 @@ def main():
     # plot population neural activity
     normalized_h = min_max_normalize(h)
 
-    # plot_dir_selectivity(normalized_h, (0, 32), (80, 112), y, desired_out, stim_level,
-    #                      stim_dir, 'Motion_Excitatory_Direction_Selectivity', True)
-    # plot_dir_selectivity(normalized_h, (32, 80), (112, 160), y, desired_out, stim_level,
-    #                      stim_dir, 'Target_Excitatory_Direction_Selectivity', True)
-    # plot_dir_selectivity(normalized_h, (160, 168), (180, 188),  y, desired_out, stim_level,
-    #                      stim_dir, 'Motion_Inhibitory_Direction_Selectivity', True)
-    # plot_dir_selectivity(normalized_h, (168, 180), (188, 200), y, desired_out, stim_level,
-    #                      stim_dir, 'Target_Inhibitory_Direction_Selectivity', True)
+    plot_dir_selectivity(normalized_h, (0, 32), (80, 112), y, desired_out, stim_level,
+                         stim_dir, 'Motion_Excitatory_Direction_Selectivity', True)
+    plot_dir_selectivity(normalized_h, (32, 80), (112, 160), y, desired_out, stim_level,
+                         stim_dir, 'Target_Excitatory_Direction_Selectivity', True)
+    plot_dir_selectivity(normalized_h, (160, 168), (180, 188),  y, desired_out, stim_level,
+                         stim_dir, 'Motion_Inhibitory_Direction_Selectivity', True)
+    plot_dir_selectivity(normalized_h, (168, 180), (188, 200), y, desired_out, stim_level,
+                         stim_dir, 'Target_Inhibitory_Direction_Selectivity', True)
 
     plot_sac_selectivity(normalized_h, (0, 32), (80, 112), y, desired_out,
                          stim_level, 'Motion_Excitatory_Saccade_Selectivity', True)
@@ -134,11 +135,18 @@ def find_pref_sac(y, h):
     ipsi_idx_m1 = choice == 1
     contra_idx_m2 = choice == 1
     ipsi_idx_m2 = choice == 0
-    contra_idx = np.append(contra_idx_m1[:100], contra_idx_m2[100:])
-    ipsi_idx = np.append(ipsi_idx_m1[:100], ipsi_idx_m2[100:])
-    contra_mean = np.mean(h[stim_st_time:, contra_idx, :], axis=(0, 1))
-    ipsi_mean = np.mean(h[stim_st_time:, ipsi_idx, :], axis=(0, 1))
-    pref_ipsi = contra_mean < ipsi_mean
+    contra_idx = np.zeros(shape=(h.shape[1], h.shape[2])).astype(bool)
+    contra_idx[:, :h.shape[2]//2] = np.tile(contra_idx_m1, (h.shape[2]//2, 1)).T
+    contra_idx[:, h.shape[2]//2:] = np.tile(contra_idx_m2, (h.shape[2]//2, 1)).T
+    ipsi_idx = np.zeros(shape=(h.shape[1], h.shape[2])).astype(bool)
+    ipsi_idx[:, :h.shape[2]//2] = np.tile(ipsi_idx_m1, (h.shape[2]//2, 1)).T
+    ipsi_idx[:, h.shape[2]//2:] = np.tile(ipsi_idx_m2, (h.shape[2]//2, 1)).T
+
+    pref_ipsi = []
+    for i in range(h.shape[2]):
+        contra_mean = np.mean(h[stim_st_time:, contra_idx[:, i], i])
+        ipsi_mean = np.mean(h[stim_st_time:, ipsi_idx[:, i], i])
+        pref_ipsi.append(contra_mean < ipsi_mean)
     return pref_ipsi, choice
 
 
@@ -340,4 +348,6 @@ def plot_sac_selectivity(h, m1_idx, m2_idx, y, desired_out, stim_level, title, s
         plt.close(fig)
 
 
-main()
+for rep in all_rep:
+    for lr in all_lr:
+        main(lr, rep)
