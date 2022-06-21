@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import os
 
 
-f_dir = 'new_input_model'
-rep = 0
+f_dir = 'high_coh_model'
+rep = 1
 lr = 0.02
 
 stim_st_time = 45
@@ -29,14 +29,14 @@ def main():
     # plot population neural activity
     normalized_h = min_max_normalize(h)
 
-    plot_dir_selectivity(normalized_h, (0, 32), (80, 112), y, desired_out, stim_level,
-                         stim_dir, 'Motion_Excitatory_Direction_Selectivity', True)
-    plot_dir_selectivity(normalized_h, (32, 80), (112, 160), y, desired_out, stim_level,
-                         stim_dir, 'Target_Excitatory_Direction_Selectivity', True)
-    plot_dir_selectivity(normalized_h, (160, 168), (180, 188),  y, desired_out, stim_level,
-                         stim_dir, 'Motion_Inhibitory_Direction_Selectivity', True)
-    plot_dir_selectivity(normalized_h, (168, 180), (188, 200), y, desired_out, stim_level,
-                         stim_dir, 'Target_Inhibitory_Direction_Selectivity', True)
+    # plot_dir_selectivity(normalized_h, (0, 32), (80, 112), y, desired_out, stim_level,
+    #                      stim_dir, 'Motion_Excitatory_Direction_Selectivity', True)
+    # plot_dir_selectivity(normalized_h, (32, 80), (112, 160), y, desired_out, stim_level,
+    #                      stim_dir, 'Target_Excitatory_Direction_Selectivity', True)
+    # plot_dir_selectivity(normalized_h, (160, 168), (180, 188),  y, desired_out, stim_level,
+    #                      stim_dir, 'Motion_Inhibitory_Direction_Selectivity', True)
+    # plot_dir_selectivity(normalized_h, (168, 180), (188, 200), y, desired_out, stim_level,
+    #                      stim_dir, 'Target_Inhibitory_Direction_Selectivity', True)
 
     plot_sac_selectivity(normalized_h, (0, 32), (80, 112), y, desired_out,
                          stim_level, 'Motion_Excitatory_Saccade_Selectivity', True)
@@ -112,7 +112,10 @@ def combine_idx(*args):
     temp = args[0]
     for i in range(1, len(args)):
         if args[i] is not None:
-            temp = np.logical_and(temp, args[i])
+            if temp is not None:
+                temp = np.logical_and(temp, args[i])
+            else:
+                temp = args[i]
     return temp
 
 
@@ -150,8 +153,7 @@ def get_temp_h(coh_idx, h, y, pref_dir, m1_idx, m2_idx, mode, correct_idx=None):
         contra_idx_m1, ipsi_idx_m1 = find_sac_idx(y, True)
         contra_idx_m2, ipsi_idx_m2 = find_sac_idx(y, False)
     elif mode == 'sac':
-        contra_idx_m1, ipsi_idx_m1 = None
-        contra_idx_m2, ipsi_idx_m2 = None
+        contra_idx_m1, ipsi_idx_m1, contra_idx_m2, ipsi_idx_m2 = None, None, None, None
 
     m1_mask = create_grp_mask(pref_dir.shape, m1_idx)
     m2_mask = create_grp_mask(pref_dir.shape, m2_idx)
@@ -164,11 +166,11 @@ def get_temp_h(coh_idx, h, y, pref_dir, m1_idx, m2_idx, mode, correct_idx=None):
         ipsi_idx_m2, coh_idx, correct_idx)[:, None], pref_dir.shape) * m2_mask
     ipsi_nonpref_idx_m2 = (~pref_dir) * np.broadcast_to(combine_idx(
         ipsi_idx_m2, coh_idx, correct_idx)[:, None], pref_dir.shape) * m2_mask
-    ipsi_h_pref = np.append(h[:, ipsi_pref_idx_m1],
-                            h[:, ipsi_pref_idx_m2], axis=1)
-    ipsi_h_nonpref = np.append(
-        h[:, ipsi_nonpref_idx_m1], h[:, ipsi_nonpref_idx_m2], axis=1)
     if mode == 'dir':
+        ipsi_h_pref = np.append(h[:, ipsi_pref_idx_m1],
+                        h[:, ipsi_pref_idx_m2], axis=1)
+        ipsi_h_nonpref = np.append(
+            h[:, ipsi_nonpref_idx_m1], h[:, ipsi_nonpref_idx_m2], axis=1)
         contra_pref_idx_m1 = pref_dir * np.broadcast_to(combine_idx(
             contra_idx_m1, coh_idx, correct_idx)[:, None], pref_dir.shape) * m1_mask
         contra_nonpref_idx_m1 = (~pref_dir) * np.broadcast_to(combine_idx(
@@ -256,7 +258,7 @@ def plot_dir_selectivity(h, m1_idx, m2_idx, y, desired_out, stim_level, stim_dir
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, '%s.png' % title))
-        plt.close(fig)
+        # plt.close(fig)
 
 
 def min_max_normalize(arr):
@@ -269,8 +271,6 @@ def min_max_normalize(arr):
 def plot_sac_selectivity(h, m1_idx, m2_idx, y, desired_out, stim_level, title, save_plt):
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
     H_idx, M_idx, L_idx, Z_idx = find_coh_idx(stim_level)
-    contra_idx_m1, ipsi_idx_m1 = find_sac_idx(y, True)
-    contra_idx_m2, ipsi_idx_m2 = find_sac_idx(y, False)
     correct_idx = find_correct_idx(y, desired_out)
     # find the trial of preferred direction
     pref_ipsi, choice = find_pref_sac(y, h)
@@ -282,39 +282,39 @@ def plot_sac_selectivity(h, m1_idx, m2_idx, y, desired_out, stim_level, title, s
     if sum(Z_idx) != 0:
         h_pref_m1, h_nonpref_m1, h_pref_m2, h_nonpref_m2 = get_temp_h(
             Z_idx, h, y, pref_sac, m1_idx, m2_idx, 'sac')
-        ax1.plot(np.mean(h_nonpref_m1, axis=(1, 2)),
+        ax1.plot(np.mean(h_nonpref_m1, axis=1),
                  linestyle='--', color='k', label='nonPref, Z')
-        ax1.plot(np.mean(h_pref_m1, axis=(1, 2)), color='k', label='contra, Z')
-        ax2.plot(np.mean(h_nonpref_m2, axis=(1, 2)),
+        ax1.plot(np.mean(h_pref_m1, axis=1), color='k', label='pref, Z')
+        ax2.plot(np.mean(h_nonpref_m2, axis=1),
                  linestyle='--', color='k', label='nonPref, Z')
-        ax2.plot(np.mean(h_pref_m2, axis=(1, 2)), color='k', label='contra, Z')
+        ax2.plot(np.mean(h_pref_m2, axis=1), color='k', label='pref, Z')
 
     h_pref_m1, h_nonpref_m1, h_pref_m2, h_nonpref_m2 = get_temp_h(
         L_idx, h, y, pref_sac, m1_idx, m2_idx, 'sac', correct_idx)
-    ax1.plot(np.mean(h_nonpref_m1, axis=(1, 2)),
+    ax1.plot(np.mean(h_nonpref_m1, axis=1),
              linestyle='--', color='b', label='nonPref, L')
-    ax1.plot(np.mean(h_pref_m1, axis=(1, 2)), color='b', label='contra, L')
-    ax2.plot(np.mean(h_nonpref_m2, axis=(1, 2)),
+    ax1.plot(np.mean(h_pref_m1, axis=1), color='b', label='pref, L')
+    ax2.plot(np.mean(h_nonpref_m2, axis=1),
              linestyle='--', color='b', label='nonPref, L')
-    ax2.plot(np.mean(h_pref_m2, axis=(1, 2)), color='b', label='contra, L')
+    ax2.plot(np.mean(h_pref_m2, axis=1), color='b', label='pref, L')
 
     h_pref_m1, h_nonpref_m1, h_pref_m2, h_nonpref_m2 = get_temp_h(
         M_idx, h, y, pref_sac, m1_idx, m2_idx, 'sac', correct_idx)
-    ax1.plot(np.mean(h_nonpref_m1, axis=(1, 2)),
+    ax1.plot(np.mean(h_nonpref_m1, axis=1),
              linestyle='--', color='g', label='nonPref, M')
-    ax1.plot(np.mean(h_pref_m1, axis=(1, 2)), color='g', label='contra, M')
-    ax2.plot(np.mean(h_nonpref_m2, axis=(1, 2)),
+    ax1.plot(np.mean(h_pref_m1, axis=1), color='g', label='pref, M')
+    ax2.plot(np.mean(h_nonpref_m2, axis=1),
              linestyle='--', color='g', label='nonPref, M')
-    ax2.plot(np.mean(h_pref_m2, axis=(1, 2)), color='g', label='contra, M')
+    ax2.plot(np.mean(h_pref_m2, axis=1), color='g', label='pref, M')
 
     h_pref_m1, h_nonpref_m1, h_pref_m2, h_nonpref_m2 = get_temp_h(
         H_idx, h, y, pref_sac, m1_idx, m2_idx, 'sac', correct_idx)
-    ax1.plot(np.mean(h_nonpref_m1, axis=(1, 2)),
+    ax1.plot(np.mean(h_nonpref_m1, axis=1),
              linestyle='--', color='r', label='nonPref, H')
-    ax1.plot(np.mean(h_pref_m1, axis=(1, 2)), color='r', label='contra, H')
-    ax2.plot(np.mean(h_nonpref_m2, axis=(1, 2)),
+    ax1.plot(np.mean(h_pref_m1, axis=1), color='r', label='pref, H')
+    ax2.plot(np.mean(h_nonpref_m2, axis=1),
              linestyle='--', color='r', label='nonPref, H')
-    ax2.plot(np.mean(h_pref_m2, axis=(1, 2)), color='r', label='contra, H')
+    ax2.plot(np.mean(h_pref_m2, axis=1), color='r', label='pref, H')
 
     ax1.set_title("Module 1")
     ax1.set_ylabel("Average activity")
