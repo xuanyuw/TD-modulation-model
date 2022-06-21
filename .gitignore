@@ -133,3 +133,4 @@ dmypy.json
 *_model/
 *.png
 *.h5
+*.zip

@@ -27,6 +27,9 @@ for syn_config in synaptic_configs:
             update_parameters({'synapse_config': syn_config,
                                'rep': rep,
                                'save_fn': 'model_results_%d_lr%f.pkl' % (rep, lr),
+                               'batch_size': par['train_batch_size'],
+                               'num_iterations': par['num_train_iterations'],
+                               'coherence_levels': par['train_coherence_levels'],
                                'weight_fn': 'weight_%d_lr%f.pth' % (rep, lr),
                                'learning_rate': lr})
             if not exists(dirname(par['save_dir'])):

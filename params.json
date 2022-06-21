@@ -1,16 +1,18 @@
 {
-  "save_dir": "./high_coh_model/",
+  "save_dir": "./debug_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
   "save_test_out": true,
   "log_test": true,
-  "rep_num": 1,
+  "rep_num": 5,
   "rep": 0,
 
   "batch_size": 1024,
-  "num_iterations": 1000,
+  "train_batch_size": 1024,
   "test_batch_size": 2048,
+  "num_iterations": 1000,
+  "num_train_iterations": 1000,
   "num_test_iterations": 1,
   "iters_between_outputs": 100,
   "learning_rate_li": [2e-2],
@@ -50,7 +52,7 @@
   "input_mean": 0.0,
   "noise_in_sd": 0.05,
   "stim_noise_sd": 0.2,
-  "noise_rnn_sd": 0.5,
+  "noise_rnn_sd": 0.33,
   "dynamic_input_noise": false,
 
   "num_motion_dirs": 2,
@@ -71,6 +73,7 @@
   "var_delay": false,
   "num_targets": 2,
   "coherence_levels": [0.6, 0.9],
+  "train_coherence_levels": [0.6, 0.9],
   "test_coherence_levels": [0, 0.15, 0.3, 0.6],
   "decision_threshold": 0.8,
   "n_level_scale": 3
