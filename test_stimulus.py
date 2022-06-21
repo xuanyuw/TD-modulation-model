@@ -27,7 +27,7 @@ def plot_neural_input(trial_info, coh_level):
     ax.set_ylabel('Input Neurons')
     ax.set_xlabel('Time relative to sample onset (ms)')
     ax.set_title('Neural input (coherence = %s)'%coh_level)
-    plt.savefig('stimulus_coh%s_varmean.png'%(coh_level), format='png')
+    plt.savefig('high_amp_stimulus_coh%s.png'%(coh_level), format='png')
     plt.show()
 
 # plot_neural_input(trial_info, 0.3)

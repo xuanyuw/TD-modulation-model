@@ -1,5 +1,5 @@
 {
-  "save_dir": "./debug_model/",
+  "save_dir": "./input_high_amp_high_noise_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
@@ -50,13 +50,13 @@
   "U_std": 0.45,
 
   "input_mean": 0.0,
-  "noise_in_sd": 0.05,
+  "noise_in_sd": 0.07,
   "stim_noise_sd": 0.2,
   "noise_rnn_sd": 0.33,
   "dynamic_input_noise": false,
 
   "num_motion_dirs": 2,
-  "tuning_height": 4,
+  "tuning_height": 2,
   "kappa": 2,
 
   "spike_regularization": "L2",
