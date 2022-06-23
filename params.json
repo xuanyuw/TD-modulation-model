@@ -1,5 +1,5 @@
 {
-  "save_dir": "./input_high_amp_high_noise_model/",
+  "save_dir": "./input_low_color_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
@@ -53,6 +53,7 @@
   "noise_in_sd": 0.07,
   "stim_noise_sd": 0.2,
   "noise_rnn_sd": 0.33,
+  "motion_noise_mult": 2,
   "dynamic_input_noise": false,
 
   "num_motion_dirs": 2,
