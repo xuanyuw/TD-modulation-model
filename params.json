@@ -1,5 +1,5 @@
 {
-  "save_dir": "./constant_base_input_model/",
+  "save_dir": "./diff_input_tuning_height_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
@@ -59,7 +59,8 @@
   "dynamic_input_noise": false,
 
   "num_motion_dirs": 2,
-  "tuning_height": 2,
+  "motion_tuning_height": 4,
+  "color_tuning_height": 2,
   "kappa": 2,
 
   "spike_regularization": "L2",
@@ -75,7 +76,7 @@
   "test_cost_multiplier": 2.0,
   "var_delay": false,
   "num_targets": 2,
-  "coherence_levels": [0, 0.15, 0.3],
+  "coherence_levels": [0, 0.15, 0.3, 0.6, 0.9],
   "train_coherence_levels": [0.6, 0.9],
   "test_coherence_levels": [0, 0.15, 0.3, 0.6],
   "decision_threshold": 0.8,
