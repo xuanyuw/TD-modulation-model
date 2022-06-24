@@ -2,12 +2,16 @@ from stimulus import Stimulus
 from calc_params import par
 import matplotlib.pyplot as plt
 from numpy import where, unique
-from os.path import join
+from os.path import join, exists
+from os import makedirs
 
 
 stim = Stimulus(par)
 trial_info = stim.generate_trial()
-fdir = "input_low_color_3mnoise_model"
+fdir = "constant_base_input_model"
+
+if not exists(fdir):
+    makedirs(fdir)
 
 
 def plot_neural_input(trial_info, coh_level, fdir):

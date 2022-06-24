@@ -1,5 +1,5 @@
 {
-  "save_dir": "./input_low_color_3mnoise_model/",
+  "save_dir": "./constant_base_input_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
@@ -51,9 +51,11 @@
 
   "input_mean": 0.0,
   "noise_in_sd": 0.07,
+
   "stim_noise_sd": 0.2,
   "noise_rnn_sd": 0.33,
-  "motion_noise_mult": 3,
+  "pure_visual_val": 2,
+  "motion_noise_mult": 1,
   "dynamic_input_noise": false,
 
   "num_motion_dirs": 2,
@@ -73,7 +75,7 @@
   "test_cost_multiplier": 2.0,
   "var_delay": false,
   "num_targets": 2,
-  "coherence_levels": [0.6, 0.9],
+  "coherence_levels": [0, 0.15, 0.3],
   "train_coherence_levels": [0.6, 0.9],
   "test_coherence_levels": [0, 0.15, 0.3, 0.6],
   "decision_threshold": 0.8,

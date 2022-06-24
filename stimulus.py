@@ -127,6 +127,10 @@ class Stimulus:
             trial_info["neural_input"][stim_time_rng, t, :] += self.all_motion_tunings[
                 tuning_idx
             ][:, stim_dir_ind]
+            # add a constant input to indicate pure visual stimulus
+            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += self.par[
+                "pure_visual_val"
+            ]
 
             color_tuning = self.create_color_tuning(trial_info["targ_loc"][t])
             if self.par["num_color_tuned"] > 0:
@@ -202,9 +206,9 @@ class Stimulus:
         cell_per_rf = self.par["num_color_tuned"] // 2
         # create red and green tuning
         green_val = np.zeros((cell_per_rf,))
-        green_val[-cell_per_rf // 2 :] = 1  # * self.par["tuning_height"]
+        green_val[-cell_per_rf // 2 :] = 1  * self.par["tuning_height"]
         red_val = np.zeros((cell_per_rf,))
-        red_val[: -cell_per_rf // 2] = 1  # * self.par["tuning_height"]
+        red_val[: -cell_per_rf // 2] = 1  * self.par["tuning_height"]
         if targ_loc:
             # red in contralateral rf
             color_tuning[
