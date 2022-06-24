@@ -291,6 +291,13 @@ def trial(par, train=True):
 
         with open(join(par["save_dir"], par["weight_fn"]), "wb") as f:
             save(f, weights)
+    else:  # plot test acc
+        plot_test_acc(
+            [H_acc, M_acc, L_acc, Z_acc],
+            par["save_dir"],
+            par["learning_rate"],
+            par["rep"],
+        )
     dump(model_performance, open(join(par["save_dir"], par["save_fn"]), "wb"))
 
 
@@ -318,3 +325,14 @@ def plot_acc(
     ax2.set_title("Loss")
     plt.savefig(join(f_dir, "TrainAcc_lr%f_rep%d.png" % (lr, rep)), format="png")
     # plt.show()
+
+def plot_test_acc(acc_arr, f_dir, lr, rep):
+    fig, ax = plt.subplots()
+    bars = ax.bar(["H", "M", "L", "Z"], acc_arr)
+    ax.set_xlabel("coherence")
+    ax.set_ylabel("accuracy")
+    ax.set_title("Test accuracy (Learning Rate = %fm Rep %d" % (lr, rep))
+    ax.bar_label(bars)
+    # plt.show()
+    plt.savefig(join(f_dir, "test_acc_lr%f_rep%d.png" % (lr, rep)), format="png")
+
