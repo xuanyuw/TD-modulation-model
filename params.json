@@ -1,5 +1,5 @@
 {
-  "save_dir": "./constant_base_input_model/",
+  "save_dir": "./fix_in_out_conn_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
