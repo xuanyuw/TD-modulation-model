@@ -280,6 +280,9 @@ def trial(par, train=True):
         for k, v in w.items():
             temp = k.split(".")
             weights[temp[1] + "0"] = v
+        weights['w_in0'] = model.w_in
+        weights['w_out0'] = model.w_out
+        weights['b_out0'] = model.b_out
 
         # Save weight masks
         all_masks = model.get_all_masks()
