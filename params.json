@@ -1,5 +1,5 @@
 {
-  "save_dir": "./fix_in_out_conn_model/",
+  "save_dir": "./fix_inout_low_rf_conn_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
@@ -23,9 +23,9 @@
 
   "synapse_config": "full",
 
-  "within_rf_conn_prob": 0.4,
-  "cross_rf_conn_prob": 0.2,
-  "cross_module_conn_prob": 0.1,
+  "within_rf_conn_prob": 0.5,
+  "cross_rf_conn_prob": 0.15,
+  "cross_module_conn_prob": 0.05,
   "input_conn_prob": 0.4,
   "output_conn_prob": 0.4,
 

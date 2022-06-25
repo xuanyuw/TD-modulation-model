@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-f_dir = "constant_base_input_model"
+f_dir = "fix_inout_low_rf_conn_model"
 all_rep = range(5)
 all_lr = [0.02]
 
