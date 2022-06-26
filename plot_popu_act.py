@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-f_dir = "fix_inout_low_rf_conn_model"
+f_dir = "constant_base_input_model"
 all_rep = range(5)
 all_lr = [0.02]
 
@@ -26,6 +26,7 @@ def main(lr, rep):
     desired_out = test_table["target_iter%d" % max_iter][:]
     stim_level = test_table["stim_level_iter%d" % max_iter][:]
     stim_dir = test_table["stim_dir_iter%d" % max_iter][:]
+    desired_out, stim_dir = correct_zero_coh(y, stim_level, stim_dir, desired_out)
     # plot population neural activity
     normalized_h = min_max_normalize(h)
 
@@ -120,6 +121,24 @@ def relu(input):
     return input * (input > 0)
 
 
+def correct_zero_coh(y, stim_level, stim_dir, desired_out):
+    # change the stimulus direction and the desired output based on the choice in zero coherence trials
+    zero_idx = np.array(stim_level) == b"Z"
+    # convert y to the same form as the desired output
+    temp_y = np.zeros(y.shape)
+    temp_y[
+        np.arange(y.shape[0])[:, None], np.arange(y.shape[1]), np.argmax(y, axis=2)
+    ] = 1
+    choice_color = get_choice_color(y, desired_out, stim_dir)[
+        -1, :
+    ]  # return choice color (green = 0, red = 1)
+    stim_dir[zero_idx & (choice_color == 0)] = 135
+    stim_dir[zero_idx & (choice_color == 1)] = 315
+    # the desired output of zero coherence trials is the choice (no correct or incorrect in zero coherence case)
+    desired_out[:, zero_idx, :] = temp_y[:, zero_idx, :]
+    return desired_out, stim_dir
+
+
 def get_max_iter(table):
     all_iters = []
     for row in table:
@@ -187,11 +206,12 @@ def combine_idx(*args):
     return temp
 
 
-def find_pref_dir(stim_dir, h):
+def find_pref_dir(stim_level, stim_dir, h):
+    nonZ_idx = np.array(stim_level) != b'Z'
     red_idx = stim_dir == 315
     green_idx = stim_dir == 135
-    red_mean = np.mean(h[stim_st_time:, red_idx, :], axis=(0, 1))
-    green_mean = np.mean(h[stim_st_time:, green_idx, :], axis=(0, 1))
+    red_mean = np.mean(h[stim_st_time:, (red_idx & nonZ_idx), :], axis=(0, 1))
+    green_mean = np.mean(h[stim_st_time:, (green_idx & nonZ_idx), :], axis=(0, 1))
     pref_red = red_mean > green_mean
     return pref_red
 
@@ -311,7 +331,7 @@ def plot_dir_selectivity(
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
     H_idx, M_idx, L_idx, Z_idx = find_coh_idx(stim_level)
     # find the trial of preferred direction
-    pref_red = find_pref_dir(stim_dir, h)
+    pref_red = find_pref_dir(stim_level, stim_dir, h)
     dir_red = stim_dir == 315
     pref_red_temp = np.tile(pref_red, (len(dir_red), 1))
     dir_red_temp = np.tile(np.reshape(dir_red, (-1, 1)), (1, len(pref_red)))
