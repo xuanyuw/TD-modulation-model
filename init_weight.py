@@ -55,6 +55,13 @@ def generate_rnn_mask():
     rnn_mask_init = rnn_mask_init * temp_mask
     return rnn_mask_init
 
+def get_fix_conn_mask(in_rng, rf_rng, conn_prob):
+    sz = (in_rng[1] - in_rng[0], rf_rng[1] - rf_rng[0])
+    temp = np.zeros(sz).flatten()
+    conn_idx = np.random.choice(np.arange(len(temp)), int(len(temp)*conn_prob), replace=False)
+    temp[conn_idx] = 1
+    temp_mask = temp.reshape(sz)
+    return temp_mask
 
 def generate_in_mask():
     in_mask_init = np.zeros((par['n_input'], par['n_hidden']))
@@ -66,13 +73,16 @@ def generate_in_mask():
     in_idx = par['input_idx']
     for i in range(len(in_idx)):
         # exc conn
-        sz = (in_rngs[in_idx[i]][1] - in_rngs[in_idx[i]][0], rf_rngs[i][1] - rf_rngs[i][0])
-        in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i][0]:rf_rngs[i][1]] = np.random.choice(
-            [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
+        
+        temp_mask = get_fix_conn_mask(in_rngs[in_idx[i]], rf_rngs[i], par['input_conn_prob'])
+        in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i][0]:rf_rngs[i][1]] = temp_mask
+        # in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i][0]:rf_rngs[i][1]] = np.random.choice(
+        #     [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
         # # inh conn
-        sz = (in_rngs[in_idx[i]][1] - in_rngs[in_idx[i]][0], rf_rngs[i+n][1] - rf_rngs[i+n][0])
-        in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i+n][0]:rf_rngs[i+n][1]] = np.random.choice(
-            [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
+        temp_mask = get_fix_conn_mask(in_rngs[in_idx[i]], rf_rngs[i+n], par['input_conn_prob'])
+        in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i+n][0]:rf_rngs[i+n][1]] = temp_mask
+        # in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i+n][0]:rf_rngs[i+n][1]] = np.random.choice(
+        #     [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
     return in_mask_init
 
 
@@ -81,8 +91,10 @@ def generate_out_mask():
     rf_rngs = calculate_rf_rngs()
     for idx in range(par['n_output']):
         i = par['output_rf'][idx]
-        out_mask_init[rf_rngs[i][0]:rf_rngs[i][1], idx] = np.random.choice(
-            [0, 1], size=(rf_rngs[i][1] - rf_rngs[i][0], ), p=(1-par['output_conn_prob'], par['output_conn_prob']))
+        temp_mask = get_fix_conn_mask(rf_rngs[i], (0, 1), par['output_conn_prob'])
+        out_mask_init[rf_rngs[i][0]:rf_rngs[i][1], idx] = temp_mask.flatten()
+        # out_mask_init[rf_rngs[i][0]:rf_rngs[i][1], idx] = np.random.choice(
+        #     [0, 1], size=(rf_rngs[i][1] - rf_rngs[i][0], ), p=(1-par['output_conn_prob'], par['output_conn_prob']))
     return out_mask_init
 
 

@@ -9,8 +9,8 @@ from stimulus import Stimulus
 from calc_params import par
 from utils import get_module_idx
 
-f_dir = "fix_in_out_conn_plots"
-all_rep = range(5)
+f_dir = "test_weights_model"
+all_rep = range(1)
 all_lr = [0.02]
 
 stim_st_time = 45
@@ -23,16 +23,16 @@ def main(rep, lr):
     # )
     # test_table = test_output.root
 
-    with open(os.path.join(f_dir, "weight_%d_lr%f.pth" % (rep, lr)), "rb") as f:
+    with open(os.path.join(f_dir, "init_weight_%d_lr%f.pth" % (rep, lr)), "rb") as f:
         all_weights = np.load(f, allow_pickle=True)
     all_weights = all_weights.item()
     stim = Stimulus(par)
     trial_info = stim.generate_trial()
     input_stats = check_in_weight(
-        all_weights["w_in0"].numpy(), all_weights["in_mask_init"].numpy(), trial_info
+        all_weights["w_in0"], all_weights["in_mask_init"], trial_info
     )
     output_stats = check_out_weight(
-        all_weights["w_out0"].numpy(), all_weights["out_mask_init"].numpy()
+        all_weights["w_out0"], all_weights["out_mask_init"]
     )
     with open(
         os.path.join(f_dir, "input_output_weight_stats_rep%d.json" % rep),
@@ -45,15 +45,15 @@ def main(rep, lr):
 def check_out_weight(out_weight, out_mask):
     masked_weight = out_weight * out_mask
     masked_weight[masked_weight == 0] = np.NaN
-    # c0_mean = round(np.nanmean(masked_weight[:, 0]).astype("float"), 3)
+    c0_mean = round(np.nanmean(masked_weight[:, 0]).astype("float"), 3)
     # c0_std = round(np.nanstd(masked_weight[:, 0]).astype("float"), 3)
-    # c1_mean = round(np.nanmean(masked_weight[:, 1]).astype("float"), 3)
+    c1_mean = round(np.nanmean(masked_weight[:, 1]).astype("float"), 3)
     # c1_std = round(np.nanstd(masked_weight[:, 1]).astype("float"), 3)
     c0_sum = round(np.nansum(masked_weight[:, 0]).astype("float"), 3)
     c1_sum = round(np.nansum(masked_weight[:, 1]).astype("float"), 3)
     out = {
-        "c0": c0_sum, # [c0_mean, c0_std],
-        "c1": c1_sum # [c1_mean, c1_std],
+        "c0": {'# conns': int(np.sum(out_mask[:, 0])), 'sum': c0_sum, 'mean': c0_mean},  # [c0_mean, c0_std],
+        "c1": {'# conns': int(np.sum(out_mask[:, 1])), 'sum': c1_sum, 'mean': c1_mean} # [c1_mean, c1_std],
     }
     return out
 
@@ -115,10 +115,12 @@ def calc_input_sum(in_weight, in_mask, stim, module_idx):
     out = []
     for tup in module_idx:
         out.append(
-            (
-                round(np.nansum(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
+            {
+                '# conns': int(np.sum(in_mask[:, tup[0]:tup[1]])),
+                'sum': round(np.nansum(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
+                'mean': round(np.nanmean(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
                 # round(np.nanstd(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
-            )
+            }
         )
     return out
 
