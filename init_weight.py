@@ -106,7 +106,8 @@ def generate_raw_weights():
     Initialize the weights without multiplying masks 
     The masks will be applied later.
     """
-    w_in0 = initialize(0.2, (par['n_input'], par['n_hidden']))
+    # w_in0 = initialize(0.2, (par['n_input'], par['n_hidden']))
+    w_in0 =  np.random.uniform(0, 0.2, size=(par['n_input'], par['n_hidden']))
     w_rnn0 = initialize(0.2, (par['n_hidden'], par['n_hidden']))
     w_rnn0[:, par['ind_inh']] = initialize(0.2, (par['n_hidden'], len(par['ind_inh'])))
     w_rnn0[par['ind_inh'], :] = initialize(0.2, (len(par['ind_inh']), par['n_hidden']))
@@ -116,7 +117,8 @@ def generate_raw_weights():
     # is used, so the strength of the recurrent weights is reduced to compensate
     if par['synapse_config'] == 'none':
         w_rnn0 = w_rnn0/3.
-    w_out0 = initialize(0.2, (par['n_hidden'], par['n_output']))
+    # w_out0 = initialize(0.2, (par['n_hidden'], par['n_output']))
+    w_out0 = np.random.uniform(0, 0.2, size=(par['n_hidden'], par['n_output']))
     b_rnn0 = np.zeros((1, par['n_hidden']), dtype=np.float32)
     b_out0 = np.zeros((1, par['n_output']), dtype=np.float32)
     return w_in0, w_rnn0, w_out0, b_rnn0, b_out0

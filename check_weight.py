@@ -7,10 +7,11 @@ import pickle
 import json
 from stimulus import Stimulus
 from calc_params import par
+from init_weight import initialize_weights
 from utils import get_module_idx
 
 f_dir = "test_weights_model"
-all_rep = range(1)
+all_rep = range(10)
 all_lr = [0.02]
 
 stim_st_time = 45
@@ -22,18 +23,16 @@ def main(rep, lr):
     #     os.path.join(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)), mode="r"
     # )
     # test_table = test_output.root
-
-    with open(os.path.join(f_dir, "init_weight_%d_lr%f.pth" % (rep, lr)), "rb") as f:
-        all_weights = np.load(f, allow_pickle=True)
-    all_weights = all_weights.item()
+    all_weights = initialize_weights(par["learning_rate"], par["rep"])
+    # with open(os.path.join(f_dir, "init_weight_%d_lr%f.pth" % (rep, lr)), "rb") as f:
+    #     all_weights = np.load(f, allow_pickle=True)
+    # all_weights = all_weights.item()
     stim = Stimulus(par)
     trial_info = stim.generate_trial()
     input_stats = check_in_weight(
         all_weights["w_in0"], all_weights["in_mask_init"], trial_info
     )
-    output_stats = check_out_weight(
-        all_weights["w_out0"], all_weights["out_mask_init"]
-    )
+    output_stats = check_out_weight(all_weights["w_out0"], all_weights["out_mask_init"])
     with open(
         os.path.join(f_dir, "input_output_weight_stats_rep%d.json" % rep),
         "w",
@@ -52,8 +51,16 @@ def check_out_weight(out_weight, out_mask):
     c0_sum = round(np.nansum(masked_weight[:, 0]).astype("float"), 3)
     c1_sum = round(np.nansum(masked_weight[:, 1]).astype("float"), 3)
     out = {
-        "c0": {'# conns': int(np.sum(out_mask[:, 0])), 'sum': c0_sum, 'mean': c0_mean},  # [c0_mean, c0_std],
-        "c1": {'# conns': int(np.sum(out_mask[:, 1])), 'sum': c1_sum, 'mean': c1_mean} # [c1_mean, c1_std],
+        "c0": {
+            "# conns": int(np.sum(out_mask[:, 0])),
+            "sum": c0_sum,
+            "mean": c0_mean,
+        },  # [c0_mean, c0_std],
+        "c1": {
+            "# conns": int(np.sum(out_mask[:, 1])),
+            "sum": c1_sum,
+            "mean": c1_mean,
+        },  # [c1_mean, c1_std],
     }
     return out
 
@@ -111,17 +118,21 @@ def get_diff_stim(trial_info):
 
 def calc_input_sum(in_weight, in_mask, stim, module_idx):
     in_val = stim @ (in_weight * in_mask)
+    # plt.imshow(in_val)
     in_val[in_val == 0] = np.NaN
+    in_w = in_weight * in_mask
+    # in_w[in_w==0] = np.NaN
     out = []
-    for tup in module_idx:
-        out.append(
-            {
-                '# conns': int(np.sum(in_mask[:, tup[0]:tup[1]])),
-                'sum': round(np.nansum(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
-                'mean': round(np.nanmean(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
-                # round(np.nanstd(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
-            }
-        )
+    m1_idx = np.extend(np.arange(module_idx[0]),)
+    out.append(
+        {
+            "# conns": int(np.sum(in_mask[:, tup[0] : tup[1]])),
+            "sum": round(np.nansum(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
+            "mean": round(np.nanmean(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
+            "weight_sum": np.sum(in_w[:, tup[0] : tup[1]]).astype("float")
+            # round(np.nanstd(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
+        }
+    )
     return out
 
 
