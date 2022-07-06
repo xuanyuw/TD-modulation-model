@@ -1,18 +1,18 @@
 {
-  "save_dir": "./test_weights_model/",
+  "save_dir": "./gamma_inout_reinit_model/",
   "log_fn": "log.txt",
   "save_fn": "model_results.pkl",
   "save_train_out": true,
   "save_test_out": true,
   "log_test": true,
-  "rep_num": 1,
+  "rep_num": 5,
   "rep": 0,
 
   "batch_size": 1024,
   "train_batch_size": 1024,
   "test_batch_size": 2048,
   "num_iterations": 1000,
-  "num_train_iterations": 1,
+  "num_train_iterations": 1000,
   "num_test_iterations": 1,
   "iters_between_outputs": 100,
   "learning_rate_li": [2e-2],
@@ -23,9 +23,9 @@
 
   "synapse_config": "full",
 
-  "within_rf_conn_prob": 0.5,
-  "cross_rf_conn_prob": 0.15,
-  "cross_module_conn_prob": 0.05,
+  "within_rf_conn_prob": 0.4,
+  "cross_rf_conn_prob": 0.2,
+  "cross_module_conn_prob": 0.1,
   "input_conn_prob": 0.4,
   "output_conn_prob": 0.4,
 

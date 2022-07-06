@@ -10,9 +10,9 @@ from calc_params import par
 from init_weight import initialize_weights
 from utils import get_module_idx
 
-f_dir = "test_weights_model"
-all_rep = range(10)
-all_lr = [0.02]
+f_dir = "uniform_in_out_model"
+all_rep = range(3)
+all_lr = [0.04]
 
 stim_st_time = 45
 target_st_time = 25
@@ -23,10 +23,10 @@ def main(rep, lr):
     #     os.path.join(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)), mode="r"
     # )
     # test_table = test_output.root
-    all_weights = initialize_weights(par["learning_rate"], par["rep"])
-    # with open(os.path.join(f_dir, "init_weight_%d_lr%f.pth" % (rep, lr)), "rb") as f:
-    #     all_weights = np.load(f, allow_pickle=True)
-    # all_weights = all_weights.item()
+    # all_weights = initialize_weights(par["learning_rate"], par["rep"])
+    with open(os.path.join(f_dir, "init_weight_%d_lr%f.pth" % (rep, lr)), "rb") as f:
+        all_weights = np.load(f, allow_pickle=True)
+    all_weights = all_weights.item()
     stim = Stimulus(par)
     trial_info = stim.generate_trial()
     input_stats = check_in_weight(
@@ -34,7 +34,7 @@ def main(rep, lr):
     )
     output_stats = check_out_weight(all_weights["w_out0"], all_weights["out_mask_init"])
     with open(
-        os.path.join(f_dir, "input_output_weight_stats_rep%d.json" % rep),
+        os.path.join(f_dir, "input_output_weight_stats_rep%d_lr%f.json" % (rep, lr)),
         "w",
         encoding="utf-8",
     ) as f:
@@ -123,18 +123,28 @@ def calc_input_sum(in_weight, in_mask, stim, module_idx):
     in_w = in_weight * in_mask
     # in_w[in_w==0] = np.NaN
     out = []
-    m1_idx = np.extend(np.arange(module_idx[0]),)
+    m1_idx = np.hstack((np.arange(module_idx[0][0], module_idx[0][1]),np.arange(module_idx[2][0],module_idx[2][1])))
+    m2_idx = np.hstack((np.arange(module_idx[1][0], module_idx[1][1]),np.arange(module_idx[3][0],module_idx[3][1])))
     out.append(
         {
-            "# conns": int(np.sum(in_mask[:, tup[0] : tup[1]])),
-            "sum": round(np.nansum(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
-            "mean": round(np.nanmean(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
-            "weight_sum": np.sum(in_w[:, tup[0] : tup[1]]).astype("float")
+            "# conns": int(np.sum(in_mask[:, m1_idx])),
+            "sum": round(np.nansum(in_val[:, m1_idx]).astype("float"), 3),
+            "mean": round(np.nanmean(in_val[:, m1_idx]).astype("float"), 3),
+            "weight_sum": np.sum(in_w[:, m1_idx]).astype("float")
+            # round(np.nanstd(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
+        }
+    )
+    out.append(
+        {
+            "# conns": int(np.sum(in_mask[:, m2_idx])),
+            "sum": round(np.nansum(in_val[:, m2_idx]).astype("float"), 3),
+            "mean": round(np.nanmean(in_val[:, m2_idx]).astype("float"), 3),
+            "weight_sum": np.sum(in_w[:, m2_idx]).astype("float")
             # round(np.nanstd(in_val[:, tup[0] : tup[1]]).astype("float"), 3),
         }
     )
     return out
 
-
-for rep in all_rep:
-    main(rep, 0.02)
+for lr in all_lr:
+    for rep in all_rep:
+        main(rep, lr)

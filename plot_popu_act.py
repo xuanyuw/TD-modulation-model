@@ -5,7 +5,7 @@ import os
 from utils import *
 
 
-f_dir = "fix_in_out_conn_plots"
+f_dir = "gamma_inout_reinit_model"
 all_rep = range(5)
 all_lr = [0.02]
 
@@ -31,91 +31,91 @@ def main(lr, rep):
     # plot population neural activity
     normalized_h = min_max_normalize(h)
     m_idx = get_module_idx()
-    # plot_dir_selectivity(
-    #     normalized_h,
-    #     m_idx[0],
-    #     m_idx[2],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     stim_dir,
-    #     "Motion_Excitatory_Direction_Selectivity",
-    #     True,
-    # )
-    # plot_dir_selectivity(
-    #     normalized_h,
-    #     m_idx[1],
-    #     m_idx[3],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     stim_dir,
-    #     "Target_Excitatory_Direction_Selectivity",
-    #     True,
-    # )
-    # plot_dir_selectivity(
-    #     normalized_h,
-    #     m_idx[4],
-    #     m_idx[6],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     stim_dir,
-    #     "Motion_Inhibitory_Direction_Selectivity",
-    #     True,
-    # )
-    # plot_dir_selectivity(
-    #     normalized_h,
-    #     m_idx[5],
-    #     m_idx[7],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     stim_dir,
-    #     "Target_Inhibitory_Direction_Selectivity",
-    #     True,
-    # )
+    plot_dir_selectivity(
+        normalized_h,
+        m_idx[0],
+        m_idx[2],
+        y,
+        desired_out,
+        stim_level,
+        stim_dir,
+        "Motion_Excitatory_Direction_Selectivity",
+        True,
+    )
+    plot_dir_selectivity(
+        normalized_h,
+        m_idx[1],
+        m_idx[3],
+        y,
+        desired_out,
+        stim_level,
+        stim_dir,
+        "Target_Excitatory_Direction_Selectivity",
+        True,
+    )
+    plot_dir_selectivity(
+        normalized_h,
+        m_idx[4],
+        m_idx[6],
+        y,
+        desired_out,
+        stim_level,
+        stim_dir,
+        "Motion_Inhibitory_Direction_Selectivity",
+        True,
+    )
+    plot_dir_selectivity(
+        normalized_h,
+        m_idx[5],
+        m_idx[7],
+        y,
+        desired_out,
+        stim_level,
+        stim_dir,
+        "Target_Inhibitory_Direction_Selectivity",
+        True,
+    )
 
-    # plot_sac_selectivity(
-    #     normalized_h,
-    #     m_idx[0],
-    #     m_idx[2],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     "Motion_Excitatory_Saccade_Selectivity",
-    #     True,
-    # )
-    # plot_sac_selectivity(
-    #     normalized_h,
-    #     m_idx[1],
-    #     m_idx[3],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     "Target_Excitatory_Saccade_Selectivity",
-    #     True,
-    # )
-    # plot_sac_selectivity(
-    #     normalized_h,
-    #     m_idx[4],
-    #     m_idx[6],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     "Motion_Inhibitory_Saccade_Selectivity",
-    #     True,
-    # )
-    # plot_sac_selectivity(
-    #     normalized_h,
-    #     m_idx[5],
-    #     m_idx[7],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     "Target_Inhibitory_Saccade_Selectivity",
-    #     True,
-    # )
+    plot_sac_selectivity(
+        normalized_h,
+        m_idx[0],
+        m_idx[2],
+        y,
+        desired_out,
+        stim_level,
+        "Motion_Excitatory_Saccade_Selectivity",
+        True,
+    )
+    plot_sac_selectivity(
+        normalized_h,
+        m_idx[1],
+        m_idx[3],
+        y,
+        desired_out,
+        stim_level,
+        "Target_Excitatory_Saccade_Selectivity",
+        True,
+    )
+    plot_sac_selectivity(
+        normalized_h,
+        m_idx[4],
+        m_idx[6],
+        y,
+        desired_out,
+        stim_level,
+        "Motion_Inhibitory_Saccade_Selectivity",
+        True,
+    )
+    plot_sac_selectivity(
+        normalized_h,
+        m_idx[5],
+        m_idx[7],
+        y,
+        desired_out,
+        stim_level,
+        "Target_Inhibitory_Saccade_Selectivity",
+        True,
+    )
 
     plot_sac_selectivity_temp(
         normalized_h,
@@ -162,7 +162,7 @@ def main(lr, rep):
 def plot_dir_selectivity(
     h, m1_idx, m2_idx, y, desired_out, stim_level, stim_dir, title, save_plt
 ):
-    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(12, 4))
     H_idx, M_idx, L_idx, Z_idx = find_coh_idx(stim_level)
     # find the trial of preferred direction
     pref_red = find_pref_dir(stim_level, stim_dir, h, stim_st_time)
@@ -237,7 +237,7 @@ def plot_dir_selectivity(
     ax2.set_title("Contra-lateral Saccade")
     ax2.set_ylabel("Average activity")
     ax2.set_xlabel("Time")
-    # ax2.legend()
+    ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     ax2.axvline(x=target_st_time, color="k")
     ax2.axvline(x=stim_st_time, color="k")
 
@@ -256,7 +256,7 @@ def plot_dir_selectivity(
 def plot_sac_selectivity(
     h, m1_idx, m2_idx, y, desired_out, stim_level, title, save_plt
 ):
-    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(10, 4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(12, 4))
     H_idx, M_idx, L_idx, Z_idx = find_coh_idx(stim_level)
     correct_idx = find_correct_idx(y, desired_out)
     # find the trial of preferred direction
@@ -324,7 +324,7 @@ def plot_sac_selectivity(
     ax2.set_title("Module 2")
     ax2.set_ylabel("Average activity")
     ax2.set_xlabel("Time")
-    # ax2.legend()
+    ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     ax2.axvline(x=target_st_time, color="k")
     ax2.axvline(x=stim_st_time, color="k")
 

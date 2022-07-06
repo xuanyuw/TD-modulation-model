@@ -19,7 +19,7 @@ def trial(par, train=True):
     iter_between_outputs = par["iters_between_outputs"]
     stim = Stimulus(par)
 
-    model = Model(par, train=train)
+    model = Model(par, stim, train=train)
     opt = bp.optimizers.Adam(par["learning_rate"], train_vars=model.train_vars())
     if train:
         grad_f = bm.grad(

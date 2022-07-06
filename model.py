@@ -9,7 +9,7 @@ bp.math.set_platform('cpu')
 
 class Model(bp.layers.Module):
 
-    def __init__(self, par, train=True):
+    def __init__(self, par, stim, train=True):
         super(Model, self).__init__()
 
         self.syn_x = bm.Variable(par['syn_x_init'])
@@ -36,7 +36,7 @@ class Model(bp.layers.Module):
 
         # weights 
         if train:
-            all_weights = initialize_weights(par['learning_rate'], par['rep'])
+            all_weights = initialize_weights(par['learning_rate'], par['rep'], stim)
         else:
             all_weights = load(
                 join(par['save_dir'], par['weight_fn']), allow_pickle=True)
@@ -44,8 +44,10 @@ class Model(bp.layers.Module):
         self.in_mask = bm.array(all_weights['in_mask_init'])
         self.rnn_mask = bm.array(all_weights['rnn_mask_init'])
         self.out_mask = bm.array(all_weights['out_mask_init'])
+        # self.w_in = bm.TrainVar(all_weights['w_in0'])
         self.w_in = bm.Variable(all_weights['w_in0'])
         self.w_rnn = bm.TrainVar(all_weights['w_rnn0'])
+        # self.w_out = bm.TrainVar(all_weights['w_out0'])
         self.w_out = bm.Variable(all_weights['w_out0'])
         self.b_rnn = bm.TrainVar(all_weights['b_rnn0'])
         self.b_out = bm.Variable(all_weights['b_out0'])

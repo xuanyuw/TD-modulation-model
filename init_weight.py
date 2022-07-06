@@ -1,9 +1,12 @@
+
 from calc_params import par
 from math import ceil
 import numpy as np
 import brainpy.math as bm
 from jax import checking_leaks
 from os.path import join
+from utils import get_module_idx, get_diff_stim, calc_input_sum
+from time import time
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -101,13 +104,78 @@ def generate_out_mask():
 def initialize(gamma_shape, size):
     return np.random.gamma(gamma_shape, size=size).astype(np.float32)
 
+def re_init_win(in_weight, in_mask, stim):
+    all_module_idx = get_module_idx()
+    g_motion, r_motion, m1_g, m1_r = get_diff_stim(stim.generate_trial())
+    motion_rf_idx = [0, 2, 4, 6]
+    re_init_cond = lambda x: min(x) < 0.8*max(x)
+    re_init = True
+    print('re-initializing input weights...')
+    start = time()
+    while re_init:
+        g_motion_vals = calc_input_sum(
+            in_weight, in_mask, g_motion, [all_module_idx[x] for x in motion_rf_idx]
+        )
+        re_init = re_init_cond(g_motion_vals)
+
+        r_motion_vals = calc_input_sum(
+            in_weight, in_mask, r_motion, [all_module_idx[x] for x in motion_rf_idx]
+        )
+        re_init = re_init or re_init_cond(r_motion_vals)
+
+        m1_g_vals = calc_input_sum(
+            in_weight,
+            in_mask,
+            m1_g,
+            [
+                all_module_idx[x]
+                for x in range(len(all_module_idx))
+                if x not in motion_rf_idx
+            ],
+        )
+        re_init = re_init or re_init_cond(m1_g_vals)
+
+        m1_r_vals = calc_input_sum(
+            in_weight,
+            in_mask,
+            m1_r,
+            [
+                all_module_idx[x]
+                for x in range(len(all_module_idx))
+                if x not in motion_rf_idx
+            ],
+        )
+        re_init = re_init or re_init_cond(m1_r_vals)
+
+        if re_init:
+            in_weight = initialize(0.1, (par['n_input'], par['n_hidden']))
+    end = time()
+    print('elapsed time: %f' %(end-start))
+    return in_weight
+
+def re_init_wout(out_weight, out_mask):
+    masked_weight = out_weight * out_mask
+    all_sums = (round(np.sum(masked_weight[:, 0]).astype("float"), 3)), round(np.sum(masked_weight[:, 1]).astype("float"), 3)
+    print('re-initializing output weights...')
+    start = time()
+    while min(all_sums)<0.8*max(all_sums):
+        out_weight = initialize(0.1, (par['n_hidden'], par['n_output']))
+        masked_weight = out_weight * out_mask
+        all_sums = (round(np.sum(masked_weight[:, 0]).astype("float"), 3)), round(np.sum(masked_weight[:, 1]).astype("float"), 3)
+    end = time()
+    print('elapsed time: %f' %(end-start))
+    return out_weight
+    
+
+
+
 def generate_raw_weights():
     """
     Initialize the weights without multiplying masks 
     The masks will be applied later.
     """
-    # w_in0 = initialize(0.2, (par['n_input'], par['n_hidden']))
-    w_in0 =  np.random.uniform(0, 0.2, size=(par['n_input'], par['n_hidden']))
+    w_in0 = initialize(0.1, (par['n_input'], par['n_hidden']))
+    # w_in0 =  np.random.uniform(0, 0.2, size=(par['n_input'], par['n_hidden']))
     w_rnn0 = initialize(0.2, (par['n_hidden'], par['n_hidden']))
     w_rnn0[:, par['ind_inh']] = initialize(0.2, (par['n_hidden'], len(par['ind_inh'])))
     w_rnn0[par['ind_inh'], :] = initialize(0.2, (len(par['ind_inh']), par['n_hidden']))
@@ -117,19 +185,23 @@ def generate_raw_weights():
     # is used, so the strength of the recurrent weights is reduced to compensate
     if par['synapse_config'] == 'none':
         w_rnn0 = w_rnn0/3.
-    # w_out0 = initialize(0.2, (par['n_hidden'], par['n_output']))
-    w_out0 = np.random.uniform(0, 0.2, size=(par['n_hidden'], par['n_output']))
+    w_out0 = initialize(0.1, (par['n_hidden'], par['n_output']))
+    # w_out0 = np.random.uniform(0, 0.2, size=(par['n_hidden'], par['n_output']))
     b_rnn0 = np.zeros((1, par['n_hidden']), dtype=np.float32)
     b_out0 = np.zeros((1, par['n_output']), dtype=np.float32)
     return w_in0, w_rnn0, w_out0, b_rnn0, b_out0
 
 
-def initialize_weights(lr=0, rep=0):
+def initialize_weights(lr=0, rep=0, stim=None):
     print('Initializing Weights...')
     in_mask_init = generate_in_mask()
     rnn_mask_init = generate_rnn_mask()
     out_mask_init = generate_out_mask()
     w_in0, w_rnn0, w_out0, b_rnn0, b_out0 = generate_raw_weights()
+    if stim is not None:
+        w_in0 = re_init_win(w_in0, in_mask_init, stim)
+        w_out0 = re_init_wout(w_out0, out_mask_init)
+
     w_in0 *= in_mask_init
     w_rnn0 *= rnn_mask_init
     w_out0 *= out_mask_init

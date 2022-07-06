@@ -240,3 +240,20 @@ def get_temp_h(coh_idx, h, y, pref_dir, m1_idx, m2_idx, mode, correct_idx=None):
             h[:, ipsi_pref_idx_m2],
             h[:, ipsi_nonpref_idx_m2],
         )
+
+def get_diff_stim(trial_info):
+    idx = np.where(trial_info["stim_dir"] == 135)[0][0]
+    g_motion = trial_info["neural_input"][:, idx, :]
+    idx = np.where(trial_info["stim_dir"] == 315)[0][0]
+    r_motion = trial_info["neural_input"][:, idx, :]
+    idx = np.where(trial_info["targ_loc"] == 0)[0][0]
+    m1_g = trial_info["neural_input"][:, idx, :]
+    idx = np.where(trial_info["targ_loc"] == 1)[0][0]
+    m1_r = trial_info["neural_input"][:, idx, :]
+    return g_motion, r_motion, m1_g, m1_r
+
+def calc_input_sum(in_weight, in_mask, stim, module_idx):
+    in_val = stim @ (in_weight * in_mask)
+    m1_idx = np.hstack((np.arange(module_idx[0][0], module_idx[0][1]),np.arange(module_idx[2][0],module_idx[2][1])))
+    m2_idx = np.hstack((np.arange(module_idx[1][0], module_idx[1][1]),np.arange(module_idx[3][0],module_idx[3][1])))
+    return (np.sum(in_val[:, m1_idx]), np.sum(in_val[:, m2_idx]))
