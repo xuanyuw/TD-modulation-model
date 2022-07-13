@@ -37,7 +37,7 @@ def main(lr, rep):
 
 
 def get_temp_y(coh_idx, y, choice, correct_idx=None):
-
+    choice =  choice.astype(bool)
     left_idx = combine_idx(~choice, coh_idx, correct_idx)
     right_idx = combine_idx(choice, coh_idx, correct_idx)
 

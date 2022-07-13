@@ -31,91 +31,91 @@ def main(lr, rep):
     # plot population neural activity
     normalized_h = min_max_normalize(h)
     m_idx = get_module_idx()
-    plot_dir_selectivity(
-        normalized_h,
-        m_idx[0],
-        m_idx[2],
-        y,
-        desired_out,
-        stim_level,
-        stim_dir,
-        "Motion_Excitatory_Direction_Selectivity",
-        True,
-    )
-    plot_dir_selectivity(
-        normalized_h,
-        m_idx[1],
-        m_idx[3],
-        y,
-        desired_out,
-        stim_level,
-        stim_dir,
-        "Target_Excitatory_Direction_Selectivity",
-        True,
-    )
-    plot_dir_selectivity(
-        normalized_h,
-        m_idx[4],
-        m_idx[6],
-        y,
-        desired_out,
-        stim_level,
-        stim_dir,
-        "Motion_Inhibitory_Direction_Selectivity",
-        True,
-    )
-    plot_dir_selectivity(
-        normalized_h,
-        m_idx[5],
-        m_idx[7],
-        y,
-        desired_out,
-        stim_level,
-        stim_dir,
-        "Target_Inhibitory_Direction_Selectivity",
-        True,
-    )
+    # plot_dir_selectivity(
+    #     normalized_h,
+    #     m_idx[0],
+    #     m_idx[2],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     stim_dir,
+    #     "Motion_Excitatory_Direction_Selectivity",
+    #     True,
+    # )
+    # plot_dir_selectivity(
+    #     normalized_h,
+    #     m_idx[1],
+    #     m_idx[3],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     stim_dir,
+    #     "Target_Excitatory_Direction_Selectivity",
+    #     True,
+    # )
+    # plot_dir_selectivity(
+    #     normalized_h,
+    #     m_idx[4],
+    #     m_idx[6],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     stim_dir,
+    #     "Motion_Inhibitory_Direction_Selectivity",
+    #     True,
+    # )
+    # plot_dir_selectivity(
+    #     normalized_h,
+    #     m_idx[5],
+    #     m_idx[7],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     stim_dir,
+    #     "Target_Inhibitory_Direction_Selectivity",
+    #     True,
+    # )
 
-    plot_sac_selectivity(
-        normalized_h,
-        m_idx[0],
-        m_idx[2],
-        y,
-        desired_out,
-        stim_level,
-        "Motion_Excitatory_Saccade_Selectivity",
-        True,
-    )
-    plot_sac_selectivity(
-        normalized_h,
-        m_idx[1],
-        m_idx[3],
-        y,
-        desired_out,
-        stim_level,
-        "Target_Excitatory_Saccade_Selectivity",
-        True,
-    )
-    plot_sac_selectivity(
-        normalized_h,
-        m_idx[4],
-        m_idx[6],
-        y,
-        desired_out,
-        stim_level,
-        "Motion_Inhibitory_Saccade_Selectivity",
-        True,
-    )
-    plot_sac_selectivity(
-        normalized_h,
-        m_idx[5],
-        m_idx[7],
-        y,
-        desired_out,
-        stim_level,
-        "Target_Inhibitory_Saccade_Selectivity",
-        True,
-    )
+    # plot_sac_selectivity(
+    #     normalized_h,
+    #     m_idx[0],
+    #     m_idx[2],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Motion_Excitatory_Saccade_Selectivity",
+    #     True,
+    # )
+    # plot_sac_selectivity(
+    #     normalized_h,
+    #     m_idx[1],
+    #     m_idx[3],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Target_Excitatory_Saccade_Selectivity",
+    #     True,
+    # )
+    # plot_sac_selectivity(
+    #     normalized_h,
+    #     m_idx[4],
+    #     m_idx[6],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Motion_Inhibitory_Saccade_Selectivity",
+    #     True,
+    # )
+    # plot_sac_selectivity(
+    #     normalized_h,
+    #     m_idx[5],
+    #     m_idx[7],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Target_Inhibitory_Saccade_Selectivity",
+    #     True,
+    # )
 
     plot_sac_selectivity_temp(
         normalized_h,
@@ -341,16 +341,14 @@ def plot_sac_selectivity(
 
 
 def get_temp_h_new(coh_idx, h, choice, m1_idx, m2_idx, correct_idx=None):
+    choice = choice.astype(bool)
+    left_idx = combine_idx(~choice, coh_idx, correct_idx)
+    right_idx = combine_idx(choice, coh_idx, correct_idx)
 
-    left_idx_m1 = combine_idx(~choice, coh_idx, correct_idx)
-    right_idx_m1 = combine_idx(choice, coh_idx, correct_idx)
-    left_idx_m2 = combine_idx(~choice, coh_idx, correct_idx)
-    right_idx_m2 = combine_idx(choice, coh_idx, correct_idx)
-
-    h_left_m1 = h[:, left_idx_m1, m1_idx[0] : m1_idx[1]]
-    h_right_m1 = h[:, right_idx_m1, m1_idx[0] : m1_idx[1]]
-    h_left_m2 = h[:, left_idx_m2, m2_idx[0] : m2_idx[1]]
-    h_right_m2 = h[:, right_idx_m2, m2_idx[0] : m2_idx[1]]
+    h_left_m1 = h[:, left_idx, m1_idx[0] : m1_idx[1]]
+    h_right_m1 = h[:, right_idx, m1_idx[0] : m1_idx[1]]
+    h_left_m2 = h[:, left_idx, m2_idx[0] : m2_idx[1]]
+    h_right_m2 = h[:, right_idx, m2_idx[0] : m2_idx[1]]
 
     return h_left_m1, h_right_m1, h_left_m2, h_right_m2
 
