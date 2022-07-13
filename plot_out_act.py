@@ -27,7 +27,13 @@ def main(lr, rep):
     stim_level = test_table["stim_level_iter%d" % max_iter][:]
     stim_dir = test_table["stim_dir_iter%d" % max_iter][:]
     desired_out, stim_dir = correct_zero_coh(y, stim_level, stim_dir, desired_out)
-    plot_output_sac_selectivity(y, desired_out, stim_level, 'Ouput_saccade_selectivity_rep%d_lr%f'%(rep, lr), True)
+    plot_output_sac_selectivity(
+        y,
+        desired_out,
+        stim_level,
+        "Ouput_saccade_selectivity_rep%d_lr%f" % (rep, lr),
+        True,
+    )
 
 
 def get_temp_y(coh_idx, y, choice, correct_idx=None):
@@ -41,7 +47,8 @@ def get_temp_y(coh_idx, y, choice, correct_idx=None):
     y_right_m2 = y[:, right_idx, 1]
 
     return y_left_m1, y_right_m1, y_left_m2, y_right_m2
-    
+
+
 def plot_output_sac_selectivity(y, desired_out, stim_level, title, save_plt):
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(12, 4))
     H_idx, M_idx, L_idx, Z_idx = find_coh_idx(stim_level)
@@ -52,49 +59,42 @@ def plot_output_sac_selectivity(y, desired_out, stim_level, title, save_plt):
     if sum(Z_idx) != 0:
         h_left_m1, h_right_m1, h_left_m2, h_right_m2 = get_temp_y(Z_idx, y, choice)
         ax1.plot(
-            np.mean(h_right_m1, axis=1),
-            linestyle="--",
-            color="k",
-            label="right, Z",
+            np.mean(h_right_m1, axis=1), linestyle="--", color="k", label="right, Z",
         )
         ax1.plot(np.mean(h_left_m1, axis=1), color="k", label="left, Z")
         ax2.plot(
-            np.mean(h_right_m2, axis=1),
-            linestyle="--",
-            color="k",
-            label="right, Z",
+            np.mean(h_right_m2, axis=1), linestyle="--", color="k", label="right, Z",
         )
         ax2.plot(np.mean(h_left_m2, axis=1), color="k", label="left, Z")
 
-    h_left_m1, h_right_m1, h_left_m2, h_right_m2 = get_temp_y(L_idx, y, choice, correct_idx)
-    ax1.plot(
-        np.mean(h_right_m1, axis=1), linestyle="--", color="b", label="right, L"
+    h_left_m1, h_right_m1, h_left_m2, h_right_m2 = get_temp_y(
+        L_idx, y, choice, correct_idx
     )
+    ax1.plot(np.mean(h_right_m1, axis=1), linestyle="--", color="b", label="right, L")
     ax1.plot(np.mean(h_left_m1, axis=1), color="b", label="left, L")
-    ax2.plot(
-        np.mean(h_right_m2, axis=1), linestyle="--", color="b", label="right, L"
-    )
+    ax2.plot(np.mean(h_right_m2, axis=1), linestyle="--", color="b", label="right, L")
     ax2.plot(np.mean(h_left_m2, axis=1), color="b", label="left, L")
 
-    h_left_m1, h_right_m1, h_left_m2, h_right_m2 = get_temp_y(M_idx, y, choice, correct_idx)
-    ax1.plot(
-        np.mean(h_right_m1, axis=1), linestyle="--", color="g", label="right, M"
+    h_left_m1, h_right_m1, h_left_m2, h_right_m2 = get_temp_y(
+        M_idx, y, choice, correct_idx
     )
+    ax1.plot(np.mean(h_right_m1, axis=1), linestyle="--", color="g", label="right, M")
     ax1.plot(np.mean(h_left_m1, axis=1), color="g", label="left, M")
-    ax2.plot(
-        np.mean(h_right_m2, axis=1), linestyle="--", color="g", label="right, M"
-    )
+    ax2.plot(np.mean(h_right_m2, axis=1), linestyle="--", color="g", label="right, M")
     ax2.plot(np.mean(h_left_m2, axis=1), color="g", label="left, M")
 
-    h_left_m1, h_right_m1, h_left_m2, h_right_m2 = get_temp_y(H_idx, y, choice, correct_idx)
-    ax1.plot(
-        np.mean(h_right_m1, axis=1), linestyle="--", color="r", label="right, H"
-    )
-    ax1.plot(np.mean(h_left_m1, axis=1), color="r", label="left, H")
-    ax2.plot(
-        np.mean(h_right_m2, axis=1), linestyle="--", color="r", label="right, H"
-    )
-    ax2.plot(np.mean(h_left_m2, axis=1), color="r", label="left, H")
+    if sum(H_idx) != 0:
+        h_left_m1, h_right_m1, h_left_m2, h_right_m2 = get_temp_y(
+            H_idx, y, choice, correct_idx
+        )
+        ax1.plot(
+            np.mean(h_right_m1, axis=1), linestyle="--", color="r", label="right, H"
+        )
+        ax1.plot(np.mean(h_left_m1, axis=1), color="r", label="left, H")
+        ax2.plot(
+            np.mean(h_right_m2, axis=1), linestyle="--", color="r", label="right, H"
+        )
+        ax2.plot(np.mean(h_left_m2, axis=1), color="r", label="left, H")
 
     ax1.set_title("Module 1")
     ax1.set_ylabel("Average activity")
@@ -112,9 +112,7 @@ def plot_output_sac_selectivity(y, desired_out, stim_level, title, save_plt):
     plt.suptitle(title)
 
     if save_plt:
-        pic_dir = os.path.join(
-            f_dir, "output_neuron_act"
-        )
+        pic_dir = os.path.join(f_dir, "output_neuron_act")
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.png" % (title)))
