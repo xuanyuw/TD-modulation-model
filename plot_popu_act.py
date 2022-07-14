@@ -31,17 +31,17 @@ def main(lr, rep):
     # plot population neural activity
     normalized_h = min_max_normalize(h)
     m_idx = get_module_idx()
-    # plot_dir_selectivity(
-    #     normalized_h,
-    #     m_idx[0],
-    #     m_idx[2],
-    #     y,
-    #     desired_out,
-    #     stim_level,
-    #     stim_dir,
-    #     "Motion_Excitatory_Direction_Selectivity",
-    #     True,
-    # )
+    plot_dir_selectivity(
+        normalized_h,
+        m_idx[0],
+        m_idx[2],
+        y,
+        desired_out,
+        stim_level,
+        stim_dir,
+        "Motion_Excitatory_Direction_Selectivity",
+        True,
+    )
     # plot_dir_selectivity(
     #     normalized_h,
     #     m_idx[1],
@@ -127,16 +127,16 @@ def main(lr, rep):
     #     "Motion_Excitatory_Saccade_Selectivity_noPrefSacGrp",
     #     True,
     # )
-    plot_sac_selectivity_temp(
-        h,
-        m_idx[1],
-        m_idx[3],
-        y,
-        desired_out,
-        stim_level,
-        "Target_Excitatory_Saccade_Selectivity_noPrefSacGrp",
-        True,
-    )
+    # plot_sac_selectivity_temp(
+    #     h,
+    #     m_idx[1],
+    #     m_idx[3],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Target_Excitatory_Saccade_Selectivity_noPrefSacGrp",
+    #     True,
+    # )
     # plot_sac_selectivity_temp(
     #     normalized_h,
     #     m_idx[4],
@@ -147,16 +147,16 @@ def main(lr, rep):
     #     "Motion_Inhibitory_Saccade_Selectivity_noPrefSacGrp",
     #     False,
     # )
-    plot_sac_selectivity_temp(
-        h,
-        m_idx[5],
-        m_idx[7],
-        y,
-        desired_out,
-        stim_level,
-        "Target_Inhibitory_Saccade_Selectivity_noPrefSacGrp",
-        True,
-    )
+    # plot_sac_selectivity_temp(
+    #     h,
+    #     m_idx[5],
+    #     m_idx[7],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Target_Inhibitory_Saccade_Selectivity_noPrefSacGrp",
+    #     True,
+    # )
 
 
 def plot_dir_selectivity(
