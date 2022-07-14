@@ -117,18 +117,18 @@ def main(lr, rep):
     #     True,
     # )
 
+    # plot_sac_selectivity_temp(
+    #     normalized_h,
+    #     m_idx[0],
+    #     m_idx[2],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Motion_Excitatory_Saccade_Selectivity_noPrefSacGrp",
+    #     True,
+    # )
     plot_sac_selectivity_temp(
-        normalized_h,
-        m_idx[0],
-        m_idx[2],
-        y,
-        desired_out,
-        stim_level,
-        "Motion_Excitatory_Saccade_Selectivity_noPrefSacGrp",
-        True,
-    )
-    plot_sac_selectivity_temp(
-        normalized_h,
+        h,
         m_idx[1],
         m_idx[3],
         y,
@@ -137,18 +137,18 @@ def main(lr, rep):
         "Target_Excitatory_Saccade_Selectivity_noPrefSacGrp",
         True,
     )
+    # plot_sac_selectivity_temp(
+    #     normalized_h,
+    #     m_idx[4],
+    #     m_idx[6],
+    #     y,
+    #     desired_out,
+    #     stim_level,
+    #     "Motion_Inhibitory_Saccade_Selectivity_noPrefSacGrp",
+    #     False,
+    # )
     plot_sac_selectivity_temp(
-        normalized_h,
-        m_idx[4],
-        m_idx[6],
-        y,
-        desired_out,
-        stim_level,
-        "Motion_Inhibitory_Saccade_Selectivity_noPrefSacGrp",
-        True,
-    )
-    plot_sac_selectivity_temp(
-        normalized_h,
+        h,
         m_idx[5],
         m_idx[7],
         y,

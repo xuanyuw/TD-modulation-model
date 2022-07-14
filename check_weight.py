@@ -10,9 +10,9 @@ from calc_params import par
 from init_weight import initialize_weights
 from utils import get_module_idx
 
-f_dir = "uniform_in_out_model"
-all_rep = range(3)
-all_lr = [0.04]
+f_dir = "gamma_inout_reinit_model"
+all_rep = range(5)
+all_lr = [0.02]
 
 stim_st_time = 45
 target_st_time = 25
@@ -52,12 +52,12 @@ def check_out_weight(out_weight, out_mask):
     c1_sum = round(np.nansum(masked_weight[:, 1]).astype("float"), 3)
     out = {
         "c0": {
-            "# conns": int(np.sum(out_mask[:, 0])),
+            # "# conns": int(np.sum(out_mask[:, 0])),
             "sum": c0_sum,
             "mean": c0_mean,
         },  # [c0_mean, c0_std],
         "c1": {
-            "# conns": int(np.sum(out_mask[:, 1])),
+            # "# conns": int(np.sum(out_mask[:, 1])),
             "sum": c1_sum,
             "mean": c1_mean,
         },  # [c1_mean, c1_std],
@@ -127,7 +127,7 @@ def calc_input_sum(in_weight, in_mask, stim, module_idx):
     m2_idx = np.hstack((np.arange(module_idx[1][0], module_idx[1][1]),np.arange(module_idx[3][0],module_idx[3][1])))
     out.append(
         {
-            "# conns": int(np.sum(in_mask[:, m1_idx])),
+            # "# conns": int(np.sum(in_mask[:, m1_idx])),
             "sum": round(np.nansum(in_val[:, m1_idx]).astype("float"), 3),
             "mean": round(np.nanmean(in_val[:, m1_idx]).astype("float"), 3),
             "weight_sum": np.sum(in_w[:, m1_idx]).astype("float")
@@ -136,7 +136,7 @@ def calc_input_sum(in_weight, in_mask, stim, module_idx):
     )
     out.append(
         {
-            "# conns": int(np.sum(in_mask[:, m2_idx])),
+            # "# conns": int(np.sum(in_mask[:, m2_idx])),
             "sum": round(np.nansum(in_val[:, m2_idx]).astype("float"), 3),
             "mean": round(np.nanmean(in_val[:, m2_idx]).astype("float"), 3),
             "weight_sum": np.sum(in_w[:, m2_idx]).astype("float")
