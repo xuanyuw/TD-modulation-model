@@ -38,7 +38,7 @@ def calc_parameters():
     # since term will be multiplied by par['alpha_neuron']
     par['noise_in'] = np.sqrt(2/par['alpha_neuron'])*par['noise_in_sd']
     # weight cost in loss function
-    par['weight_cost'] = par['lambda_weight'] / par['n_hidden']**2
+    # par['weight_cost'] = par['lambda_weight'] / par['n_hidden']**2
     # initial neural activity
     par['x0'] = 0.1*np.ones((par['batch_size'], par['n_hidden']), dtype=np.float32)
 

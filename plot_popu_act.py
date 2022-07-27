@@ -5,7 +5,7 @@ import os
 from utils import *
 
 
-f_dir = "gamma_inout_reinit_model"
+f_dir = "update_w_pos_model"
 all_rep = range(5)
 all_lr = [0.02]
 

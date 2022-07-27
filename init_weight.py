@@ -176,10 +176,11 @@ def generate_raw_weights():
     """
     w_in0 = initialize(0.1, (par['n_input'], par['n_hidden']))
     # w_in0 =  np.random.uniform(0, 0.2, size=(par['n_input'], par['n_hidden']))
-    w_rnn0 = initialize(0.2, (par['n_hidden'], par['n_hidden']))
+    w_rnn0 = initialize(0.1, (par['n_hidden'], par['n_hidden']))
     w_rnn0[:, par['ind_inh']] = initialize(0.2, (par['n_hidden'], len(par['ind_inh'])))
     w_rnn0[par['ind_inh'], :] = initialize(0.2, (len(par['ind_inh']), par['n_hidden']))
-    w_rnn0 =  par['EI_matrix'] @  bm.relu(w_rnn0)
+    w_rnn0 = bm.relu(w_rnn0)
+    # w_rnn0 =  par['EI_matrix'] @  bm.relu(w_rnn0)
 
     # Effective synaptic weights are stronger when no short-term synaptic plasticity
     # is used, so the strength of the recurrent weights is reduced to compensate

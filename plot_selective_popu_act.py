@@ -4,9 +4,9 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "gamma_inout_reinit_model"
+f_dir = "test_weight_cost_model"
 all_rep = range(5)
-all_lr = [0.02]
+all_lr = [0.0002, 0.0004, 0.0008, 0.0016]
 
 
 def main(lr, rep):
@@ -27,35 +27,45 @@ def main(lr, rep):
 
     for i in range(len(title_arr)):
         plot_dir_selectivity(
-            normalized_h,
+            n.h,
             m_idx[m1_id[i]],
             m_idx[m2_id[i]],
             n,
-            title_arr[i] + "_Motion_Selectivity",
+            title_arr[i] + "_Motion_Selectivity_rep%d_selective"%rep,
             True,
             motion_selective,
         )
 
     # for i in range(len(title_arr)):
-    #     plot_sac_selectivity_pvnp(
+    #     plot_dir_selectivity(
     #         normalized_h,
     #         m_idx[m1_id[i]],
     #         m_idx[m2_id[i]],
     #         n,
-    #         title_arr[i] + "_Saccade_Selectivity",
-    #         False,
-    #         saccade_selective,
+    #         title_arr[i] + "_Motion_Selectivity",
+    #         True
     #     )
-    # for i in range(len(title_arr)):
-    #     plot_sac_selectivity_lvr(
-    #         n.h,
-    #         m_idx[m1_id[i]],
-    #         m_idx[m2_id[i]],
-    #         n,
-    #         title_arr[i] + "_Saccade_Selectivity",
-    #         False,
-    #         saccade_selective,
-    #     )
+
+    for i in range(len(title_arr)):
+        plot_sac_selectivity_pvnp(
+            n.h,
+            m_idx[m1_id[i]],
+            m_idx[m2_id[i]],
+            n,
+            title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp"%rep,
+            True,
+            saccade_selective,
+        )
+    for i in range(len(title_arr)):
+        plot_sac_selectivity_lvr(
+            n.h,
+            m_idx[m1_id[i]],
+            m_idx[m2_id[i]],
+            n,
+            title_arr[i] + "_Saccade_Selectivity_rep%d_selective_lvr"%rep,
+            True,
+            saccade_selective,
+        )
 
 
 def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None):
@@ -92,7 +102,7 @@ def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None
         )
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "orig_popu_act"
         if selectivity is not None:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
@@ -105,7 +115,7 @@ def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None
 def plot_sac_selectivity_pvnp(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None):
     coh_dict = find_coh_idx(n.stim_level)
     # find the trial of preferred direction
-    pref_ipsi, choice = find_pref_sac(n.y, h, n.stim_st_time)
+    pref_ipsi, choice = find_pref_sac(n.y, h)
     pref_ipsi_temp = np.tile(pref_ipsi, (len(choice), 1))
     choice_temp = np.tile(np.reshape(choice, (-1, 1)), (1, len(pref_ipsi)))
     pref_sac = choice_temp == pref_ipsi_temp
@@ -131,11 +141,11 @@ def plot_sac_selectivity_pvnp(h, m1_idx, m2_idx, n, title, save_plt, selectivity
             line_dict["%s_solid_ax2" % coh],
             line_dict["%s_dash_ax2" % coh],
         ) = get_temp_h_avg(
-            coh_dict[coh], h, n.y, pref_sac, m1_idx, m2_idx, "sac", selectivity, corr
+            coh_dict[coh], h, n.y, pref_sac, m1_idx, m2_idx, "sac", corr, selectivity
         )
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "orig_popu_act"
         if selectivity is not None:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
@@ -169,11 +179,11 @@ def plot_sac_selectivity_lvr(h, m1_idx, m2_idx, n, title, save_plt, selectivity=
             line_dict["%s_dash_ax1" % coh],
             line_dict["%s_solid_ax2" % coh],
             line_dict["%s_dash_ax2" % coh],
-        ) = get_sac_avg_h(coh_dict[coh], h, n.choice, m1_idx, m2_idx, selectivity, corr)
+        ) = get_sac_avg_h(coh_dict[coh], h, n.choice, m1_idx, m2_idx, corr, selectivity)
 
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "orig_popu_act"
         if selectivity is not None:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))

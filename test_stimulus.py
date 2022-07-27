@@ -8,7 +8,7 @@ from os import makedirs
 
 stim = Stimulus(par)
 trial_info = stim.generate_trial()
-fdir = "constant_base_input_model"
+fdir = "gamma_inout_reinit_model"
 
 if not exists(fdir):
     makedirs(fdir)

@@ -206,6 +206,8 @@ def get_temp_h_avg(
         * m2_mask
     )
     if mode == "dir":
+        # ipsi_h_pref = h[:, ipsi_pref_idx_m1]
+        # ipsi_h_nonpref = h[:, ipsi_nonpref_idx_m1]
         ipsi_h_pref = np.append(h[:, ipsi_pref_idx_m1], h[:, ipsi_pref_idx_m2], axis=1)
         ipsi_h_nonpref = np.append(
             h[:, ipsi_nonpref_idx_m1], h[:, ipsi_nonpref_idx_m2], axis=1
@@ -242,6 +244,8 @@ def get_temp_h_avg(
             )
             * m2_mask
         )
+        # contra_h_pref = h[:, contra_pref_idx_m1]
+        # contra_h_nonpref = h[:, contra_nonpref_idx_m1]
         contra_h_pref = np.append(
             h[:, contra_pref_idx_m1], h[:, contra_pref_idx_m2], axis=1
         )
