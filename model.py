@@ -27,7 +27,7 @@ class Model(bp.layers.Module):
             bm.ones((par['batch_size'], par['n_output'])))
         self.y_hist = bm.Variable(
             bm.zeros((par['num_time_steps'], par['batch_size'], par['n_output'])))
-        self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_hidden'])))
+        self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_total'])))
 
         # Loss
         self.loss = bm.Variable(bm.zeros(1))
