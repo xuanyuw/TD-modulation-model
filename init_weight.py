@@ -38,21 +38,32 @@ def fill_mask(rf_rngs, conn_probs, mask):
             mask = fill_rand_conn(mask, rf_rngs[i], rf_rngs[j], conn_probs[i, j])
     return mask
 
+def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
+    new_rnn_mask = np.pad(rnn_mask_init, ((0, par['n_inter']), (0, par['n_inter'])))
+    toInter_sz = (rf_rngs[3][1], par['n_inter'])
+    fromInter_sz = (par['n_inter'], par['n_total'])
+    # only excitatory neurons can project to interneurons.
+    new_rnn_mask[:toInter_sz, par['n_hidden']:par['n_total']]  = np.random.choice(
+        [0, 1], size=toInter_sz, p=(1-conn_prob, conn_prob))
+    # interneurons randomly connect to two modules
+    new_rnn_mask[par['n_hidden']:par['n_total'], :]  = np.random.choice(
+        [0, 1], size=fromInter_sz, p=(1-conn_prob, conn_prob))
+    return new_rnn_mask
+
+
+
 
 def generate_rnn_mask():
     rnn_mask_init = np.zeros((par['n_hidden'], par['n_hidden']))
     h_prob, m_prob, l_prob = par['within_rf_conn_prob'], par['cross_rf_conn_prob'], par['cross_module_conn_prob']
-    temp_probs = np.array([[h_prob, m_prob, l_prob, l_prob],
-                           [m_prob, h_prob, l_prob, l_prob],
-                           [l_prob, l_prob, h_prob, m_prob],
-                           [l_prob, l_prob, m_prob, h_prob]])
-    # temp_probs = np.array([[h_prob, h_prob, m_prob, m_prob],
-    #                        [h_prob, h_prob, m_prob, m_prob],
-    #                        [m_prob, m_prob, h_prob, h_prob],
-    #                        [m_prob, m_prob, h_prob, h_prob]])
+    temp_probs = np.array([[h_prob, m_prob, 0, 0],
+                           [m_prob, h_prob, 0, 0],
+                           [0, 0, h_prob, m_prob],
+                           [0, 0, m_prob, h_prob]])
     conn_probs = np.tile(temp_probs, (2, 2))
     rf_rngs = calculate_rf_rngs()
     rnn_mask_init = fill_mask(rf_rngs, conn_probs, rnn_mask_init)
+    
     # remove self_connections
     temp_mask = bm.ones((par['n_hidden'], par['n_hidden'])) - bm.eye(par['n_hidden'])
     rnn_mask_init = rnn_mask_init * temp_mask

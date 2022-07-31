@@ -28,6 +28,7 @@ def calc_parameters():
     par['EI_list'] = np.ones([par['n_hidden']], dtype=np.float32)
     par['ind_inh'] = np.arange(
         par['n_hidden']*par['exc_inh_prop'], par['n_hidden']).astype(int)
+    par['n_total'] = par['n_hidden'] + par['n_inter']
     par['EI_list'][par['ind_inh']] = -1
     par['EI_matrix'] = np.diag(par['EI_list'])
     # Membrane time constant of RNN neurons
