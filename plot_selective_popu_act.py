@@ -4,9 +4,9 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "test_weight_cost_model"
-all_rep = range(5)
-all_lr = [0.0002, 0.0004, 0.0008, 0.0016]
+f_dir = "interneuron_model"
+# all_rep = range(5)
+all_lr = [0.02]
 
 
 def main(lr, rep):
@@ -25,16 +25,6 @@ def main(lr, rep):
     m1_id = [0, 1, 4, 5]
     m2_id = [2, 3, 6, 7]
 
-    for i in range(len(title_arr)):
-        plot_dir_selectivity(
-            n.h,
-            m_idx[m1_id[i]],
-            m_idx[m2_id[i]],
-            n,
-            title_arr[i] + "_Motion_Selectivity_rep%d_selective"%rep,
-            True,
-            motion_selective,
-        )
 
     # for i in range(len(title_arr)):
     #     plot_dir_selectivity(
@@ -42,20 +32,23 @@ def main(lr, rep):
     #         m_idx[m1_id[i]],
     #         m_idx[m2_id[i]],
     #         n,
-    #         title_arr[i] + "_Motion_Selectivity",
-    #         True
+    #         title_arr[i] + "_Motion_Selectivity_rep%d_selective"%rep,
+    #         True,
+    #         motion_selective,
     #     )
 
-    for i in range(len(title_arr)):
-        plot_sac_selectivity_pvnp(
-            n.h,
-            m_idx[m1_id[i]],
-            m_idx[m2_id[i]],
-            n,
-            title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp"%rep,
-            True,
-            saccade_selective,
-        )
+
+    # for i in range(len(title_arr)):
+    #     plot_sac_selectivity_pvnp(
+    #         normalized_h,
+    #         m_idx[m1_id[i]],
+    #         m_idx[m2_id[i]],
+    #         n,
+    #         title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp"%rep,
+    #         True,
+    #         saccade_selective,
+    #     )
+
     for i in range(len(title_arr)):
         plot_sac_selectivity_lvr(
             n.h,
@@ -63,7 +56,7 @@ def main(lr, rep):
             m_idx[m2_id[i]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_lvr"%rep,
-            True,
+            False,
             saccade_selective,
         )
 
@@ -102,7 +95,7 @@ def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None
         )
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
-        folder_n = "orig_popu_act"
+        folder_n = "popu_act"
         if selectivity is not None:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
@@ -145,7 +138,7 @@ def plot_sac_selectivity_pvnp(h, m1_idx, m2_idx, n, title, save_plt, selectivity
         )
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
-        folder_n = "orig_popu_act"
+        folder_n = "popu_act"
         if selectivity is not None:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
@@ -183,7 +176,7 @@ def plot_sac_selectivity_lvr(h, m1_idx, m2_idx, n, title, save_plt, selectivity=
 
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
-        folder_n = "orig_popu_act"
+        folder_n = "popu_act"
         if selectivity is not None:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
@@ -193,6 +186,8 @@ def plot_sac_selectivity_lvr(h, m1_idx, m2_idx, n, title, save_plt, selectivity=
         plt.close(fig)
 
 
-for rep in all_rep:
-    for lr in all_lr:
-        main(lr, rep)
+# for rep in all_rep:
+#     for lr in all_lr:
+rep=4
+lr = 0.02
+main(lr, rep)

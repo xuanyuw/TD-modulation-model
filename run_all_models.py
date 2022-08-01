@@ -1,4 +1,3 @@
-from turtle import clear
 import numpy as np
 from calc_params import par, update_parameters
 from model_func import trial
