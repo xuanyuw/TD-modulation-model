@@ -1,5 +1,5 @@
 {
-    "save_dir": "./fix_interneuron_highCohTest_model/",
+    "save_dir": "./interneuron_highCohTest_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
