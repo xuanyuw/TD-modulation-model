@@ -4,7 +4,7 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "fix_interneuron_model"
+f_dir = "fix_interneuron_highCohTest_model"
 all_rep = range(3)
 all_lr = [0.02]
 
