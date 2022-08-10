@@ -1,5 +1,5 @@
 {
-    "save_dir": "./interneuron_highCohTest_model/",
+    "save_dir": "./interneuron_lowRNNnoise_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -54,7 +54,7 @@
     "noise_in_sd": 0.07,
 
     "stim_noise_sd": 0.2,
-    "noise_rnn_sd": 0.15,
+    "noise_rnn_sd": 0.1,
     "pure_visual_val": 2,
     "motion_noise_mult": 1,
     "dynamic_input_noise": false,
