@@ -4,8 +4,8 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "interneuron_model"
-# all_rep = range(5)
+f_dir = "fix_interneuron_model"
+all_rep = range(3)
 all_lr = [0.02]
 
 
@@ -26,28 +26,28 @@ def main(lr, rep):
     m2_id = [2, 3, 6, 7]
 
 
-    # for i in range(len(title_arr)):
-    #     plot_dir_selectivity(
-    #         normalized_h,
-    #         m_idx[m1_id[i]],
-    #         m_idx[m2_id[i]],
-    #         n,
-    #         title_arr[i] + "_Motion_Selectivity_rep%d_selective"%rep,
-    #         True,
-    #         motion_selective,
-    #     )
+    for i in range(len(title_arr)):
+        plot_dir_selectivity(
+            normalized_h,
+            m_idx[m1_id[i]],
+            m_idx[m2_id[i]],
+            n,
+            title_arr[i] + "_Motion_Selectivity_rep%d_selective"%rep,
+            True,
+            motion_selective,
+        )
 
 
-    # for i in range(len(title_arr)):
-    #     plot_sac_selectivity_pvnp(
-    #         normalized_h,
-    #         m_idx[m1_id[i]],
-    #         m_idx[m2_id[i]],
-    #         n,
-    #         title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp"%rep,
-    #         True,
-    #         saccade_selective,
-    #     )
+    for i in range(len(title_arr)):
+        plot_sac_selectivity_pvnp(
+            normalized_h,
+            m_idx[m1_id[i]],
+            m_idx[m2_id[i]],
+            n,
+            title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp"%rep,
+            True,
+            saccade_selective,
+        )
 
     for i in range(len(title_arr)):
         plot_sac_selectivity_lvr(
@@ -56,7 +56,7 @@ def main(lr, rep):
             m_idx[m2_id[i]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_lvr"%rep,
-            False,
+            True,
             saccade_selective,
         )
 
@@ -186,8 +186,8 @@ def plot_sac_selectivity_lvr(h, m1_idx, m2_idx, n, title, save_plt, selectivity=
         plt.close(fig)
 
 
-# for rep in all_rep:
-#     for lr in all_lr:
-rep=4
-lr = 0.02
-main(lr, rep)
+for rep in all_rep:
+    for lr in all_lr:
+# rep=4
+# lr = 0.02
+        main(lr, rep)

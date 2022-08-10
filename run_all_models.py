@@ -6,7 +6,7 @@ from os.path import dirname, exists
 
 # For debugging
 # from jax.config import config
-# config.update("jax_debug_nans", True)
+# config.update("jax_debug_nans", True)b
 
 
 def try_model(par, train):

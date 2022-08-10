@@ -46,13 +46,13 @@ def fill_mask(rf_rngs, conn_probs, mask):
 def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
     new_rnn_mask = np.pad(rnn_mask_init, ((0, par["n_inter"]), (0, par["n_inter"])))
     toInter_sz = (rf_rngs[3][1], par["n_inter"])
-    fromInter_sz = (par["n_inter"], par["n_total"])
+    fromInter_sz = (par["n_inter"], par["n_hidden"])
     # only excitatory neurons can project to interneurons.
     new_rnn_mask[: toInter_sz[0], par["n_hidden"] : par["n_total"]] = np.random.choice(
         [0, 1], size=toInter_sz, p=(1 - conn_prob, conn_prob)
     )
     # interneurons randomly connect to two modules
-    new_rnn_mask[par["n_hidden"] : par["n_total"], :] = np.random.choice(
+    new_rnn_mask[par["n_hidden"] : par["n_total"], :par["n_hidden"]] = np.random.choice(
         [0, 1], size=fromInter_sz, p=(1 - conn_prob, conn_prob)
     )
     return new_rnn_mask

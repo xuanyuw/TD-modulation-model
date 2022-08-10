@@ -23,6 +23,9 @@ class Model(bp.layers.Module):
         self.alpha = bm.array(par['alpha_neuron'])
         self.EI_matrix = bm.array(par['EI_matrix'])
 
+        self.n_hidden = par['n_hidden']
+        self.n_total = par['n_total']
+
         self.y = bm.Variable(
             bm.ones((par['batch_size'], par['n_output'])))
         self.y_hist = bm.Variable(
@@ -45,6 +48,7 @@ class Model(bp.layers.Module):
         self.in_mask = bm.array(all_weights['in_mask_init'])
         self.rnn_mask = bm.array(all_weights['rnn_mask_init'])
         self.out_mask = bm.array(all_weights['out_mask_init'])
+        self.init_w_rnn = bm.array(all_weights['w_rnn0'])
         # self.w_in = bm.TrainVar(all_weights['w_in0'])
         self.w_in = bm.Variable(all_weights['w_in0'])
         self.w_rnn = bm.TrainVar(all_weights['w_rnn0'])
@@ -98,7 +102,16 @@ class Model(bp.layers.Module):
 
         # Update the hidden state. Only use excitatory projections from input layer to RNN
         # All input and RNN activity will be non-negative
-        w_rnn =  self.EI_matrix @  bm.relu(self.w_rnn)
+        
+        # replace interneuron weights with original ones
+        w_rnn = bm.relu(self.w_rnn)
+        w_rnn = w_rnn.at[self.n_hidden : self.n_total, : self.n_hidden].set(self.init_w_rnn[self.n_hidden : self.n_total, : self.n_hidden])
+        w_rnn = w_rnn.at[: self.n_hidden, self.n_hidden : self.n_total].set(self.init_w_rnn[: self.n_hidden, self.n_hidden : self.n_total])
+
+        w_rnn =  self.EI_matrix @ w_rnn
+
+
+
         state = self.alpha * bm.relu(input @ bm.relu(self.w_in) + h_post @ w_rnn +
                               self.b_rnn) + normal(0, self.noise_rnn, self.h.shape)
         self.h.value = state + self.h * (1 - self.alpha)
