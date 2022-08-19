@@ -154,12 +154,23 @@ def get_module_idx():
 
 def create_grp_mask(mask_shape, grp_idx, selectivity=None):
     mask = np.zeros(mask_shape).astype(bool)
-    if selectivity is not None:
-        idx = np.intersect1d(
-            np.arange(grp_idx[0], grp_idx[1]), np.where(selectivity)[0]
-        )
+    if len(grp_idx) != 1:
+        idx = []
+        for g_idx in grp_idx:
+            if selectivity is not None:
+                idx = np.append(idx, np.intersect1d(
+                    np.arange(g_idx[0], g_idx[1]), np.where(selectivity)[0]
+                ))
+            else:
+                idx = np.append(idx, np.arange(g_idx[0], g_idx[1]))
     else:
-        idx = np.arange(grp_idx[0], grp_idx[1])
+        if selectivity is not None:
+            idx = np.intersect1d(
+                np.arange(grp_idx[0], grp_idx[1]), np.where(selectivity)[0]
+            )
+        else:
+            idx = np.arange(grp_idx[0], grp_idx[1])
+    idx =  idx.astype(int)
     mask[:, idx] = True
     return mask
 
@@ -396,17 +407,35 @@ def get_sac_avg_h(
     choice = choice.astype(bool)
     left_idx = np.where(combine_idx(~choice, coh_idx, correct_idx))[0]
     right_idx = np.where(combine_idx(choice, coh_idx, correct_idx))[0]
-    if selectivity is not None:
-        m1_cells = np.intersect1d(
-            np.arange(m1_idx[0], m1_idx[1]), np.where(selectivity)[0]
-        )
-        m2_cells = np.intersect1d(
-            np.arange(m2_idx[0], m2_idx[1]), np.where(selectivity)[0]
-        )
-    else:
-        m1_cells = np.arange(m1_idx[0], m1_idx[1])
-        m2_cells = np.arange(m2_idx[0], m2_idx[1])
 
+    if len(m1_idx) != 1:
+        m1_cells = []
+        m2_cells = []
+        for i in range(len(m1_idx)):
+            if selectivity is not None:
+                m1_cells = np.append(m1_cells, np.intersect1d(
+                    np.arange(m1_idx[i][0], m1_idx[i][1]), np.where(selectivity)[0]
+                ))
+                m2_cells = np.append(m2_cells, np.intersect1d(
+                    np.arange(m2_idx[i][0], m2_idx[i][1]), np.where(selectivity)[0]
+                ))
+            else:
+                m1_cells = np.append(m1_cells, np.arange(m1_idx[i][0], m1_idx[i][1]))
+                m2_cells = np.append(m2_cells, np.arange(m2_idx[i][0], m2_idx[i][1]))
+    else:
+        if selectivity is not None:
+            m1_cells = np.intersect1d(
+                np.arange(m1_idx[0], m1_idx[1]), np.where(selectivity)[0]
+            )
+            m2_cells = np.intersect1d(
+                np.arange(m2_idx[0], m2_idx[1]), np.where(selectivity)[0]
+            )
+        else:
+            m1_cells = np.arange(m1_idx[0], m1_idx[1])
+            m2_cells = np.arange(m2_idx[0], m2_idx[1])
+
+    m1_cells = m1_cells.astype(int)
+    m2_cells = m2_cells.astype(int)
     h_left_m1 = np.mean(h[:, left_idx, :][:, :, m1_cells], axis=(1, 2))
     h_right_m1 = np.mean(h[:, right_idx, :][:, :, m1_cells], axis=(1, 2))
     h_left_m2 = np.mean(h[:, left_idx, :][:, :, m2_cells], axis=(1, 2))

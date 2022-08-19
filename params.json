@@ -1,5 +1,5 @@
 {
-    "save_dir": "./interneuron_lowRNNnoise_model/",
+    "save_dir": "./half_interConn_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -25,7 +25,7 @@
 
     "within_rf_conn_prob": 0.4,
     "cross_rf_conn_prob": 0.2,
-    "cross_module_conn_prob": 0.1,
+    "cross_module_conn_prob": 0.05,
     "input_conn_prob": 0.4,
     "output_conn_prob": 0.4,
 
@@ -54,7 +54,7 @@
     "noise_in_sd": 0.07,
 
     "stim_noise_sd": 0.2,
-    "noise_rnn_sd": 0.1,
+    "noise_rnn_sd": 0.15,
     "pure_visual_val": 2,
     "motion_noise_mult": 1,
     "dynamic_input_noise": false,
@@ -65,7 +65,6 @@
 
     "spike_regularization": "L2",
     "spike_cost": 0.02,
-    "weight_cost": 0,
     "clip_max_grad_val": 0.1,
     "lambda_omega": 2,
     "lambda_weight": 1,

@@ -132,6 +132,9 @@ class Stimulus:
                 "pure_visual_val"
             ]
 
+            # add extra motion input noise
+            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'], size = (len(stim_time_rng), self.par['num_motion_tuned']))
+
             color_tuning = self.create_color_tuning(trial_info["targ_loc"][t])
             if self.par["num_color_tuned"] > 0:
                 # targets are still on screen during stimulus period
@@ -189,7 +192,7 @@ class Stimulus:
                             np.exp(self.par["kappa"] * d)
                             / np.exp(self.par["kappa"])
                             * coh
-                            * self.par["tuning_height"]
+                            * self.par["tuning_height"] # increase tuing height for motion input
                         )
             all_motion_tunings.append(motion_tuning)
 

@@ -4,7 +4,7 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "lowRNNnoise_highMotionTuning_model"
+f_dir = "2xMotionTuning_2xMotionNoise_weightCost_model"
 all_rep = range(3)
 all_lr = [0.02]
 
@@ -16,22 +16,17 @@ def main(lr, rep):
     m_idx = get_module_idx()
     motion_selective = pick_selective_neurons(normalized_h, n.stim_dir)
     saccade_selective = pick_selective_neurons(normalized_h, n.choice)
-    title_arr = [
-        "Motion_Excitatory",
-        "Target_Excitatory",
-        "Motion_Inhibitory",
-        "Target_Inhibitory",
-    ]
-    
-    m1_id = [0, 1, 4, 5]
-    m2_id = [2, 3, 6, 7]
+    title_arr = ["Motion", "Target"]
+
+    m1_id = [[0, 4], [1, 5]]
+    m2_id = [[2, 6], [3, 7]]
 
 
     for i in range(len(title_arr)):
         plot_dir_selectivity(
             normalized_h,
-            m_idx[m1_id[i]],
-            m_idx[m2_id[i]],
+            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
             n,
             title_arr[i] + "_Motion_Selectivity_rep%d_selective"%rep,
             True,
@@ -42,8 +37,8 @@ def main(lr, rep):
     for i in range(len(title_arr)):
         plot_sac_selectivity_pvnp(
             normalized_h,
-            m_idx[m1_id[i]],
-            m_idx[m2_id[i]],
+            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp"%rep,
             True,
@@ -53,13 +48,46 @@ def main(lr, rep):
     for i in range(len(title_arr)):
         plot_sac_selectivity_lvr(
             n.h,
-            m_idx[m1_id[i]],
-            m_idx[m2_id[i]],
+            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_lvr"%rep,
             True,
             saccade_selective,
         )
+    
+    for i in range(len(title_arr)):
+        plot_dir_selectivity(
+            normalized_h,
+            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            n,
+            title_arr[i] + "_Motion_Selectivity_rep%d"%rep,
+            True,
+        )
+
+
+    for i in range(len(title_arr)):
+        plot_sac_selectivity_pvnp(
+            normalized_h,
+            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            n,
+            title_arr[i] + "_Saccade_Selectivity_rep%d_pvnp"%rep,
+            True,
+        )
+
+    for i in range(len(title_arr)):
+        plot_sac_selectivity_lvr(
+            n.h,
+            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            n,
+            title_arr[i] + "_Saccade_Selectivity_rep%d_lvr"%rep,
+            True,
+        )
+
+
 
 
 def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None):
