@@ -1,5 +1,5 @@
 {
-    "save_dir": "./half_interConn_model/",
+    "save_dir": "./low_STP_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -25,7 +25,7 @@
 
     "within_rf_conn_prob": 0.4,
     "cross_rf_conn_prob": 0.2,
-    "cross_module_conn_prob": 0.05,
+    "cross_module_conn_prob": 0.1,
     "input_conn_prob": 0.4,
     "output_conn_prob": 0.4,
 
@@ -47,8 +47,8 @@
     "membrane_time_constant": 100,
     "tau_fast": 200,
     "tau_slow": 1500,
-    "U_stf": 0.15,
-    "U_std": 0.45,
+    "U_stf": 0.05,
+    "U_std": 0.35,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
