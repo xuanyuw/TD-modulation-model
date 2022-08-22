@@ -1,5 +1,5 @@
 {
-    "save_dir": "./low_STP_model/",
+    "save_dir": "./half_STP_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -47,8 +47,8 @@
     "membrane_time_constant": 100,
     "tau_fast": 200,
     "tau_slow": 1500,
-    "U_stf": 0.05,
-    "U_std": 0.35,
+    "U_stf": 0.08,
+    "U_std": 0.23,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,

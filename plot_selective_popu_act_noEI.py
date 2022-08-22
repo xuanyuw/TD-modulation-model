@@ -4,7 +4,7 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "2xMotionTuning_2xMotionNoise_weightCost_model"
+f_dir = "half_STP_model"
 all_rep = range(3)
 all_lr = [0.02]
 
