@@ -55,37 +55,71 @@ def main(lr, rep):
             True,
             saccade_selective,
         )
-    
+
     for i in range(len(title_arr)):
         plot_dir_selectivity(
-            normalized_h,
+            n.h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
             [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
             n,
-            title_arr[i] + "_Motion_Selectivity_rep%d"%rep,
+            title_arr[i] + "_Motion_Selectivity_rep%d_selective_orig"%rep,
             True,
+            motion_selective,
         )
 
 
     for i in range(len(title_arr)):
         plot_sac_selectivity_pvnp(
-            normalized_h,
-            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
-            n,
-            title_arr[i] + "_Saccade_Selectivity_rep%d_pvnp"%rep,
-            True,
-        )
-
-    for i in range(len(title_arr)):
-        plot_sac_selectivity_lvr(
             n.h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
             [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
             n,
-            title_arr[i] + "_Saccade_Selectivity_rep%d_lvr"%rep,
+            title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp_orig"%rep,
             True,
+            saccade_selective,
         )
+
+    for i in range(len(title_arr)):
+        plot_sac_selectivity_lvr(
+            normalized_h,
+            [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            n,
+            title_arr[i] + "_Saccade_Selectivity_rep%d_selective_lvr_norm"%rep,
+            True,
+            saccade_selective,
+        )
+    
+    # for i in range(len(title_arr)):
+    #     plot_dir_selectivity(
+    #         normalized_h,
+    #         [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+    #         n,
+    #         title_arr[i] + "_Motion_Selectivity_rep%d"%rep,
+    #         True,
+    #     )
+
+
+    # for i in range(len(title_arr)):
+    #     plot_sac_selectivity_pvnp(
+    #         normalized_h,
+    #         [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+    #         n,
+    #         title_arr[i] + "_Saccade_Selectivity_rep%d_pvnp"%rep,
+    #         True,
+    #     )
+
+    # for i in range(len(title_arr)):
+    #     plot_sac_selectivity_lvr(
+    #         n.h,
+    #         [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
+    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+    #         n,
+    #         title_arr[i] + "_Saccade_Selectivity_rep%d_lvr"%rep,
+    #         True,
+    #     )
 
 
 
