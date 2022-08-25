@@ -1,5 +1,5 @@
 {
-    "save_dir": "./half_STP_model/",
+    "save_dir": "./motion3_RNNnoise0.08_0.1STF_0.25STD_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -47,16 +47,16 @@
     "membrane_time_constant": 100,
     "tau_fast": 200,
     "tau_slow": 1500,
-    "U_stf": 0.08,
-    "U_std": 0.23,
+    "U_stf": 0.1,
+    "U_std": 0.25,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
-
     "stim_noise_sd": 0.2,
-    "noise_rnn_sd": 0.15,
+    "noise_rnn_sd": 0.13,
     "pure_visual_val": 2,
     "motion_noise_mult": 1,
+    "motion_mult": 1.5,
     "dynamic_input_noise": false,
 
     "num_motion_dirs": 2,

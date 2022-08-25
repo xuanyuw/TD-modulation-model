@@ -126,14 +126,14 @@ class Stimulus:
             tuning_idx = self.par["coherence_levels"].index(trial_info["coherence"][t])
             trial_info["neural_input"][stim_time_rng, t, :] += self.all_motion_tunings[
                 tuning_idx
-            ][:, stim_dir_ind]
+            ][:, stim_dir_ind] * self.par['motion_mult']
             # add a constant input to indicate pure visual stimulus
             trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += self.par[
                 "pure_visual_val"
             ]
 
             # add extra motion input noise
-            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'], size = (len(stim_time_rng), self.par['num_motion_tuned']))
+            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult'], size = (len(stim_time_rng), self.par['num_motion_tuned']))
 
             color_tuning = self.create_color_tuning(trial_info["targ_loc"][t])
             if self.par["num_color_tuned"] > 0:

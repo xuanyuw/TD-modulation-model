@@ -85,8 +85,8 @@ def update_synaptic_config():
     par["alpha_std"][dep_idx] = par["dt"] / par["tau_slow"]
 
     par["U"] = np.ones((par["n_total"],), dtype=np.float32)
-    par["U"][fac_idx] = 0.15
-    par["U"][dep_idx] = 0.45
+    par["U"][fac_idx] = par['U_stf']
+    par["U"][dep_idx] = par['U_std']
 
     par["syn_x_init"] = np.ones((par["batch_size"], par["n_total"]), dtype=np.float32)
 
