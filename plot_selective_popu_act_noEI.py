@@ -4,8 +4,8 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "highMotionTuning_0.12STF_0.25STD_model"
-all_rep = range(5)
+f_dir = "motion3_RNNnoise0.09_halfTau_model"
+all_rep = range(3)
 all_lr = [0.02]
 
 
