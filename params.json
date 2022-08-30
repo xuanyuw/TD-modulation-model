@@ -1,5 +1,5 @@
 {
-    "save_dir": "./motion3_RNNnoise0.09_halfTau_model/",
+    "save_dir": "./motion3_RNNnoise0.21_halfTau_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -53,7 +53,7 @@
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
     "stim_noise_sd": 0.2,
-    "noise_rnn_sd": 0.15,
+    "noise_rnn_sd": 0.33,
     "pure_visual_val": 2,
     "motion_noise_mult": 1,
     "motion_mult": 1.5,
