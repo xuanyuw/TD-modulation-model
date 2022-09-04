@@ -9,13 +9,38 @@ all_rep = range(20)
 all_lr = [0.02]
 
 
-def main(lr, rep):
-    n = SimpleNamespace(**load_test_data(f_dir, lr, rep))
-    # plot population neural activity
-    normalized_h = min_max_normalize(n.h)
+def load_all_activities(lr, total_rep, normalize):
+    for rep in range(total_rep):
+        n = SimpleNamespace(**load_test_data(f_dir, lr, rep))
+        # plot population neural activity
+        normalized_h = min_max_normalize(n.h)
+        if normalize:
+            h = normalized_h
+        else:
+            h = n.h
+        motion_selective = pick_selective_neurons(normalized_h, n.stim_dir)
+        saccade_selective = pick_selective_neurons(normalized_h, n.choice)
+        if rep==0:
+            all_h = h
+            all_m_sel = motion_selective
+            all_s_sel = saccade_selective
+        else:
+            all_h = np.append(all_h, h, axis=2)
+            all_m_sel = np.append(all_m_sel, motion_selective)
+            all_s_sel = np.append(all_s_sel, saccade_selective) 
+        return all_h, all_m_sel, all_s_sel
+
+
+
+
+
+def main(lr, total_rep):
+    all_norm_h, all_m_sel, all_s_sel = load_all_activities(lr, total_rep, True)
+    all_orig_h, _, _ = load_all_activities(lr, total_rep, False)
+    
+    
     m_idx = get_module_idx()
-    motion_selective = pick_selective_neurons(normalized_h, n.stim_dir)
-    saccade_selective = pick_selective_neurons(normalized_h, n.choice)
+    
     title_arr = ["Motion", "Target"]
 
     m1_id = [[0, 4], [1, 5]]
@@ -24,7 +49,7 @@ def main(lr, rep):
 
     for i in range(len(title_arr)):
         plot_dir_selectivity(
-            normalized_h,
+            all_norm_h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
             [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
             n,
@@ -120,8 +145,6 @@ def main(lr, rep):
     #         title_arr[i] + "_Saccade_Selectivity_rep%d_lvr"%rep,
     #         True,
     #     )
-
-
 
 
 def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None):
