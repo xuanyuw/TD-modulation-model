@@ -26,7 +26,7 @@ def main(lr, rep):
         plot_dir_selectivity(
             normalized_h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
             n,
             title_arr[i] + "_Motion_Selectivity_rep%d_selective"%rep,
             True,
@@ -38,7 +38,7 @@ def main(lr, rep):
         plot_sac_selectivity_pvnp(
             normalized_h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp"%rep,
             True,
@@ -49,7 +49,7 @@ def main(lr, rep):
         plot_sac_selectivity_lvr(
             n.h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_lvr"%rep,
             True,
@@ -60,7 +60,7 @@ def main(lr, rep):
         plot_dir_selectivity(
             n.h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
             n,
             title_arr[i] + "_Motion_Selectivity_rep%d_selective_orig"%rep,
             True,
@@ -72,7 +72,7 @@ def main(lr, rep):
         plot_sac_selectivity_pvnp(
             n.h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_pvnp_orig"%rep,
             True,
@@ -83,7 +83,7 @@ def main(lr, rep):
         plot_sac_selectivity_lvr(
             normalized_h,
             [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-            [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+            [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
             n,
             title_arr[i] + "_Saccade_Selectivity_rep%d_selective_lvr_norm"%rep,
             True,
@@ -94,7 +94,7 @@ def main(lr, rep):
     #     plot_dir_selectivity(
     #         normalized_h,
     #         [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
     #         n,
     #         title_arr[i] + "_Motion_Selectivity_rep%d"%rep,
     #         True,
@@ -105,7 +105,7 @@ def main(lr, rep):
     #     plot_sac_selectivity_pvnp(
     #         normalized_h,
     #         [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
     #         n,
     #         title_arr[i] + "_Saccade_Selectivity_rep%d_pvnp"%rep,
     #         True,
@@ -115,7 +115,7 @@ def main(lr, rep):
     #     plot_sac_selectivity_lvr(
     #         n.h,
     #         [m_idx[m1_id[i][0]], m_idx[m1_id[i][1]]],
-    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][0]]],
+    #         [m_idx[m2_id[i][0]], m_idx[m2_id[i][1]]],
     #         n,
     #         title_arr[i] + "_Saccade_Selectivity_rep%d_lvr"%rep,
     #         True,
