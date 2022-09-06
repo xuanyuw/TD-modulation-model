@@ -14,14 +14,14 @@ def main(lr, total_rep):
     dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, total_rep, True, True)
     dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, total_rep, False, True)
 
-    plot_dir_selectivity(dir_sel_norm, "Motion_direction_selectivity_normalized_average", True, selectivity=True)
-    plot_dir_selectivity(dir_sel_orig, "Motion_direction_selectivity_raw_average", True, selectivity=True)
+    plot_dir_selectivity(dir_sel_norm, "Motion_direction_selectivity_normalized_average", True, plot_sel=True)
+    plot_dir_selectivity(dir_sel_orig, "Motion_direction_selectivity_raw_average", True, plot_sel=True)
     
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "Target_saccade_selectivity_pvnp_normalized_average", True, selectivity=True)
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "Target_saccade_selectivity_pvnp_raw_average", True, selectivity=True)
+    plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "Target_saccade_selectivity_pvnp_normalized_average", True, plot_sel=True)
+    plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "Target_saccade_selectivity_pvnp_raw_average", True, plot_sel=True)
 
-    plot_sac_selectivity_lvr(sac_sel_lvr_norm, "Target_saccade_selectivity_lvr_normalized_average", True, selectivity=True)
-    plot_sac_selectivity_lvr(sac_sel_lvr_orig, "Target_saccade_selectivity_lvr_raw_average", True, selectivity=True)
+    plot_sac_selectivity_lvr(sac_sel_lvr_norm, "Target_saccade_selectivity_lvr_normalized_average", True, plot_sel=True)
+    plot_sac_selectivity_lvr(sac_sel_lvr_orig, "Target_saccade_selectivity_lvr_raw_average", True, plot_sel=True)
 
 def load_all_activities(lr, total_rep, normalize, plot_sel):
     m_idx = get_module_idx()
@@ -58,18 +58,18 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
             all_sac_sel_lvr = sac_sel_lvr
         else:
             for k in motion_dir_sel.keys():
-                all_motion_dir_sel[k] = np.append(all_motion_dir_sel[k],  motion_dir_sel[k], axis=1)
+                all_motion_dir_sel[k] = np.vstack([all_motion_dir_sel[k],  motion_dir_sel[k]])
             for k in sac_sel_pvnp.keys():
-                all_sac_sel_pvnp[k] = np.append(all_sac_sel_pvnp[k],  sac_sel_pvnp[k], axis=1)
+                all_sac_sel_pvnp[k] = np.vstack([all_sac_sel_pvnp[k],  sac_sel_pvnp[k]])
             for k in sac_sel_lvr.keys():
-                all_sac_sel_lvr[k] = np.append(all_sac_sel_lvr[k],  sac_sel_lvr[k], axis=1)
+                all_sac_sel_lvr[k] = np.vstack([all_sac_sel_lvr[k],  sac_sel_lvr[k]])
 
     for k in all_motion_dir_sel.keys():
-        all_motion_dir_sel[k] = np.mean(all_motion_dir_sel[k], axis=1)
+        all_motion_dir_sel[k] = np.mean(all_motion_dir_sel[k], axis=0)
     for k in all_sac_sel_pvnp.keys():
-        all_sac_sel_pvnp[k] = np.mean(all_sac_sel_pvnp[k], axis=1)
+        all_sac_sel_pvnp[k] = np.mean(all_sac_sel_pvnp[k], axis=0)
     for k in all_sac_sel_lvr.keys():
-        all_sac_sel_lvr[k] = np.mean(all_sac_sel_lvr[k], axis=1)
+        all_sac_sel_lvr[k] = np.mean(all_sac_sel_lvr[k], axis=0)
     
     return all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr
 
@@ -160,7 +160,7 @@ def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act"
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
+        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.png" % title))
@@ -182,7 +182,7 @@ def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act"
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
+        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.png" % title))
@@ -203,7 +203,7 @@ def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act"
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
+        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.png" % title))
