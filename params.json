@@ -1,11 +1,11 @@
 {
-    "save_dir": "./motion3_RNNnoise0.09_halfTau_Batch20_model/",
+    "save_dir": "./lowSTP_newInput_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
     "save_test_out": true,
     "log_test": true,
-    "rep_num": 20,
+    "rep_num": 5,
     "rep": 0,
 
     "batch_size": 1024,
@@ -34,6 +34,8 @@
     "num_color_tuned": 8,
     "n_choices": 2,
     "n_output": 2,
+    "decay_const": 0.33,
+
     "output_fixation": false,
     "num_receptive_fields": 4,
     "RF_perc": [0.2, 0.3, 0.2, 0.3],
@@ -43,12 +45,12 @@
     "n_inter": 5,
 
     "exc_inh_prop": 0.8,
-    "dt": 20,
+    "dt": 25,
     "membrane_time_constant": 100,
     "tau_fast": 100,
     "tau_slow": 750,
-    "U_stf": 0.15,
-    "U_std": 0.45,
+    "U_stf": 0.1,
+    "U_std": 0.3,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
@@ -77,7 +79,7 @@
     "num_targets": 2,
     "coherence_levels": [0, 0.15, 0.3],
     "train_coherence_levels": [0.6, 0.9],
-    "test_coherence_levels": [0, 0.2, 0.4, 0.8],
+    "test_coherence_levels": [0, 0.25, 0.5, 0.75],
     "decision_threshold": 0.8,
     "n_level_scale": 3
 }

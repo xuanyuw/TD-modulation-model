@@ -133,7 +133,10 @@ class Stimulus:
             ]
 
             # add extra motion input noise
-            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult'], size = (len(stim_time_rng), self.par['num_motion_tuned']))
+            if trial_info['stim_level'] != 'Z':
+                trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult'], size = (len(stim_time_rng), self.par['num_motion_tuned']))
+            else: # add 2x noise to zero coherence trials
+                trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult']*2, size = (len(stim_time_rng), self.par['num_motion_tuned']))
 
             color_tuning = self.create_color_tuning(trial_info["targ_loc"][t])
             if self.par["num_color_tuned"] > 0:
@@ -159,7 +162,23 @@ class Stimulus:
         ).astype(np.float32)
         trial_info["neural_input"] += overall_noise
 
+        # add decay
+        target_time = (self.par['time_target'] + self.par['time_stim'])//self.par['dt']
+        stim_time =  self.par['time_stim']//self.par['dt']
+        target_decay = self.create_exp_decay(self.par['decay_const'], target_time)
+        stim_decay = self.create_exp_decay(self.par['decay_const'], stim_time)
+        color_cell_rng = (self.par['num_motion_tuned'], self.par['num_motion_tuned']+self.par['num_color_tuned'])
+        trial_info['neural_input'][np.hstack([target_time_rng, stim_time_rng]), :, color_cell_rng[0]:color_cell_rng[1]] = trial_info['neural_input'][np.hstack([target_time_rng, stim_time_rng]), :, color_cell_rng[0]:color_cell_rng[1]] * target_decay[:, np.newaxis, np.newaxis]
+        trial_info['neural_input'][stim_time_rng, :, :self.par['num_motion_tuned']] = trial_info['neural_input'][stim_time_rng, :, :self.par['num_motion_tuned']] * stim_decay[:, np.newaxis, np.newaxis]
+
         return trial_info
+
+    def create_exp_decay(self, decay_const, arr_len):
+        arr_temp = np.arange(0, 1000, self.par['dt'])/1000
+        arr_temp = np.append(arr_temp, 1)
+        arr = np.power(decay_const, arr_temp)
+        arr = arr[:arr_len]       
+        return arr
 
     def create_tuning_functions(self, coh_list):
         """
