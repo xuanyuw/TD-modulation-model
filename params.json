@@ -1,5 +1,5 @@
 {
-    "save_dir": "./lowSTP_newInput_model/",
+    "save_dir": "./origSTP_decayInput_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -49,8 +49,8 @@
     "membrane_time_constant": 100,
     "tau_fast": 100,
     "tau_slow": 750,
-    "U_stf": 0.1,
-    "U_std": 0.3,
+    "U_stf": 0.15,
+    "U_std": 0.45,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
@@ -77,7 +77,7 @@
     "test_cost_multiplier": 2.0,
     "var_delay": false,
     "num_targets": 2,
-    "coherence_levels": [0, 0.15, 0.3],
+    "coherence_levels": [0, 0.25, 0.5, 0.75, 0.6, 0.9],
     "train_coherence_levels": [0.6, 0.9],
     "test_coherence_levels": [0, 0.25, 0.5, 0.75],
     "decision_threshold": 0.8,

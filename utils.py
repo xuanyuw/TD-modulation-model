@@ -6,8 +6,8 @@ import tables
 from scipy.stats import f_oneway
 
 
-STIM_ST_TIME = 45
-TARG_ST_TIME = 25
+STIM_ST_TIME = (par['time_fixation'] + par['time_target'])//par['dt']
+TARG_ST_TIME = par['time_fixation']//par['dt']
 
 
 def find_coh_idx(stim_level):

@@ -4,8 +4,8 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "motion3_RNNnoise0.09_halfTau_Batch20_model"
-total_rep = 20
+f_dir = "lowSTP_newInput_model"
+total_rep = 5
 all_lr = [0.02]
 
 

@@ -8,7 +8,7 @@ from os import makedirs
 
 stim = Stimulus(par)
 trial_info = stim.generate_trial()
-fdir = "lowSTP_newInput_model"
+fdir = "origSTP_decayInput_model"
 
 if not exists(fdir):
     makedirs(fdir)
@@ -35,7 +35,7 @@ def plot_neural_input(trial_info, coh_level, fdir=None):
     ax.set_ylabel("Input Neurons")
     ax.set_xlabel("Time relative to sample onset (ms)")
     ax.set_title("Neural input (coherence = %s)" % coh_level)
-    # plt.savefig(join(fdir, "stimulus_coh%s.png" % (coh_level)), format="png")
+    plt.savefig(join(fdir, "stimulus_coh%s.png" % (coh_level)), format="png")
     plt.show()
 
 

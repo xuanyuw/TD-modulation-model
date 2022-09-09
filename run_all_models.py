@@ -31,10 +31,10 @@ for syn_config in synaptic_configs:
                                'coherence_levels': par['train_coherence_levels'],
                                'weight_fn': 'weight_%d_lr%f.pth' % (rep, lr),
                                'learning_rate': lr})
-            # if not exists(dirname(par['save_dir'])):
-            #     makedirs(dirname(par['save_dir']))
-            # print('Training model %d'%rep)
-            # try_model(par, True)
+            if not exists(dirname(par['save_dir'])):
+                makedirs(dirname(par['save_dir']))
+            print('Training model %d'%rep)
+            try_model(par, True)
             update_parameters({'synapse_config': syn_config,
                                'rep': rep,
                                'save_fn': 'test_results_%d.pkl' % rep,
