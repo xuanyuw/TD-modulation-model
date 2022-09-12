@@ -153,7 +153,7 @@ class Stimulus:
                 # add constant color input
                 trial_info["neural_input"][
                     np.hstack([target_time_rng, stim_time_rng]), t, color_cell_rng[0]:color_cell_rng[1]
-                ] += self.par['pure_visual_val'] * target_decay[:, np.newaxis] 
+                ] += target_decay[:, np.newaxis] 
 
             if self.par["num_fix_tuned"] > 0:
                 # fixation is always on screen

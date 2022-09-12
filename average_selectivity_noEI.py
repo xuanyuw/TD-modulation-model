@@ -4,7 +4,7 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "lowSTP_newInput_model"
+f_dir = "lowInOutProb_decayInput_model"
 total_rep = 5
 all_lr = [0.02]
 

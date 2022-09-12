@@ -1,5 +1,5 @@
 {
-    "save_dir": "./origSTP_decayInput_model/",
+    "save_dir": "./lowInOutProb_decayInput_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -26,8 +26,8 @@
     "within_rf_conn_prob": 0.4,
     "cross_rf_conn_prob": 0.2,
     "cross_module_conn_prob": 0.1,
-    "input_conn_prob": 0.4,
-    "output_conn_prob": 0.4,
+    "input_conn_prob": 0.3,
+    "output_conn_prob": 0.3,
 
     "num_motion_tuned": 9,
     "num_fix_tuned": 0,
@@ -45,7 +45,7 @@
     "n_inter": 5,
 
     "exc_inh_prop": 0.8,
-    "dt": 25,
+    "dt": 20,
     "membrane_time_constant": 100,
     "tau_fast": 100,
     "tau_slow": 750,
