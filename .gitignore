@@ -131,3 +131,8 @@ dmypy.json
 *.pdf
 *.npy
 *_model/
+*_plots/
+*.png
+*.h5
+*.zip
+*.xlsx

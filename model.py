@@ -9,7 +9,7 @@ bp.math.set_platform('cpu')
 
 class Model(bp.layers.Module):
 
-    def __init__(self, par, train=True):
+    def __init__(self, par, stim, train=True):
         super(Model, self).__init__()
 
         self.syn_x = bm.Variable(par['syn_x_init'])
@@ -21,12 +21,16 @@ class Model(bp.layers.Module):
         self.alpha_stf = bm.array(par['alpha_stf'])
         self.dynamic_synapse = bm.array(par['dynamic_synapse'])
         self.alpha = bm.array(par['alpha_neuron'])
+        self.EI_matrix = bm.array(par['EI_matrix'])
+
+        # self.n_hidden = par['n_hidden']
+        # self.n_total = par['n_total']
 
         self.y = bm.Variable(
             bm.ones((par['batch_size'], par['n_output'])))
         self.y_hist = bm.Variable(
             bm.zeros((par['num_time_steps'], par['batch_size'], par['n_output'])))
-        self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_hidden'])))
+        self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_total'])))
 
         # Loss
         self.loss = bm.Variable(bm.zeros(1))
@@ -36,7 +40,7 @@ class Model(bp.layers.Module):
 
         # weights 
         if train:
-            all_weights = initialize_weights(par['learning_rate'], par['rep'])
+            all_weights = initialize_weights(par['learning_rate'], par['rep'], stim)
         else:
             all_weights = load(
                 join(par['save_dir'], par['weight_fn']), allow_pickle=True)
@@ -44,11 +48,14 @@ class Model(bp.layers.Module):
         self.in_mask = bm.array(all_weights['in_mask_init'])
         self.rnn_mask = bm.array(all_weights['rnn_mask_init'])
         self.out_mask = bm.array(all_weights['out_mask_init'])
-        self.w_in = bm.TrainVar(all_weights['w_in0'])
+        # self.init_w_rnn = bm.array(all_weights['w_rnn0'])
+        # self.w_in = bm.TrainVar(all_weights['w_in0'])
+        self.w_in = bm.Variable(all_weights['w_in0'])
         self.w_rnn = bm.TrainVar(all_weights['w_rnn0'])
-        self.w_out = bm.TrainVar(all_weights['w_out0'])
+        # self.w_out = bm.TrainVar(all_weights['w_out0'])
+        self.w_out = bm.Variable(all_weights['w_out0'])
         self.b_rnn = bm.TrainVar(all_weights['b_rnn0'])
-        self.b_out = bm.TrainVar(all_weights['b_out0'])
+        self.b_out = bm.Variable(all_weights['b_out0'])
 
         # Constants
 
@@ -95,27 +102,41 @@ class Model(bp.layers.Module):
 
         # Update the hidden state. Only use excitatory projections from input layer to RNN
         # All input and RNN activity will be non-negative
-        state = self.alpha * (input @ bm.relu(self.w_in) + h_post @ self.w_rnn +
+        
+     
+        w_rnn = bm.relu(self.w_rnn)
+        # replace interneuron weights with original ones
+        # w_rnn = w_rnn.at[self.n_hidden : self.n_total, : self.n_hidden].set(self.init_w_rnn[self.n_hidden : self.n_total, : self.n_hidden])
+        # w_rnn = w_rnn.at[: self.n_hidden, self.n_hidden : self.n_total].set(self.init_w_rnn[: self.n_hidden, self.n_hidden : self.n_total])
+
+        w_rnn =  self.EI_matrix @ w_rnn
+
+
+
+        state = self.alpha * bm.relu(input @ bm.relu(self.w_in) + h_post @ w_rnn +
                               self.b_rnn) + normal(0, self.noise_rnn, self.h.shape)
-        self.h.value = bm.relu(state + self.h * (1 - self.alpha))
+        self.h.value = state + self.h * (1 - self.alpha)
         self.y.value = self.h @ bm.relu(self.w_out) + self.b_out
 
-    def predict(self, inputs):
-        self.h[:] = self.init_h
-        # self.h = self.init_h
+    def predict(self, inputs, train):
+        if train:
+            self.h[:] = self.init_h
+        else:
+            self.h = self.init_h
         scan = bm.make_loop(body_fun=self.update,
                             dyn_vars=[self.syn_x, self.syn_u, self.h, self.y],
                             out_vars=[self.y, self.h])
         logits, hist_h = scan(inputs)
         # TODO: softmax y?
-        self.y_hist[:] = logits
-        self.h_hist[:] = hist_h
+        if train:
+            self.y_hist[:] = logits
+            self.h_hist[:] = hist_h
         # self.y_hist = logits
 
         return logits, hist_h
 
     def loss_func(self, inputs, targets, mask):
-        logits, hist_h = self.predict(inputs)
+        logits, hist_h = self.predict(inputs, True)
         # Calculate the performance loss
         perf_loss = bp.losses.cross_entropy_loss(
             bm.softmax(logits), targets, reduction='none') * mask

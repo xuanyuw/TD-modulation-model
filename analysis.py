@@ -8,7 +8,7 @@ from os.path import join
 from brainpy.math import relu, softmax
 
 
-def get_perf(target, output, mask, stim_level):
+def get_perf(target, output, mask, stim_level, train):
     """ Calculate task accuracy by comparing the actual network output to the desired output
         only examine time points when test stimulus is on, e.g. when y[:,:,0] = 0 """
 
@@ -22,21 +22,22 @@ def get_perf(target, output, mask, stim_level):
     accuracy = {'H': [], 'M': [], 'L': [], 'Z': []}
     #print(target.shape, output.shape, mask.shape)
     #print(target[:,2,:], output[:,2,:])
-    for i in range(target_max.shape[1]):
-        batch_accuracy = np.sum(np.float32(
-            target_max[:, i] == output_max[:, i])*mask_full[:, i])/np.sum(mask_full[:, i])
-        if stim_level[i] == 'H':
-            accuracy['H'].append(batch_accuracy)
-        elif stim_level[i] == 'M':
-            accuracy['M'].append(batch_accuracy)
-        elif stim_level[i] == 'L':
-            accuracy['L'].append(batch_accuracy)
-        else:
-            accuracy['Z'].append(batch_accuracy)
-    accuracy['H'] = np.mean(accuracy['H'])
-    accuracy['M'] = np.mean(accuracy['M'])
-    accuracy['L'] = np.mean(accuracy['L'])
-    accuracy['Z'] = np.mean(accuracy['Z'])
+    if not train:
+        for i in range(target_max.shape[1]):
+            batch_accuracy = np.sum(np.float32(
+                target_max[:, i] == output_max[:, i])*mask_full[:, i])/np.sum(mask_full[:, i])
+            if stim_level[i] == 'H':
+                accuracy['H'].append(batch_accuracy)
+            elif stim_level[i] == 'M':
+                accuracy['M'].append(batch_accuracy)
+            elif stim_level[i] == 'L':
+                accuracy['L'].append(batch_accuracy)
+            else:
+                accuracy['Z'].append(batch_accuracy)
+        accuracy['H'] = np.mean(accuracy['H'])
+        accuracy['M'] = np.mean(accuracy['M'])
+        accuracy['L'] = np.mean(accuracy['L'])
+        accuracy['Z'] = np.mean(accuracy['Z'])
     total_accuracy = np.sum(np.float32(
         target_max == output_max)*mask_full)/np.sum(mask_full)
 
