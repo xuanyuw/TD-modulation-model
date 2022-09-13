@@ -1,11 +1,11 @@
 {
-    "save_dir": "./lowInOutProb_decayInput_model/",
+    "save_dir": "./crossOutput_origTimeConst_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
     "save_test_out": true,
     "log_test": true,
-    "rep_num": 5,
+    "rep_num": 20,
     "rep": 0,
 
     "batch_size": 1024,
@@ -26,8 +26,9 @@
     "within_rf_conn_prob": 0.4,
     "cross_rf_conn_prob": 0.2,
     "cross_module_conn_prob": 0.1,
-    "input_conn_prob": 0.3,
-    "output_conn_prob": 0.3,
+    "input_conn_prob": 0.4,
+    "output_conn_prob": 0.4,
+    "cross_output_prob": 0.1,
 
     "num_motion_tuned": 9,
     "num_fix_tuned": 0,
@@ -47,8 +48,8 @@
     "exc_inh_prop": 0.8,
     "dt": 20,
     "membrane_time_constant": 100,
-    "tau_fast": 100,
-    "tau_slow": 750,
+    "tau_fast": 200,
+    "tau_slow": 1500,
     "U_stf": 0.15,
     "U_std": 0.45,
 

@@ -4,8 +4,8 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "lowInOutProb_decayInput_model"
-all_rep = range(5)
+f_dir = "crossOutput_origTimeConst_model"
+all_rep = range(20)
 all_lr = [0.02]
 
 
