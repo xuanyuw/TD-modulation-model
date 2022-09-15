@@ -4,8 +4,8 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOutput_origTimeConst_model"
-total_rep = 20
+f_dir = "crossOuput_noInterneuron_highRec_model"
+total_rep = 10
 all_lr = [0.02]
 
 
