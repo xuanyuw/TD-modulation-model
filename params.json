@@ -59,11 +59,11 @@
     "noise_rnn_sd": 0.15,
     "pure_visual_val": 2,
     "motion_noise_mult": 1,
-    "motion_mult": 1.5,
+    "motion_mult": 2,
     "dynamic_input_noise": false,
 
     "num_motion_dirs": 2,
-    "tuning_height": 1.5,
+    "tuning_height": 2,
     "kappa": 2,
 
     "spike_regularization": "L2",
