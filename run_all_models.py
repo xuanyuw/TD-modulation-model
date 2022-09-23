@@ -14,7 +14,7 @@ def try_model(par, train):
         trial(par, train=train)
 
     except KeyboardInterrupt:
-        quit('Quit by KeyboardInterrupt')
+        quit('Quit by KeyboardInterrupt') 
 
 
 # Run models
