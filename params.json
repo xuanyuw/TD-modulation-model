@@ -63,7 +63,7 @@
     "dynamic_input_noise": false,
 
     "num_motion_dirs": 2,
-    "tuning_height": 2,
+    "tuning_height": 1.5,
     "kappa": 2,
 
     "spike_regularization": "L2",

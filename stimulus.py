@@ -140,7 +140,7 @@ class Stimulus:
                 trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult']*2, size = (len(stim_time_rng), self.par['num_motion_tuned']))
 
             # decrease the motion input with noise
-            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] = (2/3)*trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']]
+            # trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] = (2/3)*trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']]
 
             # add a constant input to indicate pure visual stimulus
             trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] = self.par[
@@ -152,7 +152,7 @@ class Stimulus:
                 # targets are still on screen during stimulus period
                 trial_info["neural_input"][
                     np.hstack([target_time_rng, stim_time_rng]), t, :
-                ] += color_tuning * (2/3)
+                ] += color_tuning
                 color_cell_rng = (self.par['num_motion_tuned'], self.par['num_motion_tuned']+self.par['num_color_tuned'])
                 # add constant color input
                 trial_info["neural_input"][
