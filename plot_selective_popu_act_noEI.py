@@ -4,7 +4,7 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOuput_noInterneuron_lowInOut_model"
+f_dir = "crossOuput_noInterneuron_longTauSlow_model"
 all_rep = range(20)
 all_lr = [0.02]
 

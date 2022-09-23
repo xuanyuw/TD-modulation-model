@@ -132,10 +132,6 @@ class Stimulus:
             trial_info["neural_input"][stim_time_rng, t, :] += self.all_motion_tunings[
                 tuning_idx
             ][:, stim_dir_ind] * self.par['motion_mult']
-            # add a constant input to indicate pure visual stimulus
-            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += self.par[
-                "pure_visual_val"
-            ] * stim_decay[:, np.newaxis]
 
             # add extra motion input noise
             if trial_info['stim_level'] != 'Z':
@@ -143,12 +139,20 @@ class Stimulus:
             else: # add 2x noise to zero coherence trials
                 trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult']*2, size = (len(stim_time_rng), self.par['num_motion_tuned']))
 
+            # decrease the motion input with noise
+            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] = (2/3)*trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']]
+
+            # add a constant input to indicate pure visual stimulus
+            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] = self.par[
+                "pure_visual_val"
+            ] * stim_decay[:, np.newaxis]
+
             color_tuning = self.create_color_tuning(trial_info["targ_loc"][t])
             if self.par["num_color_tuned"] > 0:
                 # targets are still on screen during stimulus period
                 trial_info["neural_input"][
                     np.hstack([target_time_rng, stim_time_rng]), t, :
-                ] += color_tuning 
+                ] += color_tuning * (2/3)
                 color_cell_rng = (self.par['num_motion_tuned'], self.par['num_motion_tuned']+self.par['num_color_tuned'])
                 # add constant color input
                 trial_info["neural_input"][
@@ -171,12 +175,6 @@ class Stimulus:
             ),
         ).astype(np.float32)
         trial_info["neural_input"] += overall_noise
-
-        # add decay
-
-        
-        # trial_info['neural_input'][np.hstack([target_time_rng, stim_time_rng]), :, color_cell_rng[0]:color_cell_rng[1]] = trial_info['neural_input'][np.hstack([target_time_rng, stim_time_rng]), :, color_cell_rng[0]:color_cell_rng[1]] * target_decay[:, np.newaxis, np.newaxis]
-        # trial_info['neural_input'][stim_time_rng, :, :self.par['num_motion_tuned']] = trial_info['neural_input'][stim_time_rng, :, :self.par['num_motion_tuned']] * stim_decay[:, np.newaxis, np.newaxis]
 
         return trial_info
 
