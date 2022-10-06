@@ -51,9 +51,9 @@ def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
         [0, 1], size=toInter_sz, p=(1 - conn_prob, conn_prob)
     )
     # interneurons randomly connect to two modules
-    new_rnn_mask[
-        par["n_hidden"] : par["n_total"], : par["n_hidden"]
-    ] = np.random.choice([0, 1], size=fromInter_sz, p=(1 - conn_prob, conn_prob))
+    new_rnn_mask[par["n_hidden"] : par["n_total"], :par["n_hidden"]] = np.random.choice(
+        [0, 1], size=fromInter_sz, p=(1 - conn_prob, conn_prob)
+    )
     return new_rnn_mask
 
 
@@ -66,26 +66,16 @@ def generate_rnn_mask():
     )
     temp_probs = np.array(
         [
-            [h_prob, m_prob, l_prob, l_prob],
-            [m_prob, h_prob, l_prob, l_prob],
-            [l_prob, l_prob, h_prob, m_prob],
-            [l_prob, l_prob, m_prob, h_prob],
-        ]
-    )
-    inh_probs = np.array(
-        [
             [h_prob, m_prob, 0, 0],
             [m_prob, h_prob, 0, 0],
             [0, 0, h_prob, m_prob],
             [0, 0, m_prob, h_prob],
         ]
     )
-
-    # conn_probs = np.tile(temp_probs, (1, 2))
-    conn_probs = np.vstack([np.tile(temp_probs, (1, 2)), np.tile(inh_probs, (1, 2))])
+    conn_probs = np.tile(temp_probs, (2, 2))
     rf_rngs = calculate_rf_rngs()
     rnn_mask_init = fill_mask(rf_rngs, conn_probs, rnn_mask_init)
-    # rnn_mask_init = add_interneuron_mask(rnn_mask_init, rf_rngs, l_prob)
+    rnn_mask_init = add_interneuron_mask(rnn_mask_init, rf_rngs, l_prob)
 
     # remove self_connections
     temp_mask = bm.ones((par["n_total"], par["n_total"])) - bm.eye(par["n_total"])
@@ -150,12 +140,12 @@ def generate_out_mask():
         out_mask_init[rf_rngs[i][0] : rf_rngs[i][1], idx] = temp_mask.flatten()
         # out_mask_init[rf_rngs[i][0]:rf_rngs[i][1], idx] = np.random.choice(
         #     [0, 1], size=(rf_rngs[i][1] - rf_rngs[i][0], ), p=(1-par['output_conn_prob'], par['output_conn_prob']))
-    if par["cross_output_prob"] > 0:
-        o1, o2 = par["output_rf"]
-        o1xo2 = get_fix_conn_mask(rf_rngs[o1], (0, 1), par["cross_output_prob"])
-        o2xo1 = get_fix_conn_mask(rf_rngs[o2], (0, 1), par["cross_output_prob"])
-        out_mask_init[rf_rngs[o1][0] : rf_rngs[o1][1], 1] = o1xo2.flatten()
-        out_mask_init[rf_rngs[o2][0] : rf_rngs[o2][1], 0] = o2xo1.flatten()
+    if par['cross_output_prob'] > 0:
+        o1, o2 = par['output_rf']
+        o1xo2 = get_fix_conn_mask(rf_rngs[o1], (0, 1), par['cross_output_prob'])
+        o2xo1 = get_fix_conn_mask(rf_rngs[o2], (0, 1), par['cross_output_prob'])
+        out_mask_init[rf_rngs[o1][0]:rf_rngs[o1][1], 1] = o1xo2.flatten()
+        out_mask_init[rf_rngs[o2][0]:rf_rngs[o2][1], 0] = o2xo1.flatten()
     return out_mask_init
 
 
