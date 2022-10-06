@@ -1,11 +1,12 @@
 {
-    "save_dir": "./crossOuput_Interneuron_lowInput_lowSTP_model/",
+
+    "save_dir": "./crossOutput_noInterneuron_DiffTauSlow_smallSTP_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
     "save_test_out": true,
     "log_test": true,
-    "rep_num": 10,
+    "rep_num": 20,
     "rep": 0,
 
     "batch_size": 1024,
@@ -49,9 +50,10 @@
     "dt": 20,
     "membrane_time_constant": 100,
     "tau_fast": 200,
-    "tau_slow": 2000,
-    "U_stf": 0.15,
-    "U_std": 0.06,
+    "tau_dep": 1000,
+    "tau_fac": 2000,
+    "U_stf": 0.08,
+    "U_std": 0.16,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,

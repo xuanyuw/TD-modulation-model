@@ -77,12 +77,12 @@ def update_synaptic_config():
     dep_idx = np.where(np.array(synaptic_configurations) == -1)[0]
 
     par["alpha_stf"] = np.ones((par["n_total"],), dtype=np.float32)
-    par["alpha_stf"][fac_idx] = par["dt"] / par["tau_slow"]
+    par["alpha_stf"][fac_idx] = par["dt"] / par["tau_fac"]
     par["alpha_stf"][dep_idx] = par["dt"] / par["tau_fast"]
 
     par["alpha_std"] = np.ones((par["n_total"],), dtype=np.float32)
     par["alpha_std"][fac_idx] = par["dt"] / par["tau_fast"]
-    par["alpha_std"][dep_idx] = par["dt"] / par["tau_slow"]
+    par["alpha_std"][dep_idx] = par["dt"] / par["tau_dep"]
 
     par["U"] = np.ones((par["n_total"],), dtype=np.float32)
     par["U"][fac_idx] = par['U_stf']

@@ -21,7 +21,7 @@ def try_model(par, train):
 #synaptic_configs = ['full', 'fac', 'dep', 'exc_fac', 'exc_dep', 'inh_fac', 'inh_dep', 'exc_dep_inh_fac', 'none']
 synaptic_configs = ['full']
 for syn_config in synaptic_configs:
-    for lr in par['learning_rate_li']:
+    for lr in par['learning_rate_li']: 
         for rep in np.arange(par['rep'],par['rep_num']):
             update_parameters({'synapse_config': syn_config,
                                'rep': rep,
