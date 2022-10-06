@@ -5,7 +5,7 @@ from utils import *
 from types import SimpleNamespace
 
 
-f_dir = "crossOutput_noInterneuron_DiffTauSlow_smallSTP_model"
+f_dir = "crossOutput_Interneuron_DiffTauSlow_smallSTP_model"
 total_rep = 20
 all_lr = [0.02]
 
