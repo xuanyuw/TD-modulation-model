@@ -66,11 +66,11 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
                 all_sac_sel_lvr[k] = np.vstack([all_sac_sel_lvr[k],  sac_sel_lvr[k]])
 
     for k in all_motion_dir_sel.keys():
-        all_motion_dir_sel[k] = np.mean(all_motion_dir_sel[k], axis=0)
+        all_motion_dir_sel[k] = np.nanmean(all_motion_dir_sel[k], axis=0)
     for k in all_sac_sel_pvnp.keys():
-        all_sac_sel_pvnp[k] = np.mean(all_sac_sel_pvnp[k], axis=0)
+        all_sac_sel_pvnp[k] = np.nanmean(all_sac_sel_pvnp[k], axis=0)
     for k in all_sac_sel_lvr.keys():
-        all_sac_sel_lvr[k] = np.mean(all_sac_sel_lvr[k], axis=0)
+        all_sac_sel_lvr[k] = np.nanmean(all_sac_sel_lvr[k], axis=0)
     
     return all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr
 
