@@ -66,10 +66,10 @@ def generate_rnn_mask():
     )
     temp_probs = np.array(
         [
-            [h_prob, m_prob, l_prob, l_prob],
-            [m_prob, h_prob, l_prob, l_prob],
-            [l_prob, l_prob, h_prob, m_prob],
-            [l_prob, l_prob, m_prob, h_prob],
+            [h_prob, m_prob, l_prob, 0],
+            [m_prob, h_prob, 0, l_prob],
+            [l_prob, 0, h_prob, m_prob],
+            [0, l_prob, m_prob, h_prob],
         ]
     )
     inh_probs = np.array(

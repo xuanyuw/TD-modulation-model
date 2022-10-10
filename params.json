@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_DiffTauSlow_smallSTP_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -52,7 +52,7 @@
     "tau_dep": 1000,
     "tau_fac": 2000,
     "U_stf": 0.08,
-    "U_std": 0.16,
+    "U_std": 0.2,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
