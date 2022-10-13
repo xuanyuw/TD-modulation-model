@@ -3,6 +3,7 @@ from calc_params import par, update_parameters
 from model_func import trial
 from os import makedirs
 from os.path import dirname, exists
+import time
 
 # For debugging
 # from jax.config import config
@@ -16,7 +17,7 @@ def try_model(par, train):
     except KeyboardInterrupt:
         quit('Quit by KeyboardInterrupt') 
 
-
+tic = time.perf_counter()
 # Run models
 #synaptic_configs = ['full', 'fac', 'dep', 'exc_fac', 'exc_dep', 'inh_fac', 'inh_dep', 'exc_dep_inh_fac', 'none']
 synaptic_configs = ['full']
@@ -44,3 +45,6 @@ for syn_config in synaptic_configs:
                                })
             print('Testing model %d'%rep)
             try_model(par, False)
+toc = time.perf_counter()
+
+print('elapsed time = %.2f seconds'%(toc-tic))
