@@ -1,12 +1,12 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_revSTP_ablation_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_sameSTP_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
     "save_test_out": true,
     "log_test": true,
-    "rep_num": 10,
-    "rep": 0,
+    "rep_num": 20,
+    "rep": 1,
 
     "batch_size": 1024,
     "train_batch_size": 1024,
@@ -51,7 +51,7 @@
     "tau_fast": 200,
     "tau_dep": 1000,
     "tau_fac": 2000,
-    "U_stf": 0.15,
+    "U_stf": 0.1,
     "U_std": 0.1,
 
     "input_mean": 0.0,
