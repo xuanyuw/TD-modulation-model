@@ -1,11 +1,11 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_2STF1STD_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_3STF2STD_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
     "save_test_out": true,
     "log_test": true,
-    "rep_num": 20,
+    "rep_num": 50,
     "rep": 0,
 
     "batch_size": 1024,
@@ -52,7 +52,7 @@
     "tau_dep": 1000,
     "tau_fac": 2000,
     "U_stf": 0.12,
-    "U_std": 0.06,
+    "U_std": 0.08,
 
     "input_mean": 0.0,
     "noise_in_sd": 0.07,

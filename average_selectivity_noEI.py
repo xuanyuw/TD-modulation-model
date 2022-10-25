@@ -4,8 +4,8 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOutput_noInterneuron_noMTConn_2STF1STD_model"
-total_rep = 20
+f_dir = "crossOutput_noInterneuron_noMTConn_3STF2STD_model"
+total_rep = 50
 all_lr = [0.02]
 
 
