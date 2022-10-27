@@ -1,11 +1,11 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_3STF2STD_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_noWeightLoss_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
     "save_test_out": true,
     "log_test": true,
-    "rep_num": 50,
+    "rep_num": 10,
     "rep": 0,
 
     "batch_size": 1024,
@@ -71,7 +71,7 @@
     "spike_cost": 0.02,
     "clip_max_grad_val": 0.1,
     "lambda_omega": 2,
-    "lambda_weight": 1,
+    "lambda_weight": 0,
 
     "time_fixation": 500,
     "time_target": 400,
