@@ -151,8 +151,9 @@ class Model(bp.layers.Module):
         # self.weight_loss = bm.mean(bm.relu(self.w_rnn) ** n)
 
         # final loss
-        self.loss[:] = self.perf_loss + self.spike_cost * \
-            self.spike_loss + self.weight_cost * self.weight_loss
+        self.loss[:] = self.perf_loss
+        # self.loss[:] = self.perf_loss + self.spike_cost * \
+        #     self.spike_loss + self.weight_cost * self.weight_loss
         # self.loss = self.perf_loss + self.spike_cost * \
         #     self.spike_loss + self.weight_cost * self.weight_loss
 
