@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_shortLossDur_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_shortLossDur_noSpikeLoss_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
