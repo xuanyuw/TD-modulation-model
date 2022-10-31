@@ -57,6 +57,7 @@ class Stimulus:
         target_time_rng = self.par["target_time_rng"]
         stim_time_rng = self.par["stim_time_rng"]
 
+
         # generate stimulus directions for each trial in batch
         trial_info["stim_dir"] = np.random.choice(
             self.move_dirs, size=(self.par["batch_size"],)
@@ -89,10 +90,12 @@ class Stimulus:
             1,
         ] = 1
         # generate training mask
+        mask_zero_rng =  np.arange(0, (self.par["time_fixation"] + self.par["time_target"] + self.par["time_decision"]) // self.par["dt"])
+        mask_one_rng = np.arange((self.par["time_fixation"] + self.par["time_target"] + self.par["time_decision"]) // self.par["dt"], stim_time_rng[-1])
         # set the mask equal to zero during the fixation time
-        trial_info["train_mask"][np.hstack([fix_time_rng, target_time_rng]), :] = 0
+        trial_info["train_mask"][mask_zero_rng, :] = 0
         # can use a greater weight for test period if needed
-        trial_info["train_mask"][stim_time_rng, :] *= self.par["test_cost_multiplier"]
+        trial_info["train_mask"][mask_one_rng, :] *= self.par["test_cost_multiplier"]
 
         # initialize coherences
         trial_info["coherence"] = np.random.choice(

@@ -4,9 +4,9 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOutput_noInterneuron_noMTConn_CELossOnly_model"
+f_dir = "crossOutput_noInterneuron_noMTConn_shortLossDur_model"
 all_rep = range(10)
-all_lr = [0.02]
+all_lr = [2e-2]
 
 
 def main(lr, rep):

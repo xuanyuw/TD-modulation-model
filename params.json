@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_CELossOnly_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_shortLossDur_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -71,12 +71,13 @@
     "spike_cost": 0.02,
     "clip_max_grad_val": 0.1,
     "lambda_omega": 2,
-    "lambda_weight": 0,
+    "lambda_weight": 1,
 
     "time_fixation": 500,
     "time_target": 400,
     "time_stim": 500,
-    "test_cost_multiplier": 2.0,
+    "time_decision": 200,
+    "test_cost_multiplier": 1.0,
     "var_delay": false,
     "num_targets": 2,
     "coherence_levels": [0, 0.25, 0.5, 0.75, 0.6, 0.9],
