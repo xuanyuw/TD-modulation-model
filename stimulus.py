@@ -137,10 +137,10 @@ class Stimulus:
             ][:, stim_dir_ind] * self.par['motion_mult']
 
             # add extra motion input noise
-            if trial_info['stim_level'] != 'Z':
-                trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult'], size = (len(stim_time_rng), self.par['num_motion_tuned']))
-            else: # add 2x noise to zero coherence trials
-                trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult']*2, size = (len(stim_time_rng), self.par['num_motion_tuned']))
+            # if trial_info['stim_level'] != 'Z':
+            trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult'], size = (len(stim_time_rng), self.par['num_motion_tuned']))
+            # else: # add 2x noise to zero coherence trials
+                # trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] += np.random.normal(self.par['input_mean'], self.par['noise_in'] * self.par['motion_mult']*2, size = (len(stim_time_rng), self.par['num_motion_tuned']))
 
             # decrease the motion input with noise
             trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']] = (2/3)*trial_info["neural_input"][stim_time_rng, t, :self.par['num_motion_tuned']]
@@ -221,6 +221,14 @@ class Stimulus:
                             * coh
                             * self.par["tuning_height"] # increase tuing height for motion input
                         )
+            else:
+                pk = (
+                        np.exp(self.par["kappa"])
+                        / np.exp(self.par["kappa"]) 
+                        * max(coh_list)
+                        * self.par["tuning_height"] # increase tuing height for motion input
+                        )
+                motion_tuning += pk * 0.2
             all_motion_tunings.append(motion_tuning)
 
         for n in range(self.par["num_fix_tuned"]):

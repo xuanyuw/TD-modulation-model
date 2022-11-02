@@ -110,7 +110,7 @@ def trial(par, train=True):
 
             # stop training if all trials with meaningful inputs reaches 95% accuracy
             # cond = (array([H_acc, M_acc, L_acc])>0.95).all()
-            cond = total_accuracy > 0.95
+            cond = total_accuracy > 0.99
             # Save the network model and output model performance to screen
             if i % iter_between_outputs == 0 or i == num_iterations - 1 or cond:
                 # save training output

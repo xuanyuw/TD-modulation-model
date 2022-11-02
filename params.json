@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_shortLossDur_noSpikeLoss_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_shortLossDur_modZCohIn_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -68,7 +68,7 @@
     "kappa": 2,
 
     "spike_regularization": "L2",
-    "spike_cost": 0.02,
+    "spike_cost": 0.002,
     "clip_max_grad_val": 0.1,
     "lambda_omega": 2,
     "lambda_weight": 1,
