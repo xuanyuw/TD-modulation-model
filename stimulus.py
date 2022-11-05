@@ -228,7 +228,7 @@ class Stimulus:
                         * max(coh_list)
                         * self.par["tuning_height"] # increase tuing height for motion input
                         )
-                motion_tuning += pk * 0.15
+                motion_tuning += pk * 0.1
             all_motion_tunings.append(motion_tuning)
 
         for n in range(self.par["num_fix_tuned"]):

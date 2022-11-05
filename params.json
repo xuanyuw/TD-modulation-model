@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_shortLossDur_highConn_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_LossDur5_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -23,12 +23,12 @@
 
     "synapse_config": "full",
 
-    "within_rf_conn_prob": 0.6,
-    "cross_rf_conn_prob": 0.3,
-    "cross_module_conn_prob": 0.15,
-    "input_conn_prob": 0.45,
-    "output_conn_prob": 0.45,
-    "cross_output_prob": 0.075,
+    "within_rf_conn_prob": 0.5,
+    "cross_rf_conn_prob": 0.25,
+    "cross_module_conn_prob": 0.1,
+    "input_conn_prob": 0.32,
+    "output_conn_prob": 0.32,
+    "cross_output_prob": 0.08,
 
     "num_motion_tuned": 9,
     "num_fix_tuned": 0,
@@ -57,7 +57,7 @@
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
     "stim_noise_sd": 0.2,
-    "noise_rnn_sd": 0.1,
+    "noise_rnn_sd": 0.08,
     "pure_visual_val": 2,
     "motion_noise_mult": 1,
     "motion_mult": 2,
@@ -76,7 +76,7 @@
     "time_fixation": 500,
     "time_target": 400,
     "time_stim": 500,
-    "time_decision": 200,
+    "time_decision": 100,
     "test_cost_multiplier": 1.0,
     "var_delay": false,
     "num_targets": 2,
