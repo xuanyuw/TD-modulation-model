@@ -9,7 +9,7 @@ from matplotlib.colors import TwoSlopeNorm
 import tables
 
 
-fdir = 'crossOutput_model'
+fdir = 'crossOutput_noInterneuron_noMTConn_gaussianInOut_model'
 rep = 0
 lr = 0.02
 
@@ -46,7 +46,18 @@ def plot_weights(weights, title, fdir, show_rnn_weights=False, show_output_weigh
     plt.savefig(join(fdir, title+'.png'), format='png')
     # plt.show()
 
-for rep in range(5):
+def plot_w_value_hist(weights, title, fdir):
+    plt.hist(weights.flatten(), 100)
+    plt.title(title + 'max=%.4f'%max(weights.flatten()))
+    plt.savefig(join(fdir, title+'.png'), format='png')
+    plt.close()
+    
+
+pic_dir = join(fdir, 'weight_value_hist')
+if not exists(pic_dir):
+    makedirs(pic_dir)
+
+for rep in range(20):
 # w = load(join(fdir, 'weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
     w = load(join(fdir, 'init_weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
     w = w.item()
@@ -56,21 +67,24 @@ for rep in range(5):
     # w_in_after = w['w_in0']
     # w_out_after = w['w_out0']
     # w_rnn_after = w['w_rnn0']
-    # w_in_init = w['w_in0']
+    w_in_init = w['w_in0']
     w_out_init = w['w_out0']
     # w_rnn_init = w['w_rnn0']
-    # in_mask = w['in_mask_init']
+    in_mask = w['in_mask_init']
     out_mask = w['out_mask_init']
     # rnn_mask = w['rnn_mask_init']
 
 
-    pic_dir = join(fdir, 'weight_matrices_rep%d_lr%f'%(rep, lr))
-    if not exists(pic_dir):
-        makedirs(pic_dir)
+    # pic_dir = join(fdir, 'weight_matrices_rep%d_lr%f'%(rep, lr))
+    # if not exists(pic_dir):
+    #     makedirs(pic_dir)
 
 
+
+    plot_w_value_hist(w_in_init*in_mask, "Input_weight_hist_rep%d"%rep, pic_dir)
+    plot_w_value_hist(w_out_init*out_mask, "Output_weight_hist_rep%d"%rep, pic_dir)
     # plot_weights(w_in_init*in_mask, 'Input_Weight_Init', pic_dir, show_rnn_weights=False)
-    plot_weights(w_out_init*out_mask, 'Output_Weight_Init', pic_dir, show_output_weights=True)
+    # plot_weights(w_out_init*out_mask, 'Output_Weight_Init', pic_dir, show_output_weights=True)
 # plot_weights(w_rnn_init*rnn_mask, 'RNN_Weight_Init', pic_dir, show_rnn_weights=True)
 
 # plot_weights(w_in_after*in_mask, 'Input_Weight_After', pic_dir, show_rnn_weights=False)

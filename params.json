@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_LossDur5_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_gaussianInOut_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -76,7 +76,7 @@
     "time_fixation": 500,
     "time_target": 400,
     "time_stim": 500,
-    "time_decision": 100,
+    "time_decision": 60,
     "test_cost_multiplier": 1.0,
     "var_delay": false,
     "num_targets": 2,
