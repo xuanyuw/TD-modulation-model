@@ -207,7 +207,8 @@ def re_init_win(in_weight, in_mask, stim):
         re_init = re_init or re_init_cond(m1_r_vals)
 
         if re_init:
-            in_weight = initialize(0.1, (par["n_input"], par["n_total"]))
+            # in_weight = initialize(0.1, (par["n_input"], par["n_total"]))
+            in_weight = np.random.normal(0.1, 0.03, size=(par["n_input"], par["n_total"]))
     end = time()
     print("elapsed time: %f" % (end - start))
     return in_weight
@@ -222,7 +223,8 @@ def re_init_wout(out_weight, out_mask):
     print("re-initializing output weights...")
     start = time()
     while min(all_sums) < 0.8 * max(all_sums):
-        out_weight = initialize(0.1, (par["n_total"], par["n_output"]))
+        # out_weight = initialize(0.1, (par["n_total"], par["n_output"]))
+        out_weight = np.random.normal(0.1, 0.03, size=(par["n_total"], par["n_output"]))
         masked_weight = out_weight * out_mask
         all_sums = (
             (round(np.sum(masked_weight[:, 0]).astype("float"), 3)),

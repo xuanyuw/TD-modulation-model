@@ -9,7 +9,7 @@ from matplotlib.colors import TwoSlopeNorm
 import tables
 
 
-fdir = 'crossOutput_noInterneuron_noMTConn_gaussianInOut_model'
+fdir = 'crossOutput_noInterneuron_noMTConn_LossDur5_model'
 rep = 0
 lr = 0.02
 
@@ -47,7 +47,8 @@ def plot_weights(weights, title, fdir, show_rnn_weights=False, show_output_weigh
     # plt.show()
 
 def plot_w_value_hist(weights, title, fdir):
-    plt.hist(weights.flatten(), 100)
+    w = weights[weights!=0].flatten()
+    plt.hist(w, 100)
     plt.title(title + 'max=%.4f'%max(weights.flatten()))
     plt.savefig(join(fdir, title+'.png'), format='png')
     plt.close()
