@@ -4,7 +4,7 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_cross5_model"
+f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_initMean0.06_model"
 all_rep = range(10)
 all_lr = [2e-2]
 

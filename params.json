@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_gaussianInOut_cross5_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_gaussianInOut_initMean0.06_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -28,7 +28,7 @@
     "cross_module_conn_prob": 0.1,
     "input_conn_prob": 0.32,
     "output_conn_prob": 0.32,
-    "cross_output_prob": 0.1,
+    "cross_output_prob": 0.08,
 
     "num_motion_tuned": 9,
     "num_fix_tuned": 0,
@@ -62,6 +62,8 @@
     "motion_noise_mult": 1,
     "motion_mult": 2,
     "dynamic_input_noise": false,
+    "inout_weight_mean": 0.06,
+    "inout_weight_std": 0.02,
 
     "num_motion_dirs": 2,
     "tuning_height": 2,
