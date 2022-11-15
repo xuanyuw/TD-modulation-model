@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
@@ -84,7 +84,7 @@
     "num_targets": 2,
     "coherence_levels": [0, 0.25, 0.5, 0.75, 0.6, 0.9],
     "train_coherence_levels": [0.6, 0.9],
-    "test_coherence_levels": [0, 0.25, 0.5, 0.75],
+    "test_coherence_levels": [0, 0.35, 0.55, 0.75],
     "decision_threshold": 0.8,
     "n_level_scale": 3
 }
