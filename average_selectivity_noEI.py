@@ -4,10 +4,10 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_inOutMean0.3_model"
-total_rep = 10
+f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_model"
+total_rep = 50
 all_lr = [2e-2]
-plot_sel = False
+plot_sel = True
 
 
 
