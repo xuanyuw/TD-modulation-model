@@ -4,7 +4,7 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model"
 total_rep = 50
 all_lr = [2e-2]
 plot_sel = True
