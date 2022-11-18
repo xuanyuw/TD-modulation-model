@@ -1,7 +1,7 @@
-from init_weight import initialize_weights, generate_rnn_mask
+from init_weight import initialize_weights, cut_conn
 import brainpy as bp
 import brainpy.math as bm
-from numpy import load
+from numpy import load, tile
 from numpy.random import normal
 from os.path import join
 bp.math.set_platform('cpu')
@@ -46,7 +46,7 @@ class Model(bp.layers.Module):
                 join(par['model_dir'], par['weight_fn']), allow_pickle=True)
             all_weights = all_weights.item()
         self.in_mask = bm.array(all_weights['in_mask_init'])
-        self.rnn_mask = bm.array(generate_rnn_mask())
+        self.rnn_mask = bm.array(all_weights['rnn_mask_init'])
         self.out_mask = bm.array(all_weights['out_mask_init'])
         # self.init_w_rnn = bm.array(all_weights['w_rnn0'])
         # self.w_in = bm.TrainVar(all_weights['w_in0'])
@@ -58,7 +58,14 @@ class Model(bp.layers.Module):
         self.b_out = bm.Variable(all_weights['b_out0'])
 
         if not train:
-            self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * generate_rnn_mask())
+            temp_conn = [
+                [1, 1, 1, 1],
+                [0, 1, 1, 1], 
+                [1, 1, 1, 1], 
+                [1, 1, 0, 1]
+            ]
+            conn = tile(temp_conn, (2, 2))
+            self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * cut_conn(conn, all_weights['rnn_mask_init'].numpy()))
 
         # Constants
 

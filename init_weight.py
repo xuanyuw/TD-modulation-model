@@ -41,6 +41,18 @@ def fill_mask(rf_rngs, conn_probs, mask):
             mask = fill_rand_conn(mask, rf_rngs[i], rf_rngs[j], conn_probs[i, j])
     return mask
 
+def cut_conn(conn, mask):
+    rf_rngs = calculate_rf_rngs()
+    for i in range(len(rf_rngs)):
+        from_rng = rf_rngs[i]
+        for j in range(len(rf_rngs)):
+            to_rng = rf_rngs[j]
+            if conn[i, j]==0:
+                sz = (from_rng[1] - from_rng[0], to_rng[1] - to_rng[0])
+                mask[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.zeros(sz)
+    return mask
+
+
 
 def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
     new_rnn_mask = np.pad(rnn_mask_init, ((0, par["n_inter"]), (0, par["n_inter"])))
@@ -64,36 +76,20 @@ def generate_rnn_mask():
         par["cross_rf_conn_prob"],
         par["cross_module_conn_prob"],
     )
-    # temp_probs = np.array(
-    #     [
-    #         [h_prob, m_prob, l_prob, 0],
-    #         [m_prob, h_prob, 0, l_prob],
-    #         [l_prob, 0, h_prob, m_prob],
-    #         [0, l_prob, m_prob, h_prob],
-    #     ]
-    # )
-    # inh_probs = np.array(
-    #     [
-    #         [h_prob, m_prob, 0, 0],
-    #         [m_prob, h_prob, 0, 0],
-    #         [0, 0, h_prob, m_prob],
-    #         [0, 0, m_prob, h_prob],
-    #     ]
-    # )
     temp_probs = np.array(
         [
             [h_prob, m_prob, l_prob, 0],
-            [0, h_prob, 0, l_prob],
+            [m_prob, h_prob, 0, l_prob],
             [l_prob, 0, h_prob, m_prob],
-            [0, l_prob, 0, h_prob],
+            [0, l_prob, m_prob, h_prob],
         ]
     )
     inh_probs = np.array(
         [
             [h_prob, m_prob, 0, 0],
-            [0, h_prob, 0, 0],
+            [m_prob, h_prob, 0, 0],
             [0, 0, h_prob, m_prob],
-            [0, 0, 0, h_prob],
+            [0, 0, m_prob, h_prob],
         ]
     )
 
