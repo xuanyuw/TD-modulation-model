@@ -4,8 +4,9 @@ import os
 from utils import *
 from types import SimpleNamespace
 
-f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
-all_rep = range(50)
+f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+# all_rep = range(50)
+all_rep = [14]
 all_lr = [2e-2]
 plot_selective = True
 
@@ -16,7 +17,7 @@ def main(lr, rep):
     normalized_h = min_max_normalize(n.h)
     m_idx = get_module_idx()
     
-    title_arr = ["Motion", "Target"]
+    title_arr = ["Example_Motion", "Example_Target"]
 
     m1_id = [[0, 4], [1, 5]]
     m2_id = [[2, 6], [3, 7]]
@@ -200,7 +201,7 @@ def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
@@ -243,7 +244,7 @@ def plot_sac_selectivity_pvnp(h, m1_idx, m2_idx, n, title, save_plt, selectivity
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
@@ -281,7 +282,7 @@ def plot_sac_selectivity_lvr(h, m1_idx, m2_idx, n, title, save_plt, selectivity=
         pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 

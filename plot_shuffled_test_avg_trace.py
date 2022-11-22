@@ -4,18 +4,24 @@ import os
 from utils import *
 from types import SimpleNamespace
 import tables
+from pickle import load, dump
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
 total_rep = 50
 total_shuf = 100
 all_lr = [2e-2]
 plot_sel = True
+rerun_calculation = True
 
 
 
 def main(lr, total_rep):
-    dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, total_rep, True, plot_sel)
-    dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, total_rep, False, plot_sel)
+    if rerun_calculation:
+        dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, total_rep, True, plot_sel)
+        dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, total_rep, False, plot_sel)
+    else:
+        dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load(open(os.path.join(f_dir, "all_selectivity_data_normalized.pkl"), 'rb'))
+        dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw.pkl"), 'rb'))
 
     plot_dir_selectivity(dir_sel_norm, "Motion_direction_selectivity_normalized_average", True, plot_sel=plot_sel)
     plot_dir_selectivity(dir_sel_orig, "Motion_direction_selectivity_raw_average", True, plot_sel=plot_sel)
@@ -77,6 +83,12 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
         all_sac_sel_pvnp[k] = np.mean(all_sac_sel_pvnp[k], axis=0)
     for k in all_sac_sel_lvr.keys():
         all_sac_sel_lvr[k] = np.mean(all_sac_sel_lvr[k], axis=0)
+    
+    if normalize:
+        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_normalized.pkl'), 'wb'))
+    else:
+        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_raw.pkl'), 'wb'))
+    
     
     return all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr
 

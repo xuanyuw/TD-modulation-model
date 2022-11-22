@@ -9,6 +9,7 @@ from math import ceil
 
 STIM_ST_TIME = (par['time_fixation'] + par['time_target'])//par['dt']
 TARG_ST_TIME = par['time_fixation']//par['dt']
+DT = par['dt']
 
 
 def find_coh_idx(stim_level):
@@ -391,14 +392,23 @@ def plot_coh_popu_act(
     ax1.set_title(label_dict["ax1_title"])
     ax1.set_ylabel("Average activity")
     ax1.set_xlabel("Time")
+    xticks = np.array([0, target_st_time, stim_st_time, len(line_dict[coh_levels[i] + "_solid_ax1"])])
+    ax1.set_xticks(xticks)
+    ax1.set_xticklabels((xticks-stim_st_time)*DT)
     ax1.axvline(x=target_st_time, color="k")
     ax1.axvline(x=stim_st_time, color="k")
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
 
     ax2.set_title(label_dict["ax2_title"])
     ax2.set_xlabel("Time")
+    ax2.set_xticks(xticks)
+    ax2.set_xticklabels((xticks-stim_st_time)*DT)
     ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     ax2.axvline(x=target_st_time, color="k")
     ax2.axvline(x=stim_st_time, color="k")
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
 
     plt.suptitle(label_dict["sup_title"])
     return fig
