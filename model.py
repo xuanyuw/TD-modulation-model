@@ -1,4 +1,5 @@
-from init_weight import initialize_weights, cut_conn
+from init_weight import initialize_weights
+from utils import cut_conn, shuffle_conn
 import brainpy as bp
 import brainpy.math as bm
 from numpy import load, tile
@@ -58,14 +59,22 @@ class Model(bp.layers.Module):
         self.b_out = bm.Variable(all_weights['b_out0'])
 
         if not train:
-            temp_conn = [
-                [1, 1, 1, 1],
-                [0, 1, 1, 1], 
-                [1, 1, 1, 1], 
-                [1, 1, 0, 1]
+            # temp_conn = [
+            #     [1, 1, 1, 1],
+            #     [0, 1, 1, 1], 
+            #     [1, 1, 1, 1], 
+            #     [1, 1, 0, 1]
+            # ]
+            # conn = tile(temp_conn, (2, 2))
+            # self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * cut_conn(conn, all_weights['rnn_mask_init'].numpy()))
+            shuffle_temp = [
+                [0, 0, 0, 0], 
+                [1, 0, 0, 0], 
+                [0, 0, 0, 0], 
+                [0, 0, 1, 0], 
             ]
-            conn = tile(temp_conn, (2, 2))
-            self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * cut_conn(conn, all_weights['rnn_mask_init'].numpy()))
+            shuffle = tile(shuffle_temp, (2, 2))
+            self.w_rnn = bm.TrainVar(shuffle_conn(shuffle, all_weights['w_rnn0']*all_weights['rnn_mask_init'].numpy()))
 
         # Constants
 

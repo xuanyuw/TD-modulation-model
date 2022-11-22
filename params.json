@@ -1,5 +1,5 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model/",
+    "save_dir": "./crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model/",
     "model_dir": "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
@@ -7,7 +7,9 @@
     "save_test_out": true,
     "log_test": true,
     "rep_num": 50,
-    "rep": 0,
+    "rep": 43,
+    "shuffle_num": 100,
+    "shuffle": 0,
 
     "batch_size": 1024,
     "train_batch_size": 1024,

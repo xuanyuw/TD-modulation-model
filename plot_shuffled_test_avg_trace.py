@@ -3,13 +3,14 @@ import matplotlib.pyplot as plt
 import os
 from utils import *
 from types import SimpleNamespace
-from pickle import load, dump
+import tables
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
 total_rep = 50
+total_shuf = 100
 all_lr = [2e-2]
 plot_sel = True
-rerun_calculation = True
+
 
 
 def main(lr, total_rep):
@@ -34,37 +35,41 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
     all_sac_sel_pvnp = {}
     all_sac_sel_lvr = {}
     for rep in range(total_rep):
-        n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
-        # plot population neural activity
-        normalized_h = min_max_normalize(n.h)
-        if normalize:
-            h = normalized_h
-        else:
-            h = n.h
-        
-        if plot_sel:
-            motion_selective = pick_selective_neurons(normalized_h, n.stim_dir)
-            saccade_selective = pick_selective_neurons(normalized_h, n.choice)
-        else:
-            motion_selective = None
-            saccade_selective = None
-        
-        # plot motion selectiivty for motion module, and saccade selectivity for saccade selectivity for target module 
-        motion_dir_sel = calc_dir_sel(h, [m_idx[m1_id[0][0]], m_idx[m1_id[0][1]]], [m_idx[m2_id[0][0]], m_idx[m2_id[0][1]]], n, motion_selective)
-        sac_sel_pvnp =  calc_sac_sel_pvnp(h, [m_idx[m1_id[1][0]], m_idx[m1_id[1][1]]], [m_idx[m2_id[1][0]], m_idx[m2_id[1][1]]], n, saccade_selective)
-        sac_sel_lvr = calc_sac_sel_lvr(h, [m_idx[m1_id[1][0]], m_idx[m1_id[1][1]]], [m_idx[m2_id[1][0]], m_idx[m2_id[1][1]]], n, saccade_selective)
+        print('---------------------------------------------------')
+        print('Loading Rep %d'%rep)
+        for shuf in range(total_shuf):
+            n = SimpleNamespace(**load_test_data(f_dir,"test_output_lr%f_rep%d_shuf%d.h5" % (lr, rep, shuf)))
+            # plot population neural activity
+            normalized_h = min_max_normalize(n.h)
+            if normalize:
+                h = normalized_h
+            else:
+                h = n.h
+            
 
-        if rep==0:
-            all_motion_dir_sel = motion_dir_sel
-            all_sac_sel_pvnp = sac_sel_pvnp
-            all_sac_sel_lvr = sac_sel_lvr
-        else:
-            for k in motion_dir_sel.keys():
-                all_motion_dir_sel[k] = np.vstack([all_motion_dir_sel[k],  motion_dir_sel[k]])
-            for k in sac_sel_pvnp.keys():
-                all_sac_sel_pvnp[k] = np.vstack([all_sac_sel_pvnp[k],  sac_sel_pvnp[k]])
-            for k in sac_sel_lvr.keys():
-                all_sac_sel_lvr[k] = np.vstack([all_sac_sel_lvr[k],  sac_sel_lvr[k]])
+            if plot_sel:
+                motion_selective = pick_selective_neurons(normalized_h, n.stim_dir)
+                saccade_selective = pick_selective_neurons(normalized_h, n.choice)
+            else:
+                motion_selective = None
+                saccade_selective = None
+            
+            # plot motion selectiivty for motion module, and saccade selectivity for saccade selectivity for target module 
+            motion_dir_sel = calc_dir_sel(h, [m_idx[m1_id[0][0]], m_idx[m1_id[0][1]]], [m_idx[m2_id[0][0]], m_idx[m2_id[0][1]]], n, motion_selective)
+            sac_sel_pvnp =  calc_sac_sel_pvnp(h, [m_idx[m1_id[1][0]], m_idx[m1_id[1][1]]], [m_idx[m2_id[1][0]], m_idx[m2_id[1][1]]], n, saccade_selective)
+            sac_sel_lvr = calc_sac_sel_lvr(h, [m_idx[m1_id[1][0]], m_idx[m1_id[1][1]]], [m_idx[m2_id[1][0]], m_idx[m2_id[1][1]]], n, saccade_selective)
+
+            if rep==0:
+                all_motion_dir_sel = motion_dir_sel
+                all_sac_sel_pvnp = sac_sel_pvnp
+                all_sac_sel_lvr = sac_sel_lvr
+            else:
+                for k in motion_dir_sel.keys():
+                    all_motion_dir_sel[k] = np.vstack([all_motion_dir_sel[k],  motion_dir_sel[k]])
+                for k in sac_sel_pvnp.keys():
+                    all_sac_sel_pvnp[k] = np.vstack([all_sac_sel_pvnp[k],  sac_sel_pvnp[k]])
+                for k in sac_sel_lvr.keys():
+                    all_sac_sel_lvr[k] = np.vstack([all_sac_sel_lvr[k],  sac_sel_lvr[k]])
 
     for k in all_motion_dir_sel.keys():
         all_motion_dir_sel[k] = np.mean(all_motion_dir_sel[k], axis=0)

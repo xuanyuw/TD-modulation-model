@@ -3,29 +3,32 @@ import matplotlib.pyplot as plt
 import os
 from utils import *
 from types import SimpleNamespace
-from pickle import load, dump
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
 total_rep = 50
+total_shuf = 100
 all_lr = [2e-2]
 plot_sel = True
-rerun_calculation = True
+
 
 
 def main(lr, total_rep):
-    dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, total_rep, True, plot_sel)
-    dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, total_rep, False, plot_sel)
+    for rep in range(total_rep):
+        print('---------------------------------------------------')
+        print('Plotting Rep %d'%rep)
+        dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, rep, True, plot_sel)
+        dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, rep, False, plot_sel)
 
-    plot_dir_selectivity(dir_sel_norm, "Motion_direction_selectivity_normalized_average", True, plot_sel=plot_sel)
-    plot_dir_selectivity(dir_sel_orig, "Motion_direction_selectivity_raw_average", True, plot_sel=plot_sel)
-    
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "Target_saccade_selectivity_pvnp_normalized_average", True, plot_sel=plot_sel)
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "Target_saccade_selectivity_pvnp_raw_average", True, plot_sel=plot_sel)
+        # plot_dir_selectivity(dir_sel_norm, "Motion_direction_selectivity_normalized_rep%d_average"%rep,rep,  True, plot_sel=plot_sel)
+        # plot_dir_selectivity(dir_sel_orig, "Motion_direction_selectivity_raw_rep%d_average"%rep,rep,  True, plot_sel=plot_sel)
+        
+        plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "Target_saccade_selectivity_pvnp_normalized_rep%d_average"%rep,rep,  True, plot_sel=plot_sel)
+        plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "Target_saccade_selectivity_pvnp_raw_rep%d_average"%rep,rep,  True, plot_sel=plot_sel)
 
-    plot_sac_selectivity_lvr(sac_sel_lvr_norm, "Target_saccade_selectivity_lvr_normalized_average", True, plot_sel=plot_sel)
-    plot_sac_selectivity_lvr(sac_sel_lvr_orig, "Target_saccade_selectivity_lvr_raw_average", True, plot_sel=plot_sel)
+        plot_sac_selectivity_lvr(sac_sel_lvr_norm, "Target_saccade_selectivity_lvr_normalized_rep%d_average"%rep,rep, True, plot_sel=plot_sel)
+        plot_sac_selectivity_lvr(sac_sel_lvr_orig, "Target_saccade_selectivity_lvr_raw_rep%d_average"%rep,rep,  True, plot_sel=plot_sel)
 
-def load_all_activities(lr, total_rep, normalize, plot_sel):
+def load_all_activities(lr, rep, normalize, plot_sel):
     m_idx = get_module_idx()
     m1_id = [[0, 4], [1, 5]]
     m2_id = [[2, 6], [3, 7]]
@@ -33,8 +36,9 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
     all_motion_dir_sel = {}
     all_sac_sel_pvnp = {}
     all_sac_sel_lvr = {}
-    for rep in range(total_rep):
-        n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
+
+    for shuf in range(total_shuf):
+        n = SimpleNamespace(**load_test_data(f_dir,"test_output_lr%f_rep%d_shuf%d.h5" % (lr, rep, shuf)))
         # plot population neural activity
         normalized_h = min_max_normalize(n.h)
         if normalize:
@@ -54,7 +58,7 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
         sac_sel_pvnp =  calc_sac_sel_pvnp(h, [m_idx[m1_id[1][0]], m_idx[m1_id[1][1]]], [m_idx[m2_id[1][0]], m_idx[m2_id[1][1]]], n, saccade_selective)
         sac_sel_lvr = calc_sac_sel_lvr(h, [m_idx[m1_id[1][0]], m_idx[m1_id[1][1]]], [m_idx[m2_id[1][0]], m_idx[m2_id[1][1]]], n, saccade_selective)
 
-        if rep==0:
+        if shuf==0:
             all_motion_dir_sel = motion_dir_sel
             all_sac_sel_pvnp = sac_sel_pvnp
             all_sac_sel_lvr = sac_sel_lvr
@@ -147,7 +151,7 @@ def calc_sac_sel_lvr(h, m1_idx, m2_idx, n, selectivity=None):
     return line_dict
     
 
-def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
+def plot_dir_selectivity(line_dict, title, rep, save_plt, plot_sel=False):
 
     label_dict = {
         "dash": "nonPref",
@@ -162,14 +166,14 @@ def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act"
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
+        pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 
-def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
+def plot_sac_selectivity_pvnp(line_dict, title, rep, save_plt, plot_sel=False):
 
     label_dict = {
         "dash": "nonPref",
@@ -184,14 +188,14 @@ def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act"
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
+        pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 
-def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
+def plot_sac_selectivity_lvr(line_dict, title, rep, save_plt, plot_sel=False):
     label_dict = {
         "dash": "right",
         "solid": "left",
@@ -205,7 +209,7 @@ def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act"
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
+        pic_dir = os.path.join(f_dir, "%s_rep%d_lr%f" % (folder_n, rep, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.png" % title))

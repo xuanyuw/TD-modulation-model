@@ -4,6 +4,7 @@ from calc_params import par
 import os
 import tables
 from scipy.stats import f_oneway
+from math import ceil
 
 
 STIM_ST_TIME = (par['time_fixation'] + par['time_target'])//par['dt']
@@ -302,9 +303,9 @@ def calc_input_sum(in_weight, in_mask, stim, module_idx):
     return (np.sum(in_val[:, m1_idx]), np.sum(in_val[:, m2_idx]))
 
 
-def load_test_data(f_dir, lr, rep):
+def load_test_data(f_dir, f_name):
     test_output = tables.open_file(
-        os.path.join(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)), mode="r"
+        os.path.join(f_dir, f_name), mode="r"
     )
     test_table = test_output.root
     max_iter = get_max_iter(test_table)
@@ -317,6 +318,7 @@ def load_test_data(f_dir, lr, rep):
     stim_dir = test_table["stim_dir_iter%d" % max_iter][:]
     desired_out, stim_dir = correct_zero_coh(y, stim_level, stim_dir, desired_out)
     correct_idx = find_correct_idx(y, desired_out)
+
     return {
         "h": h,
         "y": y,
@@ -441,3 +443,36 @@ def get_sac_avg_h(
     h_left_m2 = np.mean(h[:, left_idx, :][:, :, m2_cells], axis=(1, 2))
     h_right_m2 = np.mean(h[:, right_idx, :][:, :, m2_cells], axis=(1, 2))
     return h_left_m1, h_right_m1, h_left_m2, h_right_m2
+
+def calculate_rf_rngs():
+    """Generates the bounds for rf blocks"""
+    ei = [par["exc_inh_prop"], 1 - par["exc_inh_prop"]]
+    rf_bnd = np.append(
+        0,
+        np.cumsum(
+            [ceil(par["n_hidden"] * eix * p) for eix in ei for p in par["RF_perc"]]
+        ),
+    )
+    rf_rngs = [(rf_bnd[n], rf_bnd[n + 1]) for n in range(len(rf_bnd) - 1)]
+    return rf_rngs
+
+def cut_conn(conn, mask):
+    rf_rngs = calculate_rf_rngs()
+    for i in range(len(rf_rngs)):
+        from_rng = rf_rngs[i]
+        for j in range(len(rf_rngs)):
+            to_rng = rf_rngs[j]
+            if conn[i, j]==0:
+                sz = (from_rng[1] - from_rng[0], to_rng[1] - to_rng[0])
+                mask[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.zeros(sz)
+    return mask
+
+def shuffle_conn(shuffle, weight):
+    rf_rngs = calculate_rf_rngs()
+    for i in range(len(rf_rngs)):
+        from_rng = rf_rngs[i]
+        for j in range(len(rf_rngs)):
+            to_rng = rf_rngs[j]
+            if shuffle[i, j]==1:
+                np.random.shuffle(weight[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]])
+    return weight

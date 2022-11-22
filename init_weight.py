@@ -1,10 +1,10 @@
 from calc_params import par
-from math import ceil
+
 import numpy as np
 import brainpy.math as bm
 from os.path import join
-from utils import get_module_idx, get_diff_stim, calc_input_sum
-from time import time
+from utils import get_module_idx, get_diff_stim, calc_input_sum, calculate_rf_rngs
+from time import time 
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -22,17 +22,6 @@ def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
     return mask
 
 
-def calculate_rf_rngs():
-    """Generates the bounds for rf blocks"""
-    ei = [par["exc_inh_prop"], 1 - par["exc_inh_prop"]]
-    rf_bnd = np.append(
-        0,
-        np.cumsum(
-            [ceil(par["n_hidden"] * eix * p) for eix in ei for p in par["RF_perc"]]
-        ),
-    )
-    rf_rngs = [(rf_bnd[n], rf_bnd[n + 1]) for n in range(len(rf_bnd) - 1)]
-    return rf_rngs
 
 
 def fill_mask(rf_rngs, conn_probs, mask):
@@ -41,16 +30,6 @@ def fill_mask(rf_rngs, conn_probs, mask):
             mask = fill_rand_conn(mask, rf_rngs[i], rf_rngs[j], conn_probs[i, j])
     return mask
 
-def cut_conn(conn, mask):
-    rf_rngs = calculate_rf_rngs()
-    for i in range(len(rf_rngs)):
-        from_rng = rf_rngs[i]
-        for j in range(len(rf_rngs)):
-            to_rng = rf_rngs[j]
-            if conn[i, j]==0:
-                sz = (from_rng[1] - from_rng[0], to_rng[1] - to_rng[0])
-                mask[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.zeros(sz)
-    return mask
 
 
 
