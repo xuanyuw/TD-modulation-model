@@ -7,11 +7,12 @@ import tables
 from pickle import load, dump
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
+model_type = f_dir.split('_')[-2]
 total_rep = 50
 total_shuf = 100
 all_lr = [2e-2]
 plot_sel = True
-rerun_calculation = True
+rerun_calculation = False
 
 
 
@@ -23,14 +24,14 @@ def main(lr, total_rep):
         dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load(open(os.path.join(f_dir, "all_selectivity_data_normalized.pkl"), 'rb'))
         dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw.pkl"), 'rb'))
 
-    plot_dir_selectivity(dir_sel_norm, "Motion_direction_selectivity_normalized_average", True, plot_sel=plot_sel)
-    plot_dir_selectivity(dir_sel_orig, "Motion_direction_selectivity_raw_average", True, plot_sel=plot_sel)
+    plot_dir_selectivity(dir_sel_norm, "%s_Motion_dir_sel_norm_avg"%model_type, True, plot_sel=plot_sel)
+    plot_dir_selectivity(dir_sel_orig, "%s_Motion_dir_sel_raw_avg"%model_type, True, plot_sel=plot_sel)
     
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "Target_saccade_selectivity_pvnp_normalized_average", True, plot_sel=plot_sel)
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "Target_saccade_selectivity_pvnp_raw_average", True, plot_sel=plot_sel)
+    plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "%s_Target_sac_sel_pvnp_norm_avg"%model_type, True, plot_sel=plot_sel)
+    plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "%s_Target_sac_sel_pvnp_raw_avg"%model_type, True, plot_sel=plot_sel)
 
-    plot_sac_selectivity_lvr(sac_sel_lvr_norm, "Target_saccade_selectivity_lvr_normalized_average", True, plot_sel=plot_sel)
-    plot_sac_selectivity_lvr(sac_sel_lvr_orig, "Target_saccade_selectivity_lvr_raw_average", True, plot_sel=plot_sel)
+    plot_sac_selectivity_lvr(sac_sel_lvr_norm, "%s_Target_sac_sel_lvr_norm_avg"%model_type, True, plot_sel=plot_sel)
+    plot_sac_selectivity_lvr(sac_sel_lvr_orig, "%s_Target_sac_sel_lvr_raw_avg"%model_type, True, plot_sel=plot_sel)
 
 def load_all_activities(lr, total_rep, normalize, plot_sel):
     m_idx = get_module_idx()
@@ -182,7 +183,7 @@ def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
@@ -204,7 +205,7 @@ def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
@@ -225,7 +226,7 @@ def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
