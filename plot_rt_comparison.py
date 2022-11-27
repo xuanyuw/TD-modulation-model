@@ -10,6 +10,7 @@ mpl.rcParams['axes.spines.top'] = False
 
 f_dirs = [
     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
+    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
 ]
 
@@ -20,6 +21,7 @@ for i in range(len(f_dirs)):
     rt = load(open(join(f_dirs[i], '%s_all_rt.pkl'%model_types[i]), 'rb'))
     temp_df = pd.DataFrame({'rt': rt, 'model_type':[model_types[i]]*len(rt)})
     df = df.append(temp_df, ignore_index=True)
-
+fig, ax = plt.subplots(figsize=(12, 5))
 sns.boxplot(data=df, x='rt', y='model_type')
-plt.show()
+plt.savefig(join(f_dirs[0], "rt_comparison.pdf"))
+plt.close(fig)

@@ -10,7 +10,7 @@ from calc_params import par
 
 
 fdir = 'crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model'
-rep = 14
+rep = 0
 lr = 0.02
 
 def find_max_iter(table):

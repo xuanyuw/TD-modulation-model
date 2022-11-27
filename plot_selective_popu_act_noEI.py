@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 # all_rep = range(50)
-all_rep = [14]
+all_rep = [0]
 all_lr = [2e-2]
 plot_selective = True
 
