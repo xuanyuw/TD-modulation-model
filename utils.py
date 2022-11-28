@@ -105,6 +105,16 @@ def find_pref_dir(stim_level, stim_dir, h, stim_st_time=STIM_ST_TIME):
     pref_red = red_mean > green_mean
     return pref_red
 
+def find_pref_targ_color(h, desired_out, stim_dir, m1_targ_rng, m2_targ_rng):
+    # prefer green target = 0, prefer red target = 1
+    targ_loc = recover_targ_loc(desired_out, stim_dir)[-1, :]
+    contra_green_mean = np.mean(h[TARG_ST_TIME:STIM_ST_TIME, targ_loc==0, :], axis=(0, 1))
+    contra_red_mean = np.mean(h[TARG_ST_TIME:STIM_ST_TIME, targ_loc==1, :], axis=(0, 1))
+    pref_targ_color = np.zeros((h.shape[2],))
+    pref_targ_color[m1_targ_rng] = contra_green_mean[m1_targ_rng] < contra_red_mean[m1_targ_rng] 
+    pref_targ_color[m2_targ_rng] = contra_green_mean[m2_targ_rng] > contra_red_mean[m2_targ_rng] #ipsi-lateral targets are the opposite of contra lateral targets
+    return pref_targ_color
+
 
 def find_pref_sac(y, h, stim_st_time=STIM_ST_TIME):
     choice = np.argmax(y, 2)[-1, :]

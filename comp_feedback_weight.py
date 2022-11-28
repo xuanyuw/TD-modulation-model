@@ -6,7 +6,7 @@ import pandas as pd
 from os.path import join
 import numpy as np
 import tables
-from utils import find_pref_dir
+from utils import find_pref_dir, find_pref_targ_color, pick_selective_neurons, min_max_normalize,recover_targ_loc
 
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
@@ -17,15 +17,8 @@ model_type = f_dir.split('_')[-2]
 total_rep = 50
 total_shuf = 100
 lr = 2e-2
-plot_sel = True
-rerun_calculation = False
-
-def find_targ_color_neuron(mask_in):
-    m1_red = np.sum(mask_in[9:11, :], axis=0).astype(bool)
-    m1_green = np.sum(mask_in[11:13, :], axis=0).astype(bool)
-    m2_red = np.sum(mask_in[13:15, :], axis=0).astype(bool)
-    m2_green = np.sum(mask_in[15:17, :], axis=0).astype(bool)
-    return m1_red, m1_green, m2_red, m2_green
+plot_sel = False
+rerun_calculation = True
 
 def locate_neurons(from_arr, to_arr, mask):
     from_m = np.tile(np.expand_dims(from_arr, axis=1), (1, len(from_arr)))
@@ -35,27 +28,54 @@ def locate_neurons(from_arr, to_arr, mask):
 def find_weights(from_arr, to_arr, mask, w):
     loc_m = locate_neurons(from_arr, to_arr, mask)
     temp = w * loc_m
-    return temp[temp != 0]
+    return temp[loc_m != 0]
 
 def load_data():
     if rerun_calculation:
         df = pd.DataFrame(columns=['conn', 'weights', 'conn_type', 'module', 'rep'])
         for rep in range(total_rep):
             print('Loading rep {}'.format(rep))
+            # laod files
             init_w = np.load(join(f_dir, 'init_weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
             init_w = init_w.item()
             trained_w = np.load(join(f_dir, 'weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
             trained_w = trained_w.item()
-            m1_red, m1_green, m2_red, m2_green = find_targ_color_neuron(init_w['in_mask_init'])
             test_output = tables.open_file(join(f_dir, 'test_output_lr%f_rep%d.h5'%(lr, rep)), mode = 'r')
             test_table = test_output.root
+            # find targ color encoding neurons 
+            # prefer green target = 0, prefer red target = 1
+            m1_targ_rng = np.append(range(40, 80), range(170, 180))
+            m2_targ_rng = np.append(range(120, 160), range(190, 200))
+            pref_targ_color = find_pref_targ_color(test_table['h_iter0'][:], test_table['target_iter0'][:], test_table['stim_dir_iter0'][:], m1_targ_rng, m2_targ_rng)
+            m1_green, m1_red, m2_green, m2_red = np.zeros(pref_targ_color.shape),  np.zeros(pref_targ_color.shape),  np.zeros(pref_targ_color.shape),  np.zeros(pref_targ_color.shape)
+            m1_green[m1_targ_rng] = pref_targ_color[m1_targ_rng]==0
+            m2_green[m2_targ_rng] = pref_targ_color[m2_targ_rng]==0
+            m1_red[m1_targ_rng] = pref_targ_color[m1_targ_rng]==1
+            m2_red[m2_targ_rng] = pref_targ_color[m2_targ_rng]==1
+            if plot_sel:
+                targ_loc = recover_targ_loc(test_table['target_iter0'][:], test_table['stim_dir_iter0'][:])[-1, :]
+                normalized_h = min_max_normalize(test_table['h_iter0'][:])
+                targ_sel = pick_selective_neurons(normalized_h, targ_loc, window_st=25, window_ed=45, alpha=0.05)
+                m1_green = m1_green * targ_sel
+                m2_green = m2_green * targ_sel
+                m1_red = m1_red * targ_sel
+                m2_red = m2_red * targ_sel
+            # find moving direction encoding neurons
+            m1_stim_rng = np.append(range(0, 40), range(160, 170))
+            m2_stim_rng = np.append(range(80, 120), range(180, 190))
             pref_red = find_pref_dir(test_table['stim_level_iter0'][:], test_table['stim_dir_iter0'][:], test_table['h_iter0'][:])
             pref_green = ~pref_red.astype(bool)
             m1_pref_red, m2_pref_red, m1_pref_green, m2_pref_green  = np.zeros(pref_red.shape), np.zeros(pref_red.shape), np.zeros(pref_red.shape), np.zeros(pref_red.shape)
-            m1_pref_red[:50] = pref_red[:50]
-            m2_pref_red[100:150] = pref_red[100:150]
-            m1_pref_green[:50] = pref_green[:50]
-            m2_pref_green[100:150] = pref_green[100:150]
+            m1_pref_red[m1_stim_rng] = pref_red[m1_stim_rng]
+            m2_pref_red[m2_stim_rng] = pref_red[m2_stim_rng]
+            m1_pref_green[m1_stim_rng] = pref_green[m1_stim_rng]
+            m2_pref_green[m2_stim_rng] = pref_green[m2_stim_rng]
+            if plot_sel:
+                stim_sel = pick_selective_neurons(normalized_h, test_table['stim_dir_iter0'][:], alpha=0.05)
+                m1_pref_red = m1_pref_red * stim_sel
+                m2_pref_red = m2_pref_red * stim_sel
+                m1_pref_green = m1_pref_green * stim_sel
+                m2_pref_green = m2_pref_green * stim_sel
 
             trained_w_rnn =  trained_w['w_rnn0']
             rnn_mask = trained_w['rnn_mask_init']
@@ -94,9 +114,8 @@ def load_data():
     else:
         df = pd.read_csv(join(f_dir, '%s_connections.csv'%model_type))
     return df
-   
+    
 def plot_w_distr(df, rep=None):
-    fig, ax = plt.subplots(figsize=(5, 8))
     sns.catplot(x="conn", y="weights",
             hue="conn_type",
             data=df, kind='bar',
@@ -107,14 +126,14 @@ def plot_w_distr(df, rep=None):
     else:
         title = "%s weight comparison (rep %d)"%(model_type, rep)
         fn = "%s_weight_comparison_%d.pdf"%(model_type, rep)
+    plt.title(title)
     plt.savefig(join(f_dir, fn))
-    plt.close(fig)
 
 def main():
     df = load_data()
-    for rep in range(total_rep):
-        temp_df = df.loc[df['rep']==rep]
-        plot_w_distr(temp_df, rep)
+    # for rep in range(total_rep):
+    #     temp_df = df.loc[df['rep']==rep]
+    #     plot_w_distr(temp_df, rep)
     plot_w_distr(df)
    
 
