@@ -6,7 +6,8 @@ import pandas as pd
 from os.path import join
 import numpy as np
 import tables
-from utils import find_pref_dir, find_pref_targ_color, pick_selective_neurons, min_max_normalize,recover_targ_loc
+from utils import find_pref_dir, find_pref_targ_color, pick_selective_neurons, min_max_normalize,recover_targ_loc, relu
+from calc_params import par
 
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
@@ -17,8 +18,20 @@ model_type = f_dir.split('_')[-2]
 total_rep = 50
 total_shuf = 100
 lr = 2e-2
-plot_sel = False
+plot_sel = True
 rerun_calculation = True
+plot_trained = False
+
+title = "%s_weight_comparison"%model_type
+if plot_sel:
+    title += '_selective'
+else:
+    title += '_allUnits'
+
+if plot_trained:
+    title += '_trained'
+else:
+    title += '_init'
 
 def locate_neurons(from_arr, to_arr, mask):
     from_m = np.tile(np.expand_dims(from_arr, axis=1), (1, len(from_arr)))
@@ -36,10 +49,12 @@ def load_data():
         for rep in range(total_rep):
             print('Loading rep {}'.format(rep))
             # laod files
-            init_w = np.load(join(f_dir, 'init_weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
-            init_w = init_w.item()
-            trained_w = np.load(join(f_dir, 'weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
-            trained_w = trained_w.item()
+            if plot_trained:
+                trained_w = np.load(join(f_dir, 'weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
+                trained_w = trained_w.item()
+            else:
+                init_w = np.load(join(f_dir, 'init_weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
+                init_w = init_w.item()
             test_output = tables.open_file(join(f_dir, 'test_output_lr%f_rep%d.h5'%(lr, rep)), mode = 'r')
             test_table = test_output.root
             # find targ color encoding neurons 
@@ -76,29 +91,33 @@ def load_data():
                 m2_pref_red = m2_pref_red * stim_sel
                 m1_pref_green = m1_pref_green * stim_sel
                 m2_pref_green = m2_pref_green * stim_sel
-
-            trained_w_rnn =  trained_w['w_rnn0']
-            rnn_mask = trained_w['rnn_mask_init']
+            if plot_trained:
+                w_rnn =  par['EI_matrix'] @ relu(trained_w['w_rnn0'])
+                rnn_mask = trained_w['rnn_mask_init']
+            else:
+                w_rnn = par['EI_matrix'] @ relu(init_w['w_rnn0'])
+                rnn_mask = init_w['rnn_mask_init']
+                
 
             # feedforward conn
-            m1_mr2tr = find_weights(m1_pref_red, m1_red, rnn_mask, trained_w_rnn)
-            m1_mg2tr = find_weights(m1_pref_green, m1_red, rnn_mask, trained_w_rnn)
-            m1_mr2tg = find_weights(m1_pref_red, m1_green, rnn_mask, trained_w_rnn)
-            m1_mg2tg = find_weights(m1_pref_green, m1_green, rnn_mask, trained_w_rnn)
-            m2_mr2tr = find_weights(m2_pref_red, m2_red, rnn_mask, trained_w_rnn)
-            m2_mg2tr = find_weights(m2_pref_green, m2_red, rnn_mask, trained_w_rnn)
-            m2_mr2tg = find_weights(m2_pref_red, m1_green, rnn_mask, trained_w_rnn)
-            m2_mg2tg = find_weights(m2_pref_green, m1_green, rnn_mask, trained_w_rnn)
+            m1_mr2tr = find_weights(m1_pref_red, m1_red, rnn_mask, w_rnn)
+            m1_mg2tr = find_weights(m1_pref_green, m1_red, rnn_mask, w_rnn)
+            m1_mr2tg = find_weights(m1_pref_red, m1_green, rnn_mask, w_rnn)
+            m1_mg2tg = find_weights(m1_pref_green, m1_green, rnn_mask, w_rnn)
+            m2_mr2tr = find_weights(m2_pref_red, m2_red, rnn_mask, w_rnn)
+            m2_mg2tr = find_weights(m2_pref_green, m2_red, rnn_mask, w_rnn)
+            m2_mr2tg = find_weights(m2_pref_red, m2_green, rnn_mask, w_rnn)
+            m2_mg2tg = find_weights(m2_pref_green, m2_green, rnn_mask, w_rnn)
 
             #feedback conn
-            m1_tr2mr = find_weights(m1_red, m1_pref_red, rnn_mask, trained_w_rnn)
-            m1_tr2mg = find_weights(m1_red, m1_pref_green, rnn_mask, trained_w_rnn)
-            m1_tg2mr = find_weights(m1_green, m1_pref_red, rnn_mask, trained_w_rnn)
-            m1_tg2mg = find_weights(m1_green, m1_pref_green, rnn_mask, trained_w_rnn)
-            m2_tr2mr = find_weights(m2_red, m2_pref_red, rnn_mask, trained_w_rnn)
-            m2_tr2mg = find_weights(m2_red, m2_pref_green, rnn_mask, trained_w_rnn)
-            m2_tg2mr = find_weights(m2_green, m2_pref_red, rnn_mask, trained_w_rnn)
-            m2_tg2mg = find_weights(m2_green, m2_pref_green, rnn_mask, trained_w_rnn)
+            m1_tr2mr = find_weights(m1_red, m1_pref_red, rnn_mask, w_rnn)
+            m1_tr2mg = find_weights(m1_red, m1_pref_green, rnn_mask, w_rnn)
+            m1_tg2mr = find_weights(m1_green, m1_pref_red, rnn_mask, w_rnn)
+            m1_tg2mg = find_weights(m1_green, m1_pref_green, rnn_mask, w_rnn)
+            m2_tr2mr = find_weights(m2_red, m2_pref_red, rnn_mask, w_rnn)
+            m2_tr2mg = find_weights(m2_red, m2_pref_green, rnn_mask, w_rnn)
+            m2_tg2mr = find_weights(m2_green, m2_pref_red, rnn_mask, w_rnn)
+            m2_tg2mg = find_weights(m2_green, m2_pref_green, rnn_mask, w_rnn)
 
             conn = ['mr-tr', 'mg-tr', 'mr-tg', 'mg-tg'] * 4
             conn_type = ['ff'] * 8 + ['fb'] * 8
@@ -110,24 +129,30 @@ def load_data():
             temp_df = temp_df.explode('weights').reset_index(drop=True)
 
             df = pd.concat([df, temp_df])
-        df.to_csv(join(f_dir, '%s_connections.csv'%model_type))
+        df.to_csv(join(f_dir, title+'_data.csv'))
     else:
-        df = pd.read_csv(join(f_dir, '%s_connections.csv'%model_type))
+        df = pd.read_csv(join(f_dir, title+'_data.csv'))
     return df
-    
+
+   
 def plot_w_distr(df, rep=None):
+
+    # if rep is None:
+    
     sns.catplot(x="conn", y="weights",
-            hue="conn_type",
-            data=df, kind='bar',
-            palette="dark", alpha=.6)
-    if rep is None:
-        title = "%s weight comparison (all)"%model_type
-        fn = "%s_weight_comparison.pdf"%model_type
-    else:
-        title = "%s weight comparison (rep %d)"%(model_type, rep)
-        fn = "%s_weight_comparison_%d.pdf"%(model_type, rep)
+        hue="conn_type",
+        data=df, kind='bar',
+        palette="dark", alpha=.6)
+
+    fn_png = title + '.png'
+    fn_pdf = title + '.pdf'
+    # else:
+    #     title = "%s weight comparison (rep %d)"%(model_type, rep)
+    #     fn = "%s_weight_comparison_%d.pdf"%(model_type, rep)
     plt.title(title)
-    plt.savefig(join(f_dir, fn))
+    plt.savefig(join(f_dir, fn_png), bbox_inches='tight')
+    plt.savefig(join(f_dir, fn_pdf), bbox_inches='tight')
+    
 
 def main():
     df = load_data()
