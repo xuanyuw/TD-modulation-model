@@ -3,7 +3,6 @@ import tables
 import matplotlib.pyplot as plt
 from os.path import join, exists
 from os import makedirs
-from rocN_py import rocN
 from utils import (
     find_coh_idx,
     find_correct_idx,
@@ -13,12 +12,11 @@ from utils import (
     get_max_iter,
     correct_zero_coh,
     min_max_normalize,
-    get_temp_h,
 )
 from calc_params import par
 
 
-f_dir = "fix_in_out_conn_plots"
+f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(1)
 all_lr = [0.02]
 
@@ -40,16 +38,36 @@ def main(lr, rep):
     stim_level = test_table["stim_level_iter%d" % max_iter][:]
     stim_dir = test_table["stim_dir_iter%d" % max_iter][:]
     desired_out, stim_dir = correct_zero_coh(y, stim_level, stim_dir, desired_out)
-    all_ROC = calc_all_ROC(h, y, desired_out, stim_level, stim_dir)
-    m_idx = get_module_idx()
-    draw_ROC_plots(
-        all_ROC, m_idx[0], m_idx[2], "Motion_Excitatory_ROC", False,
-    )
+    motion_rng = np.concatenate((np.arange(0, 40), np.arange(80, 120), np.arange(160, 170), np.arange(180, 190)))
+    all_ROC = calc_all_ROC(h[:, :, motion_rng], y, desired_out, stim_level, stim_dir)
+    
+
+#     draw_ROC_plots(
+#         all_ROC, m_idx[0], m_idx[2], "Motion_Excitatory_ROC", False,
+#     )
 
 
-def draw_ROC_plots(all_ROC, m1_idx, m2_idx, title, save_plt):
-    m1_ROC
-    return
+# def draw_ROC_plots(all_ROC, m1_idx, m2_idx, title, save_plt):
+#     m1_ROC
+#     return
+
+
+def rocN(x, y, N=100):
+    x = x.flatten("F")
+    y = y.flatten("F")
+    zlo = min(min(x), min(y))
+    zhi = max(max(x), max(y))
+    z = np.linspace(zlo, zhi, N)
+    fa = np.zeros((N, ))
+    hit = np.zeros((N, ))
+    for i in range(N):
+        fa[N - (i+1)] = sum(y > z[i])
+        hit[N - (i+1)] = sum(x > z[i])
+
+    fa = fa / y.shape[0]
+    hit = hit / x.shape[0]
+    a = np.trapz(y=hit, x=fa)
+    return a
 
 
 def calc_all_ROC(h, y, desired_out, stim_level, stim_dir):
