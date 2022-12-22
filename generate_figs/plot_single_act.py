@@ -5,10 +5,9 @@ import os
 current = os.path.dirname(os.path.realpath(__file__))
 parent = os.path.dirname(current)
 sys.path.append(parent)
-import numpy as np 
-import tables
-import matplotlib.pyplot as plt
 
+import numpy as np 
+import matplotlib.pyplot as plt
 import matplotlib as mpl
 from types import SimpleNamespace
 from utils import *

@@ -128,6 +128,24 @@ def find_pref_sac(y, h, stim_st_time=STIM_ST_TIME):
     return pref_ipsi, choice
 
 
+
+def get_pref_idx(n, h):
+    # find the trial of preferred saccade direction
+    pref_ipsi, choice = find_pref_sac(n.y, h)
+    pref_ipsi_temp = np.tile(pref_ipsi, (len(choice), 1))
+    choice_temp = np.tile(np.reshape(choice, (-1, 1)), (1, len(pref_ipsi)))
+    pref_sac = choice_temp == pref_ipsi_temp
+
+    # find the trial of preferred motion direction
+    pref_red = find_pref_dir(n.stim_level, n.stim_dir, h)
+    dir_red = n.stim_dir == 315
+    pref_red_temp = np.tile(pref_red, (len(dir_red), 1))
+    dir_red_temp = np.tile(np.reshape(dir_red, (-1, 1)), (1, len(pref_red)))
+    pref_dir = pref_red_temp == dir_red_temp
+    return pref_dir, pref_sac
+
+
+
 def min_max_normalize(arr):
     norm_arr = (arr - np.min(np.mean(arr, axis=1), axis=0)) / (
         np.max(np.mean(arr, axis=1), axis=0) - np.min(np.mean(arr, axis=1), axis=0)
