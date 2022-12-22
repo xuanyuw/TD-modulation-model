@@ -20,6 +20,7 @@ from types import SimpleNamespace
 from pickle import dump, load
 from tqdm import tqdm
 from time import perf_counter
+from scipy.stats import ttest_rel
 
 # plot settings
 plt.rcParams['figure.figsize'] = [6, 4]
@@ -30,7 +31,8 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+# f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(50)
 lr = 0.02
 
@@ -38,7 +40,7 @@ stim_st_time = 45
 target_st_time = 25
 rerun_calc = True
 normalize = True
-sep_sac = True
+sep_sac = False
 
 def main():
     if rerun_calc:   
@@ -140,9 +142,9 @@ def main():
         else:
             with open(os.path.join(f_dir, 'all_ROC.pkl'), 'rb') as f:
                 [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
-            print('l')
-
-
+    if not sep_sac:
+        plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
+        plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, 'sac')
 
 
 def rocN(x, y, N=100):
@@ -171,10 +173,10 @@ def calc_ROC(h, n, coh_idx, pref_idx):
     for i in range(h.shape[2]):
         pre_idx = combine_idx(pref_idx[:, i], n.correct_idx,coh_idx)
         non_idx = combine_idx(~pref_idx[:, i], n.correct_idx,coh_idx)
-
-        h_pre = h[:, pre_idx, i]
-        h_non = h[:, non_idx, i]
-        all_ROC[:, i] = rocN(h_pre, h_non)
+        for j in range(h.shape[0]):
+            h_pre = h[j, pre_idx, i]
+            h_non = h[j, non_idx, i]
+            all_ROC[j, i] = rocN(h_pre, h_non)
     # toc = perf_counter()
     # print(f"ROC ran in {toc - tic:0.4f} seconds")
     return all_ROC
@@ -206,6 +208,48 @@ def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
         ipsi_ROC[:, i] = rocN(h_ipsi_pref, h_ipsi_non)
         contra_ROC[:, i] = rocN(h_contra_pref, h_contra_non)
     return ipsi_ROC, contra_ROC
+
+
+def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=True):
+    if cell_idx is None:
+        H_line = np.mean(H_ROC, axis=(0, 2))
+        M_line = np.mean(M_ROC, axis=(0, 2))
+        L_line = np.mean(L_ROC, axis=(0, 2))
+        Z_line = np.mean(Z_ROC, axis=(0, 2))
+
+    else:
+        H_line = H_ROC[0,cell_idx,:]
+        M_line = M_ROC[0,cell_idx,:]
+        L_line = L_ROC[0,cell_idx,:]
+        Z_line = Z_ROC[0,cell_idx,:]
+
+
+
+    fig, ax = plt.subplots()
+    ax.plot(H_line, label='H', color='r')
+    ax.plot(M_line, label='M', color='g')
+    ax.plot(L_line, label='L', color='b')
+    ax.plot(Z_line, label='Z', color='k')
+    ax.legend(loc='best', prop={'size': 10}, frameon=False)
+
+    ax.set_xlim(0, 50)
+    xticks = np.array([0, 25, 50])
+    ax.set_xticks(xticks)
+    ax.set_xticklabels((xticks+20-stim_st_time)*20)
+    ax.set_ylabel("Average AUC")
+    ax.set_xlabel("Time")
+    ax.axvline(x=target_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax.axvline(x=stim_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    plt.tight_layout()
+
+    if save_plt:
+        pic_dir = os.path.join(f_dir, 'ROC_plots')
+        if not os.path.exists(pic_dir):
+            os.makedirs(pic_dir)
+        plt.savefig(os.path.join(pic_dir,'all_ROC_%s.png'%mode))
+        plt.savefig(os.path.join(pic_dir,'all_ROC_%s.pdf'%mode))
+        plt.close(fig)
+
 
 
 main()

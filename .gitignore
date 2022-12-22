@@ -136,3 +136,4 @@ dmypy.json
 *.h5
 *.zip
 *.xlsx
+.DS_Store
