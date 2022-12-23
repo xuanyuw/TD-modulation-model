@@ -130,20 +130,28 @@ def main():
         
         pbar.close()
         if sep_sac:
+            with open(os.path.join(f_dir, 'sep_sac_ROC_dir.pkl'), 'wb') as f:
+                dump([H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC], f)
             with open(os.path.join(f_dir, 'sep_sac_ROC.pkl'), 'wb') as f:
-                dump([H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC, 
-                H_ipsi_sac_ROC, H_contra_sac_ROC, M_ipsi_sac_ROC, M_contra_sac_ROC, L_ipsi_sac_ROC, L_contra_sac_ROC, Z_ipsi_sac_ROC, Z_contra_sac_ROC], f)
+                dump([H_ipsi_sac_ROC, H_contra_sac_ROC, M_ipsi_sac_ROC, M_contra_sac_ROC, L_ipsi_sac_ROC, L_contra_sac_ROC, Z_ipsi_sac_ROC, Z_contra_sac_ROC], f)
         else:
-            with open(os.path.join(f_dir, 'all_ROC.pkl'), 'wb') as f:
-                dump([H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC], f)
-    else:
+            with open(os.path.join(f_dir, 'all_ROC_dir.pkl'), 'wb') as f:
+                dump([H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC], f)
+            with open(os.path.join(f_dir, 'all_ROC_sac.pkl'), 'wb') as f:
+                dump([H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC], f)
+        
+        
+    else:    
         if sep_sac:
-            with open(os.path.join(f_dir, 'sep_sac_ROC.pkl'), 'rb') as f:
-                H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC, 
+            with open(os.path.join(f_dir, 'sep_sac_ROC_dir.pkl'), 'rb') as f:
+                H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC = load(f)
+            with open(os.path.join(f_dir, 'sep_sac_ROC_sac.pkl'), 'rb') as f:
                 H_ipsi_sac_ROC, H_contra_sac_ROC, M_ipsi_sac_ROC, M_contra_sac_ROC, L_ipsi_sac_ROC, L_contra_sac_ROC, Z_ipsi_sac_ROC, Z_contra_sac_ROC = load(f)
         else:
-            with open(os.path.join(f_dir, 'all_ROC.pkl'), 'rb') as f:
-                [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
+            with open(os.path.join(f_dir, 'all_ROC_dir.pkl'), 'rb') as f:
+                [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC] = load(f)
+            with open(os.path.join(f_dir, 'all_ROC_sac.pkl'), 'rb') as f:
+                [H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
     if not sep_sac:
         plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
         plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, 'sac')
@@ -178,7 +186,7 @@ def calc_ROC(h, n, coh_idx, pref_idx):
         for j in range(h.shape[0]):
             h_pre = h[j, pre_idx, i]
             h_non = h[j, non_idx, i]
-            all_ROC[j, i] = rocN(h_pre, h_non)
+            all_ROC[j, i] = abs(rocN(h_pre, h_non)-0.5)+0.5
     # toc = perf_counter()
     # print(f"ROC ran in {toc - tic:0.4f} seconds")
     return all_ROC
@@ -207,8 +215,8 @@ def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
             h_contra_pref = h[j, contra_pref_idx, i]
             h_ipsi_non = h[j, ipsi_non_idx, i]
             h_contra_non = h[j, contra_non_idx, i]
-            ipsi_ROC[j, i] = rocN(h_ipsi_pref, h_ipsi_non)
-            contra_ROC[j, i] = rocN(h_contra_pref, h_contra_non)
+            ipsi_ROC[j, i] = abs(rocN(h_ipsi_pref, h_ipsi_non)-0.5)+0.5
+            contra_ROC[j, i] = abs(rocN(h_contra_pref, h_contra_non)-0.5)+0.5
     return ipsi_ROC, contra_ROC
 
 
