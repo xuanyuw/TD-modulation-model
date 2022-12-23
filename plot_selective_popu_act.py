@@ -10,7 +10,7 @@ all_lr = [0.02]
 
 
 def main(lr, rep):
-    n = SimpleNamespace(**load_test_data(f_dir, lr, rep))
+    n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
     # plot population neural activity
     normalized_h = min_max_normalize(n.h)
     m_idx = get_module_idx()

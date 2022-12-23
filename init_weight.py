@@ -1,10 +1,10 @@
 from calc_params import par
-from math import ceil
+
 import numpy as np
 import brainpy.math as bm
 from os.path import join
-from utils import get_module_idx, get_diff_stim, calc_input_sum
-from time import time
+from utils import get_module_idx, get_diff_stim, calc_input_sum, calculate_rf_rngs
+from time import time 
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
@@ -22,17 +22,6 @@ def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
     return mask
 
 
-def calculate_rf_rngs():
-    """Generates the bounds for rf blocks"""
-    ei = [par["exc_inh_prop"], 1 - par["exc_inh_prop"]]
-    rf_bnd = np.append(
-        0,
-        np.cumsum(
-            [ceil(par["n_hidden"] * eix * p) for eix in ei for p in par["RF_perc"]]
-        ),
-    )
-    rf_rngs = [(rf_bnd[n], rf_bnd[n + 1]) for n in range(len(rf_bnd) - 1)]
-    return rf_rngs
 
 
 def fill_mask(rf_rngs, conn_probs, mask):
@@ -40,6 +29,8 @@ def fill_mask(rf_rngs, conn_probs, mask):
         for j in range(len(rf_rngs)):
             mask = fill_rand_conn(mask, rf_rngs[i], rf_rngs[j], conn_probs[i, j])
     return mask
+
+
 
 
 def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
@@ -51,9 +42,9 @@ def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
         [0, 1], size=toInter_sz, p=(1 - conn_prob, conn_prob)
     )
     # interneurons randomly connect to two modules
-    new_rnn_mask[par["n_hidden"] : par["n_total"], :par["n_hidden"]] = np.random.choice(
-        [0, 1], size=fromInter_sz, p=(1 - conn_prob, conn_prob)
-    )
+    new_rnn_mask[
+        par["n_hidden"] : par["n_total"], : par["n_hidden"]
+    ] = np.random.choice([0, 1], size=fromInter_sz, p=(1 - conn_prob, conn_prob))
     return new_rnn_mask
 
 
@@ -66,16 +57,26 @@ def generate_rnn_mask():
     )
     temp_probs = np.array(
         [
+            [h_prob, m_prob, l_prob, 0],
+            [m_prob, h_prob, 0, l_prob],
+            [l_prob, 0, h_prob, m_prob],
+            [0, l_prob, m_prob, h_prob],
+        ]
+    )
+    inh_probs = np.array(
+        [
             [h_prob, m_prob, 0, 0],
             [m_prob, h_prob, 0, 0],
             [0, 0, h_prob, m_prob],
             [0, 0, m_prob, h_prob],
         ]
     )
-    conn_probs = np.tile(temp_probs, (2, 2))
+
+    # conn_probs = np.tile(temp_probs, (1, 2))
+    conn_probs = np.vstack([np.tile(temp_probs, (1, 2)), np.tile(inh_probs, (1, 2))])
     rf_rngs = calculate_rf_rngs()
     rnn_mask_init = fill_mask(rf_rngs, conn_probs, rnn_mask_init)
-    rnn_mask_init = add_interneuron_mask(rnn_mask_init, rf_rngs, l_prob)
+    # rnn_mask_init = add_interneuron_mask(rnn_mask_init, rf_rngs, l_prob)
 
     # remove self_connections
     temp_mask = bm.ones((par["n_total"], par["n_total"])) - bm.eye(par["n_total"])
@@ -140,12 +141,12 @@ def generate_out_mask():
         out_mask_init[rf_rngs[i][0] : rf_rngs[i][1], idx] = temp_mask.flatten()
         # out_mask_init[rf_rngs[i][0]:rf_rngs[i][1], idx] = np.random.choice(
         #     [0, 1], size=(rf_rngs[i][1] - rf_rngs[i][0], ), p=(1-par['output_conn_prob'], par['output_conn_prob']))
-    if par['cross_output_prob'] > 0:
-        o1, o2 = par['output_rf']
-        o1xo2 = get_fix_conn_mask(rf_rngs[o1], (0, 1), par['cross_output_prob'])
-        o2xo1 = get_fix_conn_mask(rf_rngs[o2], (0, 1), par['cross_output_prob'])
-        out_mask_init[rf_rngs[o1][0]:rf_rngs[o1][1], 1] = o1xo2.flatten()
-        out_mask_init[rf_rngs[o2][0]:rf_rngs[o2][1], 0] = o2xo1.flatten()
+    if par["cross_output_prob"] > 0:
+        o1, o2 = par["output_rf"]
+        o1xo2 = get_fix_conn_mask(rf_rngs[o1], (0, 1), par["cross_output_prob"])
+        o2xo1 = get_fix_conn_mask(rf_rngs[o2], (0, 1), par["cross_output_prob"])
+        out_mask_init[rf_rngs[o1][0] : rf_rngs[o1][1], 1] = o1xo2.flatten()
+        out_mask_init[rf_rngs[o2][0] : rf_rngs[o2][1], 0] = o2xo1.flatten()
     return out_mask_init
 
 
@@ -197,7 +198,8 @@ def re_init_win(in_weight, in_mask, stim):
         re_init = re_init or re_init_cond(m1_r_vals)
 
         if re_init:
-            in_weight = initialize(0.1, (par["n_input"], par["n_total"]))
+            # in_weight = initialize(0.1, (par["n_input"], par["n_total"]))
+            in_weight = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_input"], par["n_total"]))
     end = time()
     print("elapsed time: %f" % (end - start))
     return in_weight
@@ -212,7 +214,8 @@ def re_init_wout(out_weight, out_mask):
     print("re-initializing output weights...")
     start = time()
     while min(all_sums) < 0.8 * max(all_sums):
-        out_weight = initialize(0.1, (par["n_total"], par["n_output"]))
+        # out_weight = initialize(0.1, (par["n_total"], par["n_output"]))
+        out_weight = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_total"], par["n_output"]))
         masked_weight = out_weight * out_mask
         all_sums = (
             (round(np.sum(masked_weight[:, 0]).astype("float"), 3)),
@@ -228,8 +231,9 @@ def generate_raw_weights():
     Initialize the weights without multiplying masks 
     The masks will be applied later.
     """
-    w_in0 = initialize(0.1, (par["n_input"], par["n_total"]))
+    # w_in0 = initialize(0.1, (par["n_input"], par["n_total"]))
     # w_in0 =  np.random.uniform(0, 0.2, size=(par['n_input'], par['n_hidden']))
+    w_in0 = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_input"], par["n_total"]))
     w_rnn0 = initialize(0.1, (par["n_total"], par["n_total"]))
     w_rnn0[: par["n_hidden"], par["ind_inh"]] = initialize(
         0.2, (par["n_hidden"], len(par["ind_inh"]))
@@ -244,7 +248,8 @@ def generate_raw_weights():
     # is used, so the strength of the recurrent weights is reduced to compensate
     if par["synapse_config"] == "none":
         w_rnn0 = w_rnn0 / 3.0
-    w_out0 = initialize(0.1, (par["n_total"], par["n_output"]))
+    # w_out0 = initialize(0.1, (par["n_total"], par["n_output"]))
+    w_out0 = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_total"], par["n_output"]))
     # w_out0 = np.random.uniform(0, 0.2, size=(par['n_hidden'], par['n_output']))
     b_rnn0 = np.zeros((1, par["n_total"]), dtype=np.float32)
     b_out0 = np.zeros((1, par["n_output"]), dtype=np.float32)

@@ -110,7 +110,7 @@ def trial(par, train=True):
 
             # stop training if all trials with meaningful inputs reaches 95% accuracy
             # cond = (array([H_acc, M_acc, L_acc])>0.95).all()
-            cond = total_accuracy > 0.95
+            cond = total_accuracy > 0.99
             # Save the network model and output model performance to screen
             if i % iter_between_outputs == 0 or i == num_iterations - 1 or cond:
                 # save training output
@@ -176,22 +176,22 @@ def trial(par, train=True):
                 all_h.append(h_hist.numpy())
                 all_rt.append(get_reaction_time(model.y_hist, par))
                 all_neural_in.append(inputs.numpy())
-            print(
-                f" Iter {i:4d}"
-                + f" | Accuracy {total_accuracy:0.4f}"
-                + f" | Mean activity {bm.mean(model.h):0.4f}"
-                + f" | RT {rt:0.4f}"
-            )
-            print(
-                f"Separated Accuracy:"
-                + f" | H {H_acc:0.4f}"
-                + f" | M {M_acc:0.4f}"
-                + f" | L {L_acc:0.4f}"
-                + f" | Z {Z_acc:0.4f}"
-            )
-            print(
-                "--------------------------------------------------------------------------------------------------------------------------------"
-            )
+            # print(
+            #     f" Iter {i:4d}"
+            #     + f" | Accuracy {total_accuracy:0.4f}"
+            #     + f" | Mean activity {bm.mean(model.h):0.4f}"
+            #     + f" | RT {rt:0.4f}"
+            # )
+            # print(
+            #     f"Separated Accuracy:"
+            #     + f" | H {H_acc:0.4f}"
+            #     + f" | M {M_acc:0.4f}"
+            #     + f" | L {L_acc:0.4f}"
+            #     + f" | Z {Z_acc:0.4f}"
+            # )
+            # print(
+            #     "--------------------------------------------------------------------------------------------------------------------------------"
+            # )
 
     if train and par["save_train_out"]:
         train_file = tables.open_file(
@@ -240,7 +240,7 @@ def trial(par, train=True):
         test_file = tables.open_file(
             join(
                 par["save_dir"],
-                "test_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"]),
+                "test_output_lr%f_rep%d_shuf%d.h5" % (par["learning_rate"], par["rep"], par['shuffle']),
             ),
             mode="w",
             title="Test output",
@@ -291,13 +291,13 @@ def trial(par, train=True):
 
         with open(join(par["save_dir"], par["weight_fn"]), "wb") as f:
             save(f, weights)
-    else:  # plot test acc
-        plot_test_acc(
-            [H_acc, M_acc, L_acc, Z_acc],
-            par["save_dir"],
-            par["learning_rate"],
-            par["rep"],
-        )
+    # else:  # plot test acc
+        # plot_test_acc(
+        #     [H_acc, M_acc, L_acc, Z_acc],
+        #     par["save_dir"],
+        #     par["learning_rate"],
+        #     par["rep"],
+        # )
     dump(model_performance, open(join(par["save_dir"], par["save_fn"]), "wb"))
 
 

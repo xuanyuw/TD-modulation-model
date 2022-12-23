@@ -8,7 +8,7 @@ from os import makedirs
 
 stim = Stimulus(par)
 trial_info = stim.generate_trial()
-fdir = "origSTP_decayInput_model"
+fdir = "crossOuput_noInterneuron_lowInput_lowSTP_model"
 
 if not exists(fdir):
     makedirs(fdir)

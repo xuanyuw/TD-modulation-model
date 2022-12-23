@@ -1,7 +1,8 @@
 from init_weight import initialize_weights
+from utils import cut_conn, shuffle_conn
 import brainpy as bp
 import brainpy.math as bm
-from numpy import load
+from numpy import load, tile
 from numpy.random import normal
 from os.path import join
 bp.math.set_platform('cpu')
@@ -43,7 +44,7 @@ class Model(bp.layers.Module):
             all_weights = initialize_weights(par['learning_rate'], par['rep'], stim)
         else:
             all_weights = load(
-                join(par['save_dir'], par['weight_fn']), allow_pickle=True)
+                join(par['model_dir'], par['weight_fn']), allow_pickle=True)
             all_weights = all_weights.item()
         self.in_mask = bm.array(all_weights['in_mask_init'])
         self.rnn_mask = bm.array(all_weights['rnn_mask_init'])
@@ -56,6 +57,24 @@ class Model(bp.layers.Module):
         self.w_out = bm.Variable(all_weights['w_out0'])
         self.b_rnn = bm.TrainVar(all_weights['b_rnn0'])
         self.b_out = bm.Variable(all_weights['b_out0'])
+
+        if not train:
+            # temp_conn = [
+            #     [1, 1, 1, 1],
+            #     [0, 1, 1, 1], 
+            #     [1, 1, 1, 1], 
+            #     [1, 1, 0, 1]
+            # ]
+            # conn = tile(temp_conn, (2, 2))
+            # self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * cut_conn(conn, all_weights['rnn_mask_init'].numpy()))
+            shuffle_temp = [
+                [0, 0, 0, 0], 
+                [1, 0, 0, 0], 
+                [0, 0, 0, 0], 
+                [0, 0, 1, 0], 
+            ]
+            shuffle = tile(shuffle_temp, (2, 2))
+            self.w_rnn = bm.TrainVar(shuffle_conn(shuffle, all_weights['w_rnn0']*all_weights['rnn_mask_init'].numpy()))
 
         # Constants
 
@@ -151,6 +170,7 @@ class Model(bp.layers.Module):
         # self.weight_loss = bm.mean(bm.relu(self.w_rnn) ** n)
 
         # final loss
+        # self.loss[:] = self.perf_loss + self.weight_cost * self.weight_loss
         self.loss[:] = self.perf_loss + self.spike_cost * \
             self.spike_loss + self.weight_cost * self.weight_loss
         # self.loss = self.perf_loss + self.spike_cost * \

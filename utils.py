@@ -4,10 +4,12 @@ from calc_params import par
 import os
 import tables
 from scipy.stats import f_oneway
+from math import ceil
 
 
 STIM_ST_TIME = (par['time_fixation'] + par['time_target'])//par['dt']
 TARG_ST_TIME = par['time_fixation']//par['dt']
+DT = par['dt']
 
 
 def find_coh_idx(stim_level):
@@ -103,6 +105,16 @@ def find_pref_dir(stim_level, stim_dir, h, stim_st_time=STIM_ST_TIME):
     pref_red = red_mean > green_mean
     return pref_red
 
+def find_pref_targ_color(h, desired_out, stim_dir, m1_targ_rng, m2_targ_rng):
+    # prefer green target = 0, prefer red target = 1
+    targ_loc = recover_targ_loc(desired_out, stim_dir)[-1, :]
+    contra_green_mean = np.mean(h[TARG_ST_TIME:STIM_ST_TIME, targ_loc==0, :], axis=(0, 1))
+    contra_red_mean = np.mean(h[TARG_ST_TIME:STIM_ST_TIME, targ_loc==1, :], axis=(0, 1))
+    pref_targ_color = np.zeros((h.shape[2],))
+    pref_targ_color[m1_targ_rng] = contra_green_mean[m1_targ_rng] < contra_red_mean[m1_targ_rng] 
+    pref_targ_color[m2_targ_rng] = contra_green_mean[m2_targ_rng] > contra_red_mean[m2_targ_rng] #ipsi-lateral targets are the opposite of contra lateral targets
+    return pref_targ_color
+
 
 def find_pref_sac(y, h, stim_st_time=STIM_ST_TIME):
     choice = np.argmax(y, 2)[-1, :]
@@ -114,6 +126,24 @@ def find_pref_sac(y, h, stim_st_time=STIM_ST_TIME):
         ipsi_mean = np.mean(h[stim_st_time:, ipsi_idx, i])
         pref_ipsi.append(contra_mean < ipsi_mean)
     return pref_ipsi, choice
+
+
+
+def get_pref_idx(n, h):
+    # find the trial of preferred saccade direction
+    pref_ipsi, choice = find_pref_sac(n.y, h)
+    pref_ipsi_temp = np.tile(pref_ipsi, (len(choice), 1))
+    choice_temp = np.tile(np.reshape(choice, (-1, 1)), (1, len(pref_ipsi)))
+    pref_sac = choice_temp == pref_ipsi_temp
+
+    # find the trial of preferred motion direction
+    pref_red = find_pref_dir(n.stim_level, n.stim_dir, h)
+    dir_red = n.stim_dir == 315
+    pref_red_temp = np.tile(pref_red, (len(dir_red), 1))
+    dir_red_temp = np.tile(np.reshape(dir_red, (-1, 1)), (1, len(pref_red)))
+    pref_dir = pref_red_temp == dir_red_temp
+    return pref_dir, pref_sac
+
 
 
 def min_max_normalize(arr):
@@ -302,9 +332,9 @@ def calc_input_sum(in_weight, in_mask, stim, module_idx):
     return (np.sum(in_val[:, m1_idx]), np.sum(in_val[:, m2_idx]))
 
 
-def load_test_data(f_dir, lr, rep):
+def load_test_data(f_dir, f_name):
     test_output = tables.open_file(
-        os.path.join(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)), mode="r"
+        os.path.join(f_dir, f_name), mode="r"
     )
     test_table = test_output.root
     max_iter = get_max_iter(test_table)
@@ -317,6 +347,7 @@ def load_test_data(f_dir, lr, rep):
     stim_dir = test_table["stim_dir_iter%d" % max_iter][:]
     desired_out, stim_dir = correct_zero_coh(y, stim_level, stim_dir, desired_out)
     correct_idx = find_correct_idx(y, desired_out)
+
     return {
         "h": h,
         "y": y,
@@ -389,14 +420,23 @@ def plot_coh_popu_act(
     ax1.set_title(label_dict["ax1_title"])
     ax1.set_ylabel("Average activity")
     ax1.set_xlabel("Time")
+    xticks = np.array([0, target_st_time, stim_st_time, len(line_dict[coh_levels[i] + "_solid_ax1"])])
+    ax1.set_xticks(xticks)
+    ax1.set_xticklabels((xticks-stim_st_time)*DT)
     ax1.axvline(x=target_st_time, color="k")
     ax1.axvline(x=stim_st_time, color="k")
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
 
     ax2.set_title(label_dict["ax2_title"])
     ax2.set_xlabel("Time")
+    ax2.set_xticks(xticks)
+    ax2.set_xticklabels((xticks-stim_st_time)*DT)
     ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     ax2.axvline(x=target_st_time, color="k")
     ax2.axvline(x=stim_st_time, color="k")
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
 
     plt.suptitle(label_dict["sup_title"])
     return fig
@@ -441,3 +481,36 @@ def get_sac_avg_h(
     h_left_m2 = np.mean(h[:, left_idx, :][:, :, m2_cells], axis=(1, 2))
     h_right_m2 = np.mean(h[:, right_idx, :][:, :, m2_cells], axis=(1, 2))
     return h_left_m1, h_right_m1, h_left_m2, h_right_m2
+
+def calculate_rf_rngs():
+    """Generates the bounds for rf blocks"""
+    ei = [par["exc_inh_prop"], 1 - par["exc_inh_prop"]]
+    rf_bnd = np.append(
+        0,
+        np.cumsum(
+            [ceil(par["n_hidden"] * eix * p) for eix in ei for p in par["RF_perc"]]
+        ),
+    )
+    rf_rngs = [(rf_bnd[n], rf_bnd[n + 1]) for n in range(len(rf_bnd) - 1)]
+    return rf_rngs
+
+def cut_conn(conn, mask):
+    rf_rngs = calculate_rf_rngs()
+    for i in range(len(rf_rngs)):
+        from_rng = rf_rngs[i]
+        for j in range(len(rf_rngs)):
+            to_rng = rf_rngs[j]
+            if conn[i, j]==0:
+                sz = (from_rng[1] - from_rng[0], to_rng[1] - to_rng[0])
+                mask[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.zeros(sz)
+    return mask
+
+def shuffle_conn(shuffle, weight):
+    rf_rngs = calculate_rf_rngs()
+    for i in range(len(rf_rngs)):
+        from_rng = rf_rngs[i]
+        for j in range(len(rf_rngs)):
+            to_rng = rf_rngs[j]
+            if shuffle[i, j]==1:
+                np.random.shuffle(weight[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]])
+    return weight

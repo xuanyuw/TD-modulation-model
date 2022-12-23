@@ -3,6 +3,7 @@ import tables
 import matplotlib.pyplot as plt
 import os
 from utils import *
+import matplotlib as mpl
 
 
 f_dir = "update_w_pos_model"
@@ -12,6 +13,14 @@ all_lr = [0.02]
 stim_st_time = 45
 target_st_time = 25
 
+
+# plot settings
+plt.rcParams['figure.figsize'] = [6, 4]
+mpl.rcParams['axes.spines.right'] = False
+mpl.rcParams['axes.spines.top'] = False
+mpl.rcParams['font.family'] = 'Arial'
+mpl.rcParams.update({'font.size': 15})
+mpl.rcParams['lines.linewidth'] = 2
 
 def main(lr, rep):
 

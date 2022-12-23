@@ -1,28 +1,51 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import os
 from utils import *
 from types import SimpleNamespace
+from pickle import load, dump
 
-f_dir = "crossOutput_origTimeConst_model"
-total_rep = 20
-all_lr = [0.02]
+mpl.rcParams['axes.spines.right'] = False
+mpl.rcParams['axes.spines.top'] = False
 
+f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+model_type = f_dir.split('_')[-2]
+total_rep = 50
+all_lr = [2e-2]
+plot_sel = True
+rerun_calculation = False
 
 
 def main(lr, total_rep):
-    dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, total_rep, True, True)
-    dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, total_rep, False, True)
+    if rerun_calculation:
+        dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, total_rep, True, plot_sel)
+        dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, total_rep, False, plot_sel)
+    else:
+        dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load(open(os.path.join(f_dir, "all_selectivity_data_normalized.pkl"), 'rb'))
+        for k in dir_sel_norm.keys():
+            dir_sel_norm[k] = np.mean(dir_sel_norm[k], axis=0)
+        for k in sac_sel_pvnp_norm.keys():
+            sac_sel_pvnp_norm[k] = np.mean(sac_sel_pvnp_norm[k], axis=0)
+        for k in sac_sel_lvr_norm.keys():
+            sac_sel_lvr_norm[k] = np.mean(sac_sel_lvr_norm[k], axis=0)
 
-    plot_dir_selectivity(dir_sel_norm, "Motion_direction_selectivity_normalized_average", True, plot_sel=True)
-    plot_dir_selectivity(dir_sel_orig, "Motion_direction_selectivity_raw_average", True, plot_sel=True)
+        dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw.pkl"), 'rb'))
+        for k in dir_sel_orig.keys():
+            dir_sel_orig[k] = np.mean(dir_sel_orig[k], axis=0)
+        for k in sac_sel_pvnp_orig.keys():
+            sac_sel_pvnp_orig[k] = np.mean(sac_sel_pvnp_orig[k], axis=0)
+        for k in sac_sel_lvr_orig.keys():
+            sac_sel_lvr_orig[k] = np.mean(sac_sel_lvr_orig[k], axis=0)
+
+    plot_dir_selectivity(dir_sel_norm, "%s_Motion_dir_sel_norm_avg"%model_type, True, plot_sel=plot_sel)
+    plot_dir_selectivity(dir_sel_orig, "%s_Motion_dir_sel_raw_avg"%model_type, True, plot_sel=plot_sel)
     
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "Target_saccade_selectivity_pvnp_normalized_average", True, plot_sel=True)
-    plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "Target_saccade_selectivity_pvnp_raw_average", True, plot_sel=True)
+    plot_sac_selectivity_pvnp(sac_sel_pvnp_norm, "%s_Target_sac_sel_pvnp_norm_avg"%model_type, True, plot_sel=plot_sel)
+    plot_sac_selectivity_pvnp(sac_sel_pvnp_orig, "%s_Target_sac_sel_pvnp_raw_avg"%model_type, True, plot_sel=plot_sel)
 
-    plot_sac_selectivity_lvr(sac_sel_lvr_norm, "Target_saccade_selectivity_lvr_normalized_average", True, plot_sel=True)
-    plot_sac_selectivity_lvr(sac_sel_lvr_orig, "Target_saccade_selectivity_lvr_raw_average", True, plot_sel=True)
-
+    plot_sac_selectivity_lvr(sac_sel_lvr_norm, "%s_Target_sac_sel_lvr_norm_avg"%model_type, True, plot_sel=plot_sel)
+    plot_sac_selectivity_lvr(sac_sel_lvr_orig, "%s_Target_sac_sel_lvr_raw_avg"%model_type, True, plot_sel=plot_sel)
 def load_all_activities(lr, total_rep, normalize, plot_sel):
     m_idx = get_module_idx()
     m1_id = [[0, 4], [1, 5]]
@@ -32,7 +55,7 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
     all_sac_sel_pvnp = {}
     all_sac_sel_lvr = {}
     for rep in range(total_rep):
-        n = SimpleNamespace(**load_test_data(f_dir, lr, rep))
+        n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
         # plot population neural activity
         normalized_h = min_max_normalize(n.h)
         if normalize:
@@ -64,13 +87,17 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
             for k in sac_sel_lvr.keys():
                 all_sac_sel_lvr[k] = np.vstack([all_sac_sel_lvr[k],  sac_sel_lvr[k]])
 
+    if normalize:
+        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_normalized.pkl'), 'wb'))
+    else:
+        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_raw.pkl'), 'wb'))
+    
     for k in all_motion_dir_sel.keys():
         all_motion_dir_sel[k] = np.mean(all_motion_dir_sel[k], axis=0)
     for k in all_sac_sel_pvnp.keys():
         all_sac_sel_pvnp[k] = np.mean(all_sac_sel_pvnp[k], axis=0)
     for k in all_sac_sel_lvr.keys():
         all_sac_sel_lvr[k] = np.mean(all_sac_sel_lvr[k], axis=0)
-    
     return all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr
 
 
@@ -163,7 +190,7 @@ def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
@@ -185,7 +212,7 @@ def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
@@ -206,7 +233,7 @@ def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
         plt.close(fig)
 
 
