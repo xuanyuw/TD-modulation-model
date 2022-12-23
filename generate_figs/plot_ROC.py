@@ -31,8 +31,8 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-# f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
-f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+# f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(50)
 lr = 0.02
 
@@ -72,6 +72,7 @@ def main():
             L_sac_ROC = np.zeros((len(all_rep),70-19, 100))
             Z_sac_ROC = np.zeros((len(all_rep),70-19, 100))
         pbar = tqdm(total=len(all_rep)*2*4)
+        # pbar = tqdm(total = len(all_rep)*4)
         for rep in all_rep:
             # print('Running ROC calculation for rep %d ... '%rep)
             n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
@@ -81,6 +82,7 @@ def main():
             else:
                 h = n.h
             motion_rng = np.concatenate((np.arange(0, 40), np.arange(80, 120), np.arange(160, 170), np.arange(180, 190)))
+            target_rng = np.concatenate((np.arange(40, 80), np.arange(120, 160), np.arange(170, 180), np.arange(190, 200)))
             m1_rng = np.concatenate((np.arange(0, 40), np.arange(160, 170)))
             coh_dict = find_coh_idx(n.stim_level)
             H_idx = coh_dict['H']
@@ -98,13 +100,13 @@ def main():
                 Z_ipsi_dir_ROC[rep, :, :], Z_contra_dir_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, Z_idx, pref_dir)
                 pbar.update(1)
                 
-                H_ipsi_sac_ROC[rep, :, :], H_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, H_idx, pref_sac)
+                H_ipsi_sac_ROC[rep, :, :], H_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, H_idx, pref_sac)
                 pbar.update(1)
-                M_ipsi_sac_ROC[rep, :, :], M_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, M_idx, pref_sac)
+                M_ipsi_sac_ROC[rep, :, :], M_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, M_idx, pref_sac)
                 pbar.update(1)
-                L_ipsi_sac_ROC[rep, :, :], L_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, L_idx, pref_sac)
+                L_ipsi_sac_ROC[rep, :, :], L_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, L_idx, pref_sac)
                 pbar.update(1)
-                Z_ipsi_sac_ROC[rep, :, :], Z_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, Z_idx, pref_sac)
+                Z_ipsi_sac_ROC[rep, :, :], Z_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, Z_idx, pref_sac)
                 pbar.update(1)
             else:
                 
@@ -117,13 +119,13 @@ def main():
                 Z_dir_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, Z_idx, pref_dir)
                 pbar.update(1)
                 
-                H_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, H_idx, pref_sac)
+                H_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, H_idx, pref_sac)
                 pbar.update(1)
-                M_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, M_idx, pref_sac)
+                M_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, M_idx, pref_sac)
                 pbar.update(1)
-                L_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, L_idx, pref_sac)
+                L_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, L_idx, pref_sac)
                 pbar.update(1)
-                Z_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, Z_idx, pref_sac)
+                Z_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, Z_idx, pref_sac)
                 pbar.update(1)
         
         pbar.close()
@@ -200,13 +202,13 @@ def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
         contra_pref_idx = combine_idx(contra_idx, pref_idx[:, i], n.correct_idx,coh_idx)
         ipsi_non_idx = combine_idx(ipsi_idx, ~pref_idx[:, i], n.correct_idx,coh_idx)
         contra_non_idx = combine_idx(contra_idx, ~pref_idx[:, i], n.correct_idx,coh_idx)
-
-        h_ipsi_pref = h[:, ipsi_pref_idx, i]
-        h_contra_pref = h[:, contra_pref_idx, i]
-        h_ipsi_non = h[:, ipsi_non_idx, i]
-        h_contra_non = h[:, contra_non_idx, i]
-        ipsi_ROC[:, i] = rocN(h_ipsi_pref, h_ipsi_non)
-        contra_ROC[:, i] = rocN(h_contra_pref, h_contra_non)
+        for j in range(h.shape[0]):
+            h_ipsi_pref = h[j, ipsi_pref_idx, i]
+            h_contra_pref = h[j, contra_pref_idx, i]
+            h_ipsi_non = h[j, ipsi_non_idx, i]
+            h_contra_non = h[j, contra_non_idx, i]
+            ipsi_ROC[j, i] = rocN(h_ipsi_pref, h_ipsi_non)
+            contra_ROC[j, i] = rocN(h_contra_pref, h_contra_non)
     return ipsi_ROC, contra_ROC
 
 
