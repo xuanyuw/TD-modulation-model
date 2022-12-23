@@ -6,8 +6,13 @@ from utils import *
 from types import SimpleNamespace
 from pickle import load, dump
 
+# plot settings
+plt.rcParams['figure.figsize'] = [10, 4]
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
+mpl.rcParams['font.family'] = 'Arial'
+mpl.rcParams.update({'font.size': 15})
+mpl.rcParams['lines.linewidth'] = 2
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 model_type = f_dir.split('_')[-2]
@@ -46,6 +51,7 @@ def main(lr, total_rep):
 
     plot_sac_selectivity_lvr(sac_sel_lvr_norm, "%s_Target_sac_sel_lvr_norm_avg"%model_type, True, plot_sel=plot_sel)
     plot_sac_selectivity_lvr(sac_sel_lvr_orig, "%s_Target_sac_sel_lvr_raw_avg"%model_type, True, plot_sel=plot_sel)
+
 def load_all_activities(lr, total_rep, normalize, plot_sel):
     m_idx = get_module_idx()
     m1_id = [[0, 4], [1, 5]]
@@ -124,6 +130,7 @@ def calc_dir_sel(h, m1_idx, m2_idx, n, selectivity=None):
         ) = get_temp_h_avg(
             coh_dict[coh], h, n.y, pref_dir, m1_idx, m2_idx, "dir", corr, selectivity
         )
+
     return line_dict
 
 def calc_sac_sel_pvnp(h, m1_idx, m2_idx, n, selectivity=None):
@@ -144,9 +151,9 @@ def calc_sac_sel_pvnp(h, m1_idx, m2_idx, n, selectivity=None):
             corr = n.correct_idx
         (
             line_dict["%s_solid_ax1" % coh],
-            line_dict["%s_dash_ax1" % coh],
+            line_dict["%s_dash_ax1" % coh], 
             line_dict["%s_solid_ax2" % coh],
-            line_dict["%s_dash_ax2" % coh],
+            line_dict["%s_dash_ax2" % coh], 
         ) = get_temp_h_avg(
             coh_dict[coh], h, n.y, pref_sac, m1_idx, m2_idx, "sac", corr, selectivity
         )
@@ -163,12 +170,13 @@ def calc_sac_sel_lvr(h, m1_idx, m2_idx, n, selectivity=None):
             corr = None
         else:
             corr = correct_idx
-        (
+        (   
             line_dict["%s_solid_ax1" % coh],
             line_dict["%s_dash_ax1" % coh],
             line_dict["%s_solid_ax2" % coh],
             line_dict["%s_dash_ax2" % coh],
         ) = get_sac_avg_h(coh_dict[coh], h, n.choice, m1_idx, m2_idx, corr, selectivity) 
+
     return line_dict
     
 
@@ -182,6 +190,9 @@ def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         "sup_title": title,
     }
 
+    for k, v in line_dict.items():
+        line_dict[k] = v[19:]
+
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
         folder_n = "popu_act"
@@ -191,6 +202,7 @@ def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 
@@ -203,6 +215,8 @@ def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         "ax2_title": "Module 2",
         "sup_title": title,
     }
+    for k, v in line_dict.items():
+        line_dict[k] = v[19:]
 
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
@@ -213,6 +227,7 @@ def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 
@@ -224,7 +239,8 @@ def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         "ax2_title": "Module 2",
         "sup_title": title,
     }
-
+    for k, v in line_dict.items():
+        line_dict[k] = v[19:]
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
         folder_n = "popu_act"
@@ -234,6 +250,7 @@ def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 

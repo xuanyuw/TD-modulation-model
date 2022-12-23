@@ -391,7 +391,7 @@ def plot_coh_popu_act(
     assert len(line_dict) % 2 == 0 and len(line_dict) >= 2
     assert all("_dash" in k or "_solid" in k for k in line_dict.keys())
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(13, 4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
     for i in range(len(coh_levels)):
         if coh_levels[i] + "_dash_ax1" not in line_dict.keys():
             continue
@@ -420,25 +420,29 @@ def plot_coh_popu_act(
     ax1.set_title(label_dict["ax1_title"])
     ax1.set_ylabel("Average activity")
     ax1.set_xlabel("Time")
-    xticks = np.array([0, target_st_time, stim_st_time, len(line_dict[coh_levels[i] + "_solid_ax1"])])
+    xticks = np.array([0, 25, 50])
+    ax1.set_xlim(0, 50)
     ax1.set_xticks(xticks)
-    ax1.set_xticklabels((xticks-stim_st_time)*DT)
-    ax1.axvline(x=target_st_time, color="k")
-    ax1.axvline(x=stim_st_time, color="k")
+    ax1.set_xticklabels((xticks+20-stim_st_time)*DT)
+    ax1.axvline(x=target_st_time-20, color="k", linewidth=1, linestyle="--")
+    ax1.axvline(x=stim_st_time-20, color="k", linewidth=1, linestyle="--")
     ax1.spines['top'].set_visible(False)
     ax1.spines['right'].set_visible(False)
 
     ax2.set_title(label_dict["ax2_title"])
     ax2.set_xlabel("Time")
+    ax2.set_xlim(0, 50)
     ax2.set_xticks(xticks)
-    ax2.set_xticklabels((xticks-stim_st_time)*DT)
-    ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    ax2.axvline(x=target_st_time, color="k")
-    ax2.axvline(x=stim_st_time, color="k")
+    ax2.set_xticklabels((xticks+20-stim_st_time)*DT)
+    ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5), prop={'size': 10}, frameon=False)
+    ax2.axvline(x=target_st_time-20, color="k", linewidth=1, linestyle="--")
+    ax2.axvline(x=stim_st_time-20, color="k", linewidth=1, linestyle="--")
     ax2.spines['top'].set_visible(False)
     ax2.spines['right'].set_visible(False)
 
     plt.suptitle(label_dict["sup_title"])
+
+    plt.tight_layout()
     return fig
 
 def get_sac_avg_h(
