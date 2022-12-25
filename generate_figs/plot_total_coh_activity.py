@@ -27,12 +27,12 @@ TARG_ST_TIME = par['time_fixation']//par['dt']
 DT = par['dt']
 
 def main(lr, total_rep):
-    dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load(open(os.path.join(f_dir, "all_selectivity_data_normalized.pkl"), 'rb'))
+    dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load(open(os.path.join(f_dir, "all_selectivity_data_normalized_%dnet.pkl"%total_rep), 'rb'))
     dir_sel_norm = load_new_line_dict(dir_sel_norm)
     sac_sel_pvnp_norm = load_new_line_dict(sac_sel_pvnp_norm)
     sac_sel_lvr_norm = load_new_line_dict(sac_sel_lvr_norm)
 
-    dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw.pkl"), 'rb'))
+    dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw_%dnet.pkl"%total_rep), 'rb'))
     dir_sel_orig = load_new_line_dict(dir_sel_orig)
     sac_sel_pvnp_orig = load_new_line_dict(sac_sel_pvnp_orig)
     sac_sel_lvr_orig = load_new_line_dict(sac_sel_lvr_orig)

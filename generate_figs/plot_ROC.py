@@ -23,7 +23,7 @@ from time import perf_counter
 from scipy.stats import ttest_rel
 
 # plot settings
-plt.rcParams['figure.figsize'] = [6, 4]
+
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
 mpl.rcParams['font.family'] = 'Arial'
@@ -31,17 +31,22 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+# f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 total_rep = 1
-# f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
 lr = 0.02
 
 stim_st_time = 45
 target_st_time = 25
-rerun_calc = True
+rerun_calc = False
 normalize = False
 sep_sac = True
+
+if not sep_sac:
+    plt.rcParams['figure.figsize'] = [6, 4]
+else:
+    plt.rcParams['figure.figsize'] = [10, 4]
 
 h_len = 70-19
 
@@ -150,8 +155,6 @@ def main():
         if sep_sac:
             with open(os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep), 'rb') as f:
                 H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC = load(f)
-            with open(os.path.join(f_dir, 'sep_sac_ROC_sac_%dnet.pkl'%total_rep), 'rb') as f:
-                H_ipsi_sac_ROC, H_contra_sac_ROC, M_ipsi_sac_ROC, M_contra_sac_ROC, L_ipsi_sac_ROC, L_contra_sac_ROC, Z_ipsi_sac_ROC, Z_contra_sac_ROC = load(f)
         else:
             with open(os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep), 'rb') as f:
                 [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC] = load(f)
@@ -160,6 +163,12 @@ def main():
     if not sep_sac:
         plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
         plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, 'sac')
+    else:
+        line_dict = {'H_ipsi': np.mean(H_ipsi_dir_ROC, axis=(0, 2)), 'H_contra': np.mean(H_contra_dir_ROC, axis=(0, 2)),
+            'M_ipsi': np.mean(M_ipsi_dir_ROC, axis=(0, 2)), 'M_contra': np.mean(M_contra_dir_ROC, axis=(0, 2)),
+            'L_ipsi': np.mean(L_ipsi_dir_ROC, axis=(0, 2)), 'L_contra': np.mean(L_contra_dir_ROC, axis=(0, 2)),
+            'Z_ipsi': np.mean(Z_ipsi_dir_ROC, axis=(0, 2)), 'Z_contra': np.mean(Z_contra_dir_ROC, axis=(0, 2))}
+        plot_all_avg_ROC_sep_sac(line_dict)
 
 
 def rocN(x, y, N=100):
@@ -253,8 +262,6 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
         L_line = L_ROC[0,cell_idx,:]
         Z_line = Z_ROC[0,cell_idx,:]
 
-
-
     fig, ax = plt.subplots()
     ax.plot(H_line, label='H', color='r')
     ax.plot(M_line, label='M', color='g')
@@ -279,6 +286,46 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir,'all_ROC_%s.png'%mode))
         plt.savefig(os.path.join(pic_dir,'all_ROC_%s.pdf'%mode))
+        plt.close(fig)
+
+def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    ax1.plot(line_dict['H_ipsi'], label='H', color='r', linestyle='--')
+    ax1.plot(line_dict['M_ipsi'], label='M', color='g', linestyle='--')
+    ax1.plot(line_dict['H_contra'], label='H', color='r')
+    ax1.plot(line_dict['M_contra'], label='M', color='g')
+    
+    ax2.plot(line_dict['L_ipsi'], label='L', color='b', linestyle='--')
+    ax2.plot(line_dict['Z_ipsi'], label='Z', color='k', linestyle='--')
+    ax2.plot(line_dict['L_contra'], label='L', color='b')
+    ax2.plot(line_dict['Z_contra'], label='Z', color='k')
+    # ax2.legend(loc='best', prop={'size': 10}, frameon=False)
+
+    xticks = np.array([0, 25, 50])
+    ax1.set_xlim(0, 50)
+    ax1.set_xticks(xticks)
+    ax1.set_xticklabels((xticks+20-stim_st_time)*20)
+    ax1.set_ylabel("Average AUC")
+    ax1.set_xlabel("Time")
+    ax1.axvline(x=target_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax1.axvline(x=stim_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+
+    ax2.set_xlim(0, 50)
+    ax2.set_xticks(xticks)
+    ax2.set_xticklabels((xticks+20-stim_st_time)*20)
+    ax2.set_ylabel("Average AUC")
+    ax2.set_xlabel("Time")
+    ax2.axvline(x=target_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax2.axvline(x=stim_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    plt.tight_layout()
+
+    if save_plt:
+        pic_dir = os.path.join(f_dir, 'ROC_plots_%dnet'%total_rep)
+        if not os.path.exists(pic_dir):
+            os.makedirs(pic_dir)
+        plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.png'))
+        plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.pdf'))
         plt.close(fig)
 
 

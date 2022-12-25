@@ -1,7 +1,14 @@
+
+import sys
+import os
+# setting path
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import os
 from utils import *
 from types import SimpleNamespace
 from pickle import load, dump
@@ -16,10 +23,10 @@ mpl.rcParams['lines.linewidth'] = 2
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 model_type = f_dir.split('_')[-2]
-total_rep = 50
+total_rep = 1
 all_lr = [2e-2]
 plot_sel = True
-rerun_calculation = False
+rerun_calculation = True
 
 
 def main(lr, total_rep):
@@ -27,7 +34,7 @@ def main(lr, total_rep):
         dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load_all_activities(lr, total_rep, True, plot_sel)
         dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig  = load_all_activities(lr, total_rep, False, plot_sel)
     else:
-        dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load(open(os.path.join(f_dir, "all_selectivity_data_normalized.pkl"), 'rb'))
+        dir_sel_norm, sac_sel_pvnp_norm, sac_sel_lvr_norm = load(open(os.path.join(f_dir, "all_selectivity_data_normalized_%dnet.pkl"%total_rep), 'rb'))
         for k in dir_sel_norm.keys():
             dir_sel_norm[k] = np.mean(dir_sel_norm[k], axis=0)
         for k in sac_sel_pvnp_norm.keys():
@@ -35,7 +42,7 @@ def main(lr, total_rep):
         for k in sac_sel_lvr_norm.keys():
             sac_sel_lvr_norm[k] = np.mean(sac_sel_lvr_norm[k], axis=0)
 
-        dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw.pkl"), 'rb'))
+        dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw_%dnet.pkl"%total_rep), 'rb'))
         for k in dir_sel_orig.keys():
             dir_sel_orig[k] = np.mean(dir_sel_orig[k], axis=0)
         for k in sac_sel_pvnp_orig.keys():
@@ -94,16 +101,16 @@ def load_all_activities(lr, total_rep, normalize, plot_sel):
                 all_sac_sel_lvr[k] = np.vstack([all_sac_sel_lvr[k],  sac_sel_lvr[k]])
 
     if normalize:
-        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_normalized.pkl'), 'wb'))
+        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_normalized_%dnet.pkl'%total_rep), 'wb'))
     else:
-        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_raw.pkl'), 'wb'))
-    
-    for k in all_motion_dir_sel.keys():
-        all_motion_dir_sel[k] = np.mean(all_motion_dir_sel[k], axis=0)
-    for k in all_sac_sel_pvnp.keys():
-        all_sac_sel_pvnp[k] = np.mean(all_sac_sel_pvnp[k], axis=0)
-    for k in all_sac_sel_lvr.keys():
-        all_sac_sel_lvr[k] = np.mean(all_sac_sel_lvr[k], axis=0)
+        dump([all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr], open(os.path.join(f_dir,'all_selectivity_data_raw_%dnet.pkl'%total_rep), 'wb'))
+    if total_rep>1:
+        for k in all_motion_dir_sel.keys():
+            all_motion_dir_sel[k] = np.mean(all_motion_dir_sel[k], axis=0)
+        for k in all_sac_sel_pvnp.keys():
+            all_sac_sel_pvnp[k] = np.mean(all_sac_sel_pvnp[k], axis=0)
+        for k in all_sac_sel_lvr.keys():
+            all_sac_sel_lvr[k] = np.mean(all_sac_sel_lvr[k], axis=0)
     return all_motion_dir_sel, all_sac_sel_pvnp, all_sac_sel_lvr
 
 
@@ -195,7 +202,7 @@ def plot_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
 
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
@@ -220,7 +227,7 @@ def plot_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
 
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
@@ -243,10 +250,10 @@ def plot_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         line_dict[k] = v[19:]
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
+        pic_dir = os.path.join(f_dir, "%s_avg" % (folder_n))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
