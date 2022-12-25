@@ -31,18 +31,19 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-# f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
-f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
-all_rep = range(1)
+f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+total_rep = 1
+# f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+all_rep = range(total_rep)
 lr = 0.02
 
 stim_st_time = 45
 target_st_time = 25
-rerun_calc = True
+rerun_calc = False
 normalize = False
 sep_sac = False
 
-h_len = 70-19-5
+h_len = 70-19
 
 def main():
     if rerun_calc:   
@@ -73,8 +74,8 @@ def main():
             M_sac_ROC = np.zeros((len(all_rep),h_len, 100))
             L_sac_ROC = np.zeros((len(all_rep),h_len, 100))
             Z_sac_ROC = np.zeros((len(all_rep),h_len, 100))
-        # pbar = tqdm(total=len(all_rep)*2*4)
-        pbar = tqdm(total = len(all_rep)*4)
+        pbar = tqdm(total=len(all_rep)*2*4)
+        # pbar = tqdm(total = len(all_rep)*4)
         for rep in all_rep:
             # print('Running ROC calculation for rep %d ... '%rep)
             n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
@@ -132,27 +133,27 @@ def main():
         
         pbar.close()
         if sep_sac:
-            with open(os.path.join(f_dir, 'sep_sac_ROC_dir.pkl'), 'wb') as f:
+            with open(os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep), 'wb') as f:
                 dump([H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC], f)
-            with open(os.path.join(f_dir, 'sep_sac_ROC.pkl'), 'wb') as f:
+            with open(os.path.join(f_dir, 'sep_sac_ROC_%dnet.pkl'%total_rep), 'wb') as f:
                 dump([H_ipsi_sac_ROC, H_contra_sac_ROC, M_ipsi_sac_ROC, M_contra_sac_ROC, L_ipsi_sac_ROC, L_contra_sac_ROC, Z_ipsi_sac_ROC, Z_contra_sac_ROC], f)
         else:
-            # with open(os.path.join(f_dir, 'all_ROC_dir.pkl'), 'wb') as f:
-            #     dump([H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC], f)
-            with open(os.path.join(f_dir, 'all_ROC_sac.pkl'), 'wb') as f:
+            with open(os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep), 'wb') as f:
+                dump([H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC], f)
+            with open(os.path.join(f_dir, 'all_ROC_sac_%dnet.pkl'%total_rep), 'wb') as f:
                 dump([H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC], f)
         
         
     else:    
         if sep_sac:
-            with open(os.path.join(f_dir, 'sep_sac_ROC_dir.pkl'), 'rb') as f:
+            with open(os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep), 'rb') as f:
                 H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC = load(f)
-            with open(os.path.join(f_dir, 'sep_sac_ROC_sac.pkl'), 'rb') as f:
+            with open(os.path.join(f_dir, 'sep_sac_ROC_sac_%dnet.pkl'%total_rep), 'rb') as f:
                 H_ipsi_sac_ROC, H_contra_sac_ROC, M_ipsi_sac_ROC, M_contra_sac_ROC, L_ipsi_sac_ROC, L_contra_sac_ROC, Z_ipsi_sac_ROC, Z_contra_sac_ROC = load(f)
         else:
-            with open(os.path.join(f_dir, 'all_ROC_dir.pkl'), 'rb') as f:
+            with open(os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep), 'rb') as f:
                 [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC] = load(f)
-            with open(os.path.join(f_dir, 'all_ROC_sac.pkl'), 'rb') as f:
+            with open(os.path.join(f_dir, 'all_ROC_sac_%dnet.pkl'%total_rep), 'rb') as f:
                 [H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
     if not sep_sac:
         plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
@@ -181,14 +182,19 @@ def rocN(x, y, N=100):
 
 def calc_ROC(h, n, coh_idx, pref_idx):
     # tic = perf_counter()
-    all_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
+    # all_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
+    all_ROC = np.zeros((h.shape[0], h.shape[2]))
     for i in range(h.shape[2]):
         pre_idx = combine_idx(pref_idx[:, i], n.correct_idx,coh_idx)
         non_idx = combine_idx(~pref_idx[:, i], n.correct_idx,coh_idx)
-        for j in range(h.shape[0]-5):
-            h_pre = np.mean(h[j:j+5, pre_idx, i], axis=0)
-            h_non = np.mean(h[j:j+5, non_idx, i], axis=0)
+        for j in range(h.shape[0]):
+            h_pre = h[j, pre_idx, i]
+            h_non = h[j, non_idx, i]
             all_ROC[j, i] = rocN(h_pre, h_non)
+        # for j in range(h.shape[0]-5):
+        #     h_pre = np.mean(h[j:j+5, pre_idx, i], axis=0)
+        #     h_non = np.mean(h[j:j+5, non_idx, i], axis=0)
+        #     all_ROC[j, i] = rocN(h_pre, h_non)
     # toc = perf_counter()
     # print(f"ROC ran in {toc - tic:0.4f} seconds")
     return all_ROC
@@ -255,9 +261,10 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
     ax.plot(Z_line, label='Z', color='k')
     ax.legend(loc='best', prop={'size': 10}, frameon=False)
 
-    ax.set_xlim(0, h_len)
-    xticks = np.array([0, round(h_len/2), h_len])
+    ax.set_xlim(0, 50)
+    xticks = np.array([0, 25, 50])
     ax.set_xticks(xticks)
+    # ax.set_xticklabels([-500, 0, 500])
     ax.set_xticklabels((xticks+20-stim_st_time)*20)
     ax.set_ylabel("Average AUC")
     ax.set_xlabel("Time")
@@ -266,7 +273,7 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
     plt.tight_layout()
 
     if save_plt:
-        pic_dir = os.path.join(f_dir, 'ROC_plots')
+        pic_dir = os.path.join(f_dir, 'ROC_plots_%dnet'%total_rep)
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir,'all_ROC_%s.png'%mode))

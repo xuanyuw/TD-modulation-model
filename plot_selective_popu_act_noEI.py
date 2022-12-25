@@ -2,7 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from utils import *
+import matplotlib as mpl
 from types import SimpleNamespace
+
+# plot settings
+plt.rcParams['figure.figsize'] = [10, 4]
+mpl.rcParams['axes.spines.right'] = False
+mpl.rcParams['axes.spines.top'] = False
+mpl.rcParams['font.family'] = 'Arial'
+mpl.rcParams.update({'font.size': 15})
+mpl.rcParams['lines.linewidth'] = 2
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 # all_rep = range(50)
@@ -193,6 +202,8 @@ def plot_dir_selectivity(h, m1_idx, m2_idx, n, title, save_plt, selectivity=None
         ) = get_temp_h_avg(
             coh_dict[coh], h, n.y, pref_dir, m1_idx, m2_idx, "dir", corr, selectivity
         )
+    for k, v in line_dict.items():
+        line_dict[k] = v[19:]
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
         folder_n = "popu_act"
@@ -236,6 +247,8 @@ def plot_sac_selectivity_pvnp(h, m1_idx, m2_idx, n, title, save_plt, selectivity
         ) = get_temp_h_avg(
             coh_dict[coh], h, n.y, pref_sac, m1_idx, m2_idx, "sac", corr, selectivity
         )
+    for k, v in line_dict.items():
+        line_dict[k] = v[19:]
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
         folder_n = "popu_act"
@@ -274,6 +287,8 @@ def plot_sac_selectivity_lvr(h, m1_idx, m2_idx, n, title, save_plt, selectivity=
             line_dict["%s_dash_ax2" % coh],
         ) = get_sac_avg_h(coh_dict[coh], h, n.choice, m1_idx, m2_idx, corr, selectivity)
 
+    for k, v in line_dict.items():
+        line_dict[k] = v[19:]
     fig = plot_coh_popu_act(line_dict, label_dict, coh_levels)
     if save_plt:
         folder_n = "popu_act"

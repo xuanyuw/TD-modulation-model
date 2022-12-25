@@ -17,8 +17,7 @@ mpl.rcParams['lines.linewidth'] = 2
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 model_type = f_dir.split('_')[-2]
-total_rep = 50
-total_shuf = 100
+total_rep = 1
 all_lr = [2e-2]
 plot_sel = True
 
@@ -113,7 +112,7 @@ def plot_total_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
 
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
@@ -133,7 +132,7 @@ def plot_total_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
 
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
@@ -154,7 +153,7 @@ def plot_total_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
 
     fig = plot_coh_popu_act(line_dict, label_dict, ['Z', 'L', 'M', 'H'])
     if save_plt:
-        folder_n = "popu_act"
+        folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
         pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
