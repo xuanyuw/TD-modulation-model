@@ -15,12 +15,15 @@ from utils import (
     load_test_data,
     min_max_normalize,
     get_pref_idx,
+    pick_selective_neurons
 )
 from types import SimpleNamespace
 from pickle import dump, load
 from tqdm import tqdm
 from time import perf_counter
-from scipy.stats import ttest_rel
+from scipy.stats import ttest_ind, sem
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch
 
 # plot settings
 
@@ -31,58 +34,65 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-# f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 total_rep = 1
-f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+# f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
 lr = 0.02
 
 stim_st_time = 45
 target_st_time = 25
-rerun_calc = False
+rerun_calc = True
 normalize = False
-sep_sac = True
+sep_sac = False
+plot_sel = True
 
 if not sep_sac:
     plt.rcParams['figure.figsize'] = [6, 4]
 else:
     plt.rcParams['figure.figsize'] = [10, 4]
 
-h_len = 70-19
+h_len = 70-19-3
+
+
+if sep_sac:
+    fn = os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep)
+    if plot_sel:
+        fn = os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet_sel.pkl'%total_rep)
+else:
+    fn_dir = os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep)
+    fn_sac = os.path.join(f_dir, 'all_ROC_sac_%dnet.pkl'%total_rep)
+    if plot_sel:
+        fn_dir = os.path.join(f_dir, 'all_ROC_dir_%dnet_sel.pkl'%total_rep)
+        fn_sac = os.path.join(f_dir, 'all_ROC_sac_%dnet_sel.pkl'%total_rep)
 
 def main():
     if rerun_calc:   
         if sep_sac:
-            H_ipsi_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            H_contra_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            M_ipsi_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            M_contra_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            L_ipsi_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            L_contra_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            Z_ipsi_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            Z_contra_dir_ROC = np.zeros((len(all_rep),h_len, 100) )
-            
-            H_ipsi_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
-            H_contra_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
-            M_ipsi_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
-            M_contra_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
-            L_ipsi_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
-            L_contra_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
-            Z_ipsi_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
-            Z_contra_sac_ROC = np.zeros((len(all_rep),h_len, 100) )
+
+            H_ipsi_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+            H_contra_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+            M_ipsi_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+            M_contra_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+            L_ipsi_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+            L_contra_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+            Z_ipsi_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+            Z_contra_dir_ROC = np.empty((h_len, 100*len(all_rep))) * np.nan
+
         else:
-            H_dir_ROC = np.zeros((len(all_rep),h_len, 100))
-            M_dir_ROC = np.zeros((len(all_rep),h_len, 100))
-            L_dir_ROC = np.zeros((len(all_rep),h_len, 100))
-            Z_dir_ROC = np.zeros((len(all_rep),h_len, 100))
-            H_sac_ROC = np.zeros((len(all_rep),h_len, 100))
-            M_sac_ROC = np.zeros((len(all_rep),h_len, 100))
-            L_sac_ROC = np.zeros((len(all_rep),h_len, 100))
-            Z_sac_ROC = np.zeros((len(all_rep),h_len, 100))
+            H_dir_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
+            M_dir_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
+            L_dir_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
+            Z_dir_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
+            H_sac_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
+            M_sac_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
+            L_sac_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
+            Z_sac_ROC = np.empty((len(all_rep),h_len, 100)) * np.nan
         if not sep_sac:
             pbar = tqdm(total=len(all_rep)*2*4)
         else:
             pbar = tqdm(total = len(all_rep)*4)
+        idx=0
         for rep in all_rep:
             # print('Running ROC calculation for rep %d ... '%rep)
             n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
@@ -91,6 +101,21 @@ def main():
                 h = normalized_h
             else:
                 h = n.h
+
+            motion_rng = np.concatenate((np.arange(0, 40), np.arange(80, 120), np.arange(160, 170), np.arange(180, 190)))
+            target_rng = np.concatenate((np.arange(40, 80), np.arange(120, 160), np.arange(170, 180), np.arange(190, 200)))
+            motion_idx, target_idx = np.array([False] * 200), np.array([False] * 200)
+            motion_idx[motion_rng] = True
+            
+            # motion_idx[0]=True
+
+            target_idx[target_rng] = True
+            if plot_sel:
+                motion_selective = pick_selective_neurons(normalized_h, n.stim_dir)
+                saccade_selective = pick_selective_neurons(normalized_h, n.choice)
+                motion_idx = np.logical_and(motion_idx, motion_selective)
+                target_idx = np.logical_and(target_idx, saccade_selective)
+
             motion_rng = np.concatenate((np.arange(0, 40), np.arange(80, 120), np.arange(160, 170), np.arange(180, 190)))
             target_rng = np.concatenate((np.arange(40, 80), np.arange(120, 160), np.arange(170, 180), np.arange(190, 200)))
             m1_rng = np.concatenate((np.arange(0, 40), np.arange(80, 90))) # range of m1 neuron indices after separated by RF
@@ -101,74 +126,65 @@ def main():
             Z_idx = coh_dict['Z']
             pref_dir, pref_sac = get_pref_idx(n, h)
             if sep_sac:
-                H_ipsi_dir_ROC[rep, :, :], H_contra_dir_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, H_idx, pref_dir[:, motion_rng])
+                H_ipsi_dir_ROC[:, idx:idx+sum(motion_idx)], H_contra_dir_ROC[:, idx:idx+sum(motion_idx)] = calc_sac_sep_ROC(h[17:, :, motion_idx], n, m1_rng, H_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
-                M_ipsi_dir_ROC[rep, :, :], M_contra_dir_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, M_idx, pref_dir[:, motion_rng])
+                M_ipsi_dir_ROC[:, idx:idx+sum(motion_idx)], M_contra_dir_ROC[:, idx:idx+sum(motion_idx)] = calc_sac_sep_ROC(h[17:, :, motion_idx], n, m1_rng, M_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
-                L_ipsi_dir_ROC[rep, :, :], L_contra_dir_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, L_idx, pref_dir[:, motion_rng])
+                L_ipsi_dir_ROC[:, idx:idx+sum(motion_idx)], L_contra_dir_ROC[:, idx:idx+sum(motion_idx)] = calc_sac_sep_ROC(h[17:, :, motion_idx], n, m1_rng, L_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
-                Z_ipsi_dir_ROC[rep, :, :], Z_contra_dir_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, motion_rng], n, m1_rng, Z_idx, pref_dir[:, motion_rng])
+                Z_ipsi_dir_ROC[:, idx:idx+sum(motion_idx)], Z_contra_dir_ROC[:, idx:idx+sum(motion_idx)] = calc_sac_sep_ROC(h[17:, :, motion_idx], n, m1_rng, Z_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
-                
-                # H_ipsi_sac_ROC[rep, :, :], H_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, H_idx, pref_sac[:, target_rng])
-                # pbar.update(1)
-                # M_ipsi_sac_ROC[rep, :, :], M_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, M_idx, pref_sac[:, target_rng])
-                # pbar.update(1)
-                # L_ipsi_sac_ROC[rep, :, :], L_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, L_idx, pref_sac[:, target_rng])
-                # pbar.update(1)
-                # Z_ipsi_sac_ROC[rep, :, :], Z_contra_sac_ROC[rep, :, :] = calc_sac_sep_ROC(h[19:, :, target_rng], n, m1_rng, Z_idx, pref_sac[:, target_rng])
-                # pbar.update(1)
+                idx = idx+sum(motion_idx)
+
             else:
                 
-                H_dir_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, H_idx, pref_dir[:, motion_rng])
+                H_dir_ROC[rep, :, :sum(motion_idx)] = calc_ROC(h[17:, :, motion_idx], n, H_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
-                M_dir_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, M_idx, pref_dir[:, motion_rng])
+                M_dir_ROC[rep, :, :sum(motion_idx)] = calc_ROC(h[17:, :, motion_idx], n, M_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
-                L_dir_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, L_idx, pref_dir[:, motion_rng])
+                L_dir_ROC[rep, :, :sum(motion_idx)] = calc_ROC(h[17:, :, motion_idx], n, L_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
-                Z_dir_ROC[rep, :, :] = calc_ROC(h[19:, :, motion_rng], n, Z_idx, pref_dir[:, motion_rng])
+                Z_dir_ROC[rep, :, :sum(motion_idx)] = calc_ROC(h[17:, :, motion_idx], n, Z_idx, pref_dir[:, motion_idx])
                 pbar.update(1)
                 
-                H_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, H_idx, pref_sac[:, target_rng])
+                H_sac_ROC[rep, :, :sum(target_idx)] = calc_ROC(h[17:, :, target_idx], n, H_idx, pref_sac[:, target_idx])
                 pbar.update(1)
-                M_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, M_idx, pref_sac[:, target_rng])
+                M_sac_ROC[rep, :, :sum(target_idx)] = calc_ROC(h[17:, :, target_idx], n, M_idx, pref_sac[:, target_idx])
                 pbar.update(1)
-                L_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, L_idx, pref_sac[:, target_rng])
+                L_sac_ROC[rep, :, :sum(target_idx)] = calc_ROC(h[17:, :, target_idx], n, L_idx, pref_sac[:, target_idx])
                 pbar.update(1)
-                Z_sac_ROC[rep, :, :] = calc_ROC(h[19:, :, target_rng], n, Z_idx, pref_sac[:, target_rng])
+                Z_sac_ROC[rep, :, :sum(target_idx)] = calc_ROC(h[17:, :, target_idx], n, Z_idx, pref_sac[:, target_idx])
                 pbar.update(1)
         
         pbar.close()
         if sep_sac:
-            with open(os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep), 'wb') as f:
+            with open(fn, 'wb') as f:
                 dump([H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC], f)
-            with open(os.path.join(f_dir, 'sep_sac_ROC_sac_%dnet.pkl'%total_rep), 'wb') as f:
-                dump([H_ipsi_sac_ROC, H_contra_sac_ROC, M_ipsi_sac_ROC, M_contra_sac_ROC, L_ipsi_sac_ROC, L_contra_sac_ROC, Z_ipsi_sac_ROC, Z_contra_sac_ROC], f)
         else:
-            with open(os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep), 'wb') as f:
+            with open(fn_dir, 'wb') as f:
                 dump([H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC], f)
-            with open(os.path.join(f_dir, 'all_ROC_sac_%dnet.pkl'%total_rep), 'wb') as f:
+            with open(fn_sac, 'wb') as f:
                 dump([H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC], f)
         
         
     else:    
         if sep_sac:
-            with open(os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep), 'rb') as f:
+            with open(fn, 'rb') as f:
                 H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC = load(f)
         else:
-            with open(os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep), 'rb') as f:
+            with open(fn_dir, 'rb') as f:
                 [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC] = load(f)
-            with open(os.path.join(f_dir, 'all_ROC_sac_%dnet.pkl'%total_rep), 'rb') as f:
+            with open(fn_sac, 'rb') as f:
                 [H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
-    if not sep_sac:
-        plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
-        plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, 'sac')
-    else:
-        line_dict = {'H_ipsi': np.mean(H_ipsi_dir_ROC, axis=(0, 2)), 'H_contra': np.mean(H_contra_dir_ROC, axis=(0, 2)),
-            'M_ipsi': np.mean(M_ipsi_dir_ROC, axis=(0, 2)), 'M_contra': np.mean(M_contra_dir_ROC, axis=(0, 2)),
-            'L_ipsi': np.mean(L_ipsi_dir_ROC, axis=(0, 2)), 'L_contra': np.mean(L_contra_dir_ROC, axis=(0, 2)),
-            'Z_ipsi': np.mean(Z_ipsi_dir_ROC, axis=(0, 2)), 'Z_contra': np.mean(Z_contra_dir_ROC, axis=(0, 2))}
-        plot_all_avg_ROC_sep_sac(line_dict)
+    # if not sep_sac:
+    #     plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
+    #     plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, 'sac')
+    # else:
+    #     line_dict = {'H_ipsi': H_ipsi_dir_ROC, 'H_contra': H_contra_dir_ROC,
+    #         'M_ipsi': M_ipsi_dir_ROC, 'M_contra': M_contra_dir_ROC,
+    #         'L_ipsi': L_ipsi_dir_ROC, 'L_contra': L_contra_dir_ROC,
+    #         'Z_ipsi': Z_ipsi_dir_ROC, 'Z_contra': Z_contra_dir_ROC}
+    #     plot_all_avg_ROC_sep_sac(line_dict)
 
 
 def rocN(x, y, N=100):
@@ -192,22 +208,25 @@ def rocN(x, y, N=100):
 
 
 def calc_ROC(h, n, coh_idx, pref_idx):
-    # tic = perf_counter()
-    # all_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
-    all_ROC = np.zeros((h.shape[0], h.shape[2]))
+    tic = perf_counter()
+    all_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
+    # all_ROC = np.zeros((h.shape[0], h.shape[2]))
     for i in range(h.shape[2]):
         pre_idx = combine_idx(pref_idx[:, i], n.correct_idx,coh_idx)
         non_idx = combine_idx(~pref_idx[:, i], n.correct_idx,coh_idx)
-        for j in range(h.shape[0]):
-            h_pre = h[j, pre_idx, i]
-            h_non = h[j, non_idx, i]
+        # for j in range(h.shape[0]):
+        #     h_pre = h[j, pre_idx, i]
+        #     h_non = h[j, non_idx, i]
+            # all_ROC[j, i] = rocN(h_pre, h_non)
+        tic2 = perf_counter()
+        for j in range(h.shape[0]-5):
+            h_pre = np.mean(h[j:j+5, pre_idx, i], axis=0)
+            h_non = np.mean(h[j:j+5, non_idx, i], axis=0)
             all_ROC[j, i] = rocN(h_pre, h_non)
-        # for j in range(h.shape[0]-5):
-        #     h_pre = np.mean(h[j:j+5, pre_idx, i], axis=0)
-        #     h_non = np.mean(h[j:j+5, non_idx, i], axis=0)
-        #     all_ROC[j, i] = rocN(h_pre, h_non)
-    # toc = perf_counter()
-    # print(f"ROC ran in {toc - tic:0.4f} seconds")
+        toc2 = perf_counter()
+        print(f"Inner loop ran in {toc2 - tic2:0.4f} seconds")
+    toc = perf_counter()
+    print(f"ROC ran in {toc - tic:0.4f} seconds")
     return all_ROC
    
 
@@ -216,8 +235,8 @@ def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
     contra_idx_m1, ipsi_idx_m1 = find_sac_idx(n.y, True)
     contra_idx_m2, ipsi_idx_m2 = find_sac_idx(n.y, False)
 
-    ipsi_ROC = np.zeros((h.shape[0], h.shape[2]))
-    contra_ROC = np.zeros((h.shape[0], h.shape[2]))
+    ipsi_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
+    contra_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
     for i in range(h.shape[2]):
         if i in m1_rng:
             contra_idx = contra_idx_m1
@@ -229,11 +248,11 @@ def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
         contra_pref_idx = combine_idx(contra_idx, pref_idx[:, i], n.correct_idx,coh_idx)
         ipsi_non_idx = combine_idx(ipsi_idx, ~pref_idx[:, i], n.correct_idx,coh_idx)
         contra_non_idx = combine_idx(contra_idx, ~pref_idx[:, i], n.correct_idx,coh_idx)
-        for j in range(h.shape[0]):
-            h_ipsi_pref = h[j, ipsi_pref_idx, i]
-            h_contra_pref = h[j, contra_pref_idx, i]
-            h_ipsi_non = h[j, ipsi_non_idx, i]
-            h_contra_non = h[j, contra_non_idx, i]
+        for j in range(h.shape[0]-5):
+            h_ipsi_pref = np.mean(h[j:j+5, ipsi_pref_idx, i], axis=0)
+            h_contra_pref = np.mean(h[j:j+5, contra_pref_idx, i], axis=0)
+            h_ipsi_non = np.mean(h[j:j+5, ipsi_non_idx, i], axis=0)
+            h_contra_non = np.mean(h[j:j+5, contra_non_idx, i], axis=0)
             # if len(h_ipsi_non) ==0:
             #     print('cell %d time %d h ipsi non empty'%(i, j))
             # elif len(h_ipsi_pref) ==0:
@@ -250,11 +269,25 @@ def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
 
 
 def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=True):
+
+
     if cell_idx is None:
         H_line = np.mean(H_ROC, axis=(0, 2))
         M_line = np.mean(M_ROC, axis=(0, 2))
         L_line = np.mean(L_ROC, axis=(0, 2))
         Z_line = np.mean(Z_ROC, axis=(0, 2))
+
+        # calculate STE
+        if total_rep>1:
+            H_ste = sem(np.mean(H_ROC, 2))
+            M_ste = sem(np.mean(M_ROC, 2))
+            L_ste = sem(np.mean(L_ROC, 2))
+            Z_ste = sem(np.mean(Z_ROC, 2))
+        else:
+            H_ste = sem(H_ROC[0, :, :], axis=1)
+            M_ste = sem(M_ROC[0, :, :], axis=1)
+            L_ste = sem(L_ROC[0, :, :], axis=1)
+            Z_ste = sem(Z_ROC[0, :, :], axis=1)
 
     else:
         H_line = H_ROC[0,cell_idx,:]
@@ -269,15 +302,22 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
     ax.plot(Z_line, label='Z', color='k')
     ax.legend(loc='best', prop={'size': 10}, frameon=False)
 
-    ax.set_xlim(0, 50)
-    xticks = np.array([0, 25, 50])
+
+    ax.fill_between(np.arange(h_len), H_line-H_ste, H_line+H_ste, color='r', alpha=0.3)
+    ax.fill_between(np.arange(h_len), M_line-M_ste, M_line+M_ste, color='g', alpha=0.3)
+    ax.fill_between(np.arange(h_len), L_line-L_ste, L_line+L_ste, color='b', alpha=0.3)
+    ax.fill_between(np.arange(h_len), Z_line-Z_ste, Z_line+Z_ste, color='k', alpha=0.3)
+
+    
+    ax.set_xlim(0, h_len)
+    xticks = np.array([0, round(h_len/2), h_len])
     ax.set_xticks(xticks)
-    # ax.set_xticklabels([-500, 0, 500])
-    ax.set_xticklabels((xticks+20-stim_st_time)*20)
+    ax.set_xticklabels([-500, 0, 500])
+    # ax.set_xticklabels((xticks+20-stim_st_time)*20)
     ax.set_ylabel("Average AUC")
     ax.set_xlabel("Time")
-    ax.axvline(x=target_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax.axvline(x=stim_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
     plt.tight_layout()
 
     if save_plt:
@@ -285,39 +325,63 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir,'all_ROC_%s.png'%mode))
-        plt.savefig(os.path.join(pic_dir,'all_ROC_%s.pdf'%mode))
+        plt.savefig(os.path.join(pic_dir,'all_ROC_%s.pdf'%mode), format='pdf')
+        plt.savefig(os.path.join(pic_dir,'all_ROC_%s.eps'%mode), format='eps')
         plt.close(fig)
+
+
+
 
 def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
 
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-    ax1.plot(line_dict['H_ipsi'], label='H', color='r', linestyle='--')
-    ax1.plot(line_dict['M_ipsi'], label='M', color='g', linestyle='--')
-    ax1.plot(line_dict['H_contra'], label='H', color='r')
-    ax1.plot(line_dict['M_contra'], label='M', color='g')
+    ax1.plot(np.mean(line_dict['H_ipsi'], axis=1), label='H', color='r', linestyle='--')
+    ax1.plot(np.mean(line_dict['M_ipsi'], axis=1), label='M', color='g', linestyle='--')
+    ax1.plot(np.mean(line_dict['H_contra'], axis=1), label='H', color='r')
+    ax1.plot(np.mean(line_dict['M_contra'], axis=1), label='M', color='g')
+    h_pval = ttest_ind(line_dict['H_ipsi'], line_dict['H_contra'], axis=1).pvalue
+    m_pval = ttest_ind(line_dict['M_ipsi'], line_dict['M_contra'], axis=1).pvalue
     
-    ax2.plot(line_dict['L_ipsi'], label='L', color='b', linestyle='--')
-    ax2.plot(line_dict['Z_ipsi'], label='Z', color='k', linestyle='--')
-    ax2.plot(line_dict['L_contra'], label='L', color='b')
-    ax2.plot(line_dict['Z_contra'], label='Z', color='k')
+    ax2.plot(np.mean(line_dict['L_ipsi'], axis=1), label='L', color='b', linestyle='--')
+    ax2.plot(np.mean(line_dict['Z_ipsi'], axis=1), label='Z', color='k', linestyle='--')
+    ax2.plot(np.mean(line_dict['L_contra'], axis=1), label='L', color='b')
+    ax2.plot(np.mean(line_dict['Z_contra'], axis=1), label='Z', color='k')
+    l_pval = ttest_ind(line_dict['L_ipsi'], line_dict['L_contra'], axis=1).pvalue
+    z_pval = ttest_ind(line_dict['Z_ipsi'], line_dict['Z_contra'], axis=1).pvalue
     # ax2.legend(loc='best', prop={'size': 10}, frameon=False)
 
-    xticks = np.array([0, 25, 50])
-    ax1.set_xlim(0, 50)
+    h_pval_x = np.where(h_pval<=0.01)[0]
+    m_pval_x = np.where(m_pval<=0.01)[0]
+    l_pval_x = np.where(l_pval<=0.01)[0]
+    z_pval_x = np.where(z_pval<=0.01)[0]
+
+    pval_y1 = max(np.mean(line_dict['H_ipsi'], axis=1))+0.11
+    pval_y2 = pval_y1 - 0.01
+    
+
+    xticks = np.array([0, round(h_len/2), h_len])
+
+    ax1.set_xlim(0, h_len)
     ax1.set_xticks(xticks)
-    ax1.set_xticklabels((xticks+20-stim_st_time)*20)
+    ax1.set_xticklabels([-500, 0, 500])
     ax1.set_ylabel("Average AUC")
     ax1.set_xlabel("Time")
-    ax1.axvline(x=target_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax1.axvline(x=stim_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax1.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax1.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax1.scatter(h_pval_x, np.ones(h_pval_x.shape)*pval_y1, color = 'r', marker='*', linewidths=2)
+    ax1.scatter(m_pval_x, np.ones(m_pval_x.shape)*pval_y2, color = 'g', marker='*', linewidths=2)
 
-    ax2.set_xlim(0, 50)
+
+    ax2.set_xlim(0, h_len)
     ax2.set_xticks(xticks)
-    ax2.set_xticklabels((xticks+20-stim_st_time)*20)
+    ax2.set_xticklabels([-500, 0, 500])
     ax2.set_ylabel("Average AUC")
     ax2.set_xlabel("Time")
-    ax2.axvline(x=target_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax2.axvline(x=stim_st_time-20, color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax2.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax2.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax2.scatter(l_pval_x, np.ones(l_pval_x.shape)*pval_y1, color = 'b', marker='*', linewidths=2)
+    ax2.scatter(z_pval_x, np.ones(z_pval_x.shape)*pval_y2, color = 'k', marker='*', linewidths=2)
+    
     plt.tight_layout()
 
     if save_plt:
@@ -325,9 +389,8 @@ def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.png'))
-        plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.pdf'))
+        plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.pdf'), format='pdf')
+        plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.eps'), format='eps')
         plt.close(fig)
-
-
 
 main()
