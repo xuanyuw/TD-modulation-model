@@ -40,16 +40,19 @@ def main():
     # plot single neural activity
     motion_rng = np.concatenate((np.arange(0, 40), np.arange(80, 120), np.arange(160, 170), np.arange(180, 190)), axis=0)
     target_rng = np.concatenate((np.arange(40, 80), np.arange(120, 160), np.arange(170, 180), np.arange(190, 200)), axis=0)
-    for i in motion_rng:
-        plot_avgAct_combined(h, n, i, True, mode='motion')
+    # for i in motion_rng:
+    #     plot_avgAct_combined(h, n, i, True, mode='motion')
     for i in target_rng:
-        plot_avgAct_combined(h, n, i, True, mode='target')
+        if i in np.concatenate((np.arange(40, 80), np.arange(170, 180))):
+            plot_avgAct_combined(h, n, i, True, mode='target', m1=True)
+        else:
+            plot_avgAct_combined(h, n, i, True, mode='target', m1=False)
 
 ###############################
 # Plot single neuron activity #
 ###############################
 
-def plot_avgAct_combined(h, n, cell_idx, save_plt, mode):
+def plot_avgAct_combined(h, n, cell_idx, save_plt, mode, m1=True):
     fig, ax = plt.subplots()
     coh_dict = find_coh_idx(n.stim_level)
     H_idx = coh_dict['H']
@@ -75,18 +78,17 @@ def plot_avgAct_combined(h, n, cell_idx, save_plt, mode):
         ax.plot(np.mean(h[19:, combine_idx(M_idx, n.correct_idx, red_idx), cell_idx], axis=1), color=colors['M_red'], label='315, M')
         ax.plot(np.mean(h[19:, combine_idx(H_idx, n.correct_idx, red_idx), cell_idx], axis=1), color=colors['H_red'], label='315, H')
     elif mode == 'target':
-        red_choice = choice_color[-1, :]==1
-        green_choice =  choice_color[-1, :]==0
+        contra_idx, ipsi_idx = find_sac_idx(n.y, m1)
         if sum(Z_idx) != 0:
-            ax.plot(np.mean(h[19:, combine_idx(Z_idx, green_choice), cell_idx], axis=1), linestyle ='--', color='#000000', label='green targ, Z')
-            ax.plot(np.mean(h[19:, combine_idx(Z_idx, red_choice), cell_idx], axis=1), color='#000000', label='red targ, Z')
-        ax.plot(np.mean(h[19:, combine_idx(L_idx, n.correct_idx, green_choice), cell_idx], axis=1), color=colors['L_green'], label='green targ, L')
-        ax.plot(np.mean(h[19:, combine_idx(M_idx, n.correct_idx, green_choice), cell_idx], axis=1), color=colors['M_green'], label='green targ, M')
-        ax.plot(np.mean(h[19:, combine_idx(H_idx, n.correct_idx, green_choice), cell_idx], axis=1), color=colors['H_green'], label='green targ, H')
+            ax.plot(np.mean(h[19:, combine_idx(Z_idx, contra_idx), cell_idx], axis=1), linestyle ='--', color='#000000', label='contra sac, Z')
+            ax.plot(np.mean(h[19:, combine_idx(Z_idx, ipsi_idx), cell_idx], axis=1), color='#000000', label='ipsi sac, Z')
+        ax.plot(np.mean(h[19:, combine_idx(L_idx, n.correct_idx, contra_idx), cell_idx], axis=1), color=colors['L_green'], label='contra sac, L')
+        ax.plot(np.mean(h[19:, combine_idx(M_idx, n.correct_idx, contra_idx), cell_idx], axis=1), color=colors['M_green'], label='contra sac, M')
+        ax.plot(np.mean(h[19:, combine_idx(H_idx, n.correct_idx, contra_idx), cell_idx], axis=1), color=colors['H_green'], label='contra sac, H')
         
-        ax.plot(np.mean(h[19:, combine_idx(L_idx, n.correct_idx, red_choice), cell_idx], axis=1), color=colors['L_red'], label='red targ, L')
-        ax.plot(np.mean(h[19:, combine_idx(M_idx, n.correct_idx, red_choice), cell_idx], axis=1), color=colors['M_red'], label='red targ, M')
-        ax.plot(np.mean(h[19:, combine_idx(H_idx, n.correct_idx, red_choice), cell_idx], axis=1), color=colors['H_red'], label='red targ, H')
+        ax.plot(np.mean(h[19:, combine_idx(L_idx, n.correct_idx, ipsi_idx), cell_idx], axis=1), color=colors['L_red'], label='ipsi sac, L')
+        ax.plot(np.mean(h[19:, combine_idx(M_idx, n.correct_idx, ipsi_idx), cell_idx], axis=1), color=colors['M_red'], label='ipsi sac, M')
+        ax.plot(np.mean(h[19:, combine_idx(H_idx, n.correct_idx, ipsi_idx), cell_idx], axis=1), color=colors['H_red'], label='ipsi sac, H')
     
     
     ax.set_xlim(0, 50)

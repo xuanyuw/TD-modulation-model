@@ -1,7 +1,14 @@
+
+import sys
+import os
+# setting path
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import os
 from pickle import load
 from calc_params import par
 
@@ -17,7 +24,7 @@ mpl.rcParams['lines.linewidth'] = 2
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 model_type = f_dir.split('_')[-2]
-total_rep = 1
+total_rep = 50
 all_lr = [2e-2]
 plot_sel = True
 
@@ -115,10 +122,11 @@ def plot_total_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
+        pic_dir = os.path.join(f_dir, "%s_avg" % (folder_n))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 
@@ -135,10 +143,11 @@ def plot_total_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
+        pic_dir = os.path.join(f_dir, "%s_avg" % (folder_n))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 
@@ -156,10 +165,11 @@ def plot_total_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         folder_n = "popu_act_%dnet"%total_rep
         if plot_sel:
             folder_n += "_selected"
-        pic_dir = os.path.join(f_dir, "%s_avg_lr%f" % (folder_n, lr))
+        pic_dir = os.path.join(f_dir, "%s_avg" % (folder_n))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
         plt.close(fig)
 
 
