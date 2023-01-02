@@ -22,8 +22,6 @@ from pickle import dump, load
 from tqdm import tqdm
 from time import perf_counter
 from scipy.stats import ttest_ind, sem
-from matplotlib.path import Path
-from matplotlib.patches import PathPatch
 
 # plot settings
 
@@ -234,15 +232,25 @@ def main():
             plot_all_avg_ROC_sep_sac(line_dict)
 
 def get_sel_cells():
-    motion_selective = np.zeros((len(all_rep), 200))
-    saccade_selective = np.zeros((len(all_rep), 200))
-    for rep in all_rep:
-        # print('Running ROC calculation for rep %d ... '%rep)
-        n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
-        normalized_h = min_max_normalize(n.h)
-        if plot_sel:
-            motion_selective[rep, :] = pick_selective_neurons(normalized_h, n.stim_dir)
-            saccade_selective[rep, :] = pick_selective_neurons(normalized_h, n.choice)
+    if not os.path.exists(os.path.join(f_dir, 'motion_selective_cell_idx.npy')) or not os.path.exists(os.path.join(f_dir, 'saccade_selective_cell_idx.npy')):
+        motion_selective = np.zeros((len(all_rep), 200))
+        saccade_selective = np.zeros((len(all_rep), 200))
+        for rep in all_rep:
+            # print('Running ROC calculation for rep %d ... '%rep)
+            n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
+            normalized_h = min_max_normalize(n.h)
+            if plot_sel:
+                motion_selective[rep, :] = pick_selective_neurons(normalized_h, n.stim_dir)
+                saccade_selective[rep, :] = pick_selective_neurons(normalized_h, n.choice)
+        with open(os.path.join(f_dir, 'motion_selective_cell_idx.npy'), 'wb') as f:
+            np.save(f, motion_selective)
+        with open(os.path.join(f_dir, 'saccade_selective_cell_idx.npy'), 'wb') as f:
+            np.save(f, saccade_selective)
+    else:
+        with open(os.path.join(f_dir, 'motion_selective_cell_idx.npy'), 'rb') as f:
+            motion_selective = np.load(f)
+        with open(os.path.join(f_dir, 'saccade_selective_cell_idx.npy'), 'rb') as f:
+            saccade_selective = np.load(f)
     return motion_selective, saccade_selective
 
 
