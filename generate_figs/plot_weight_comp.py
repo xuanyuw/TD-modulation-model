@@ -1,3 +1,10 @@
+import sys
+import os
+# setting path
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -8,19 +15,31 @@ import numpy as np
 import tables
 from utils import find_pref_dir, find_pref_targ_color, pick_selective_neurons, min_max_normalize,recover_targ_loc, relu
 from calc_params import par
+from statannotations.Annotator import Annotator
+from matplotlib.collections import PolyCollection
+from matplotlib.legend_handler import HandlerTuple
 
+# plot settings
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
+mpl.rcParams['font.family'] = 'Arial'
+mpl.rcParams.update({'font.size': 15})
+mpl.rcParams['lines.linewidth'] = 2
 
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+plt_dir = os.path.join('generate_figs', 'Fig7', '7a_paired_weight_ff_fb_comp')
+if ~os.path.exists(plt_dir):
+    os.makedirs(plt_dir)
+
+
 model_type = f_dir.split('_')[-2]
 total_rep = 50
 total_shuf = 100
 lr = 2e-2
 plot_sel = True
-rerun_calculation = True
-plot_trained = False
+rerun_calculation = False
+plot_trained = True
 
 title = "%s_weight_comparison"%model_type
 if plot_sel:
@@ -138,20 +157,28 @@ def load_data():
 def plot_w_distr(df, rep=None):
 
     # if rep is None:
+    df['conn_cat'] = np.where(np.logical_or(df['conn'] == 'mr-tr', df['conn'] == 'mg-tg'), 'Paired', 'Non-paired')
+    df['conn_type'] = np.where(df['conn_type']=='ff', 'Feedforward', 'Feedback')
     
-    sns.catplot(x="conn", y="weights",
-        hue="conn_type",
-        data=df, kind='bar',
-        palette="dark", alpha=.6)
 
-    fn_png = title + '.png'
-    fn_pdf = title + '.pdf'
-    # else:
-    #     title = "%s weight comparison (rep %d)"%(model_type, rep)
-    #     fn = "%s_weight_comparison_%d.pdf"%(model_type, rep)
-    plt.title(title)
-    plt.savefig(join(f_dir, fn_png), bbox_inches='tight')
-    plt.savefig(join(f_dir, fn_pdf), bbox_inches='tight')
+    fig, ax = plt.subplots()
+    # color_palette = {'H': '#FF0000', 'M': '#00FF00', 'L':'#0000FF', 'Z': 'k'}
+    colors = ['#FF0000','#0000FF']
+    # sns.violinplot(x = 'conn_cat', y = 'weights', hue = 'conn_type', data = df, inner='points', ax=ax, palette=colors)
+    sns.barplot(x = 'conn_cat', y = 'weights', hue = 'conn_type', data = df,  ax=ax, palette=colors, alpha=0.8)
+    ax.set(xlabel="", ylabel="Weight")
+    plt.legend(frameon=False)
+
+    # plot significance values
+    pairs = [(('Paired', 'Feedforward'), ('Non-paired', 'Feedforward')), (('Paired', 'Feedback'), ('Non-paired', 'Feedback'))]
+    annot = Annotator(ax, pairs, data=df, x='conn_cat', y='weights', hue='conn_type')
+    annot.configure(test='t-test_ind', text_format='star', loc='outside')
+    annot.apply_and_annotate()
+    plt.tight_layout()
+    
+    plt.savefig(join(plt_dir, title + '.png'), format='png', bbox_inches='tight')
+    plt.savefig(join(plt_dir, title + '.pdf'), format='pdf', bbox_inches='tight')
+    plt.savefig(join(plt_dir, title + '.eps'), format='eps', bbox_inches='tight')
     
 
 def main():

@@ -1,18 +1,30 @@
+import sys
+import os
+# setting path
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from pickle import load
 import pandas as pd
 from os.path import join
 import numpy as np
 import tables
 from utils import pick_selective_neurons, min_max_normalize,recover_targ_loc, relu
-from plot_weight_comp import locate_neurons
+from generate_figs.plot_weight_comp import locate_neurons
 from calc_params import par
 from scipy.stats import rankdata
 
+# plot settings
+
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
+mpl.rcParams['font.family'] = 'Arial'
+mpl.rcParams.update({'font.size': 15})
+mpl.rcParams['lines.linewidth'] = 2
+plt.rcParams['figure.figsize'] = [10, 4]
 
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
@@ -21,7 +33,7 @@ total_rep = 50
 total_shuf = 100
 lr = 2e-2
 plot_sel = True
-rerun_calculation = True
+rerun_calculation = False
 plot_trained = False
 use_sel_rank =True
 use_w_rank = False
