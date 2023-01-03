@@ -35,7 +35,6 @@ lr = 0.02
 stim_st_time = 45
 target_st_time = 25
 normalize = False
-sep_sac = True
 plot_sel = True
 rerun_calc = False
 save_plot = True
@@ -44,8 +43,6 @@ save_plot = True
 st = 29
 ed = 48
 
-if not sep_sac:
-    plt.rcParams['figure.figsize'] = [6, 4]
 
 # load data
 fn = os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep)

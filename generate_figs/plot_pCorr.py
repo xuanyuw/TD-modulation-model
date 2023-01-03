@@ -8,7 +8,6 @@ sys.path.append(parent)
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import pandas as pd
 from plot_ROC import get_sel_cells
 from types import SimpleNamespace
 from utils import (
@@ -18,6 +17,8 @@ from utils import (
     load_test_data,
     min_max_normalize,
     get_choice_color,
+    get_pref_idx,
+    find_pref_targ_color_motion_cell,
 )
 from scipy.stats import ttest_ind, sem
 from scipy.io import savemat, loadmat
@@ -139,11 +140,8 @@ def create_plot(data_dict):
 
     stim_pval = ttest_ind(ipsi_pCorr_stim, contra_pCorr_stim, axis=1).pvalue
     choice_pval = ttest_ind(ipsi_pCorr_choice, contra_pCorr_choice, axis=1).pvalue
-    stim_pval_x = np.where(stim_pval<=0.01)[0]
-    choice_pval_x = np.where(choice_pval<=0.01)[0]
-
-    yl = ax1.get_ylim()
-    pval_y = max(yl)-0.01
+    stim_pval_x = np.where(stim_pval<=0.005)[0]
+    choice_pval_x = np.where(choice_pval<=0.005)[0]
 
     ax1.set_xlim(0, len(ipsi_choice_mean))
     ax1.set_xticks(xticks)
@@ -152,7 +150,6 @@ def create_plot(data_dict):
     ax1.set_xlabel("Time to motion onset(ms)")
     ax1.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
     ax1.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax1.scatter(choice_pval_x, np.ones(choice_pval_x.shape)*pval_y, color = 'k', marker='*', linewidths=2)
     ax1.legend(loc='best', prop={'size': 10}, frameon=False)
 
 
@@ -168,7 +165,12 @@ def create_plot(data_dict):
     ax2.set_xlabel("Time to motion onset(ms)")
     ax2.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
     ax2.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    
+    yl = ax1.get_ylim()
+    pval_y = max(yl)+0.005
+    ax1.scatter(choice_pval_x, np.ones(choice_pval_x.shape)*pval_y, color = 'k', marker='*', linewidths=2)
     ax2.scatter(stim_pval_x, np.ones(stim_pval_x.shape)*pval_y, color = 'k', marker='*', linewidths=2)
+    
 
     plt.tight_layout()
 
@@ -181,7 +183,7 @@ def create_plot(data_dict):
         plt.savefig(os.path.join(pic_dir,'pCorr_%dnet.eps'%total_rep), format='eps')
         plt.close(fig)
 
-def extract_pCorr_data(rep, motion_rng, m1, m_sel, coh_code = {'H':4, 'M':2, 'L':1, 'Z':0}, red_sign = 1, green_sign = -1):
+def extract_pCorr_data(rep, motion_rng, m1, m_sel, coh_code = {'H':4, 'M':2, 'L':1, 'Z':0}, pref_sign = 1, non_sign = -1):
     n = SimpleNamespace(**load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep)))
     normalized_h = min_max_normalize(n.h)
     if normalize:
@@ -193,30 +195,40 @@ def extract_pCorr_data(rep, motion_rng, m1, m_sel, coh_code = {'H':4, 'M':2, 'L'
     coh_dict = find_coh_idx(n.stim_level)
     # extract indices for each case
     contra_idx, ipsi_idx = find_sac_idx(n.y, m1)
-    red_motion_idx = n.stim_dir==315
-    green_motion_idx = n.stim_dir==135
-    choice_color = get_choice_color(n.y, n.desired_out, n.stim_dir) #(green = 0, red = 1)
+    # red_motion_idx = n.stim_dir==315
+    # green_motion_idx = n.stim_dir==135
+    pref_dir, _ = get_pref_idx(n, h)
+    pref_dir = pref_dir[:, motion_rng][:,  m_sel.astype(bool)]
+
+    pref_targ_c = find_pref_targ_color_motion_cell(h, n)
+    pref_targ_c = pref_targ_c[:, motion_rng][:,  m_sel.astype(bool)]
 
     # populate stim arr
-    ipsi_stim_arr = np.zeros((h.shape[1],))
-    contra_stim_arr = np.zeros((h.shape[1],))
+    ipsi_stim_arr = np.zeros(pref_dir.shape)
+    contra_stim_arr = np.zeros(pref_dir.shape)
+    
+    # cor_idx = np.tile(n.correct_idx, (pref_dir.shape[1], 1)).T
+    ipsi_idx = np.tile(ipsi_idx, (pref_dir.shape[1], 1)).T
+    contra_idx = np.tile(contra_idx, (pref_dir.shape[1], 1)).T
+    
     for coh in coh_levels:
-        ipsi_stim_red_idx = combine_idx(red_motion_idx, coh_dict[coh], n.correct_idx, ipsi_idx)
-        ipsi_stim_green_idx = combine_idx(green_motion_idx, coh_dict[coh], n.correct_idx, ipsi_idx)
-        contra_stim_red_idx = combine_idx(red_motion_idx, coh_dict[coh], n.correct_idx, contra_idx)
-        contra_stim_green_idx = combine_idx(green_motion_idx, coh_dict[coh], n.correct_idx, contra_idx)
-        ipsi_stim_arr[ipsi_stim_red_idx] = coh_code[coh]*red_sign
-        ipsi_stim_arr[ipsi_stim_green_idx] = coh_code[coh]*green_sign
-        contra_stim_arr[contra_stim_red_idx] = coh_code[coh]*red_sign
-        contra_stim_arr[contra_stim_green_idx] = coh_code[coh]*green_sign
+        coh_idx = np.tile(coh_dict[coh], (pref_dir.shape[1], 1)).T
+        ipsi_stim_pref_idx = combine_idx(pref_dir, coh_idx, ipsi_idx)
+        ipsi_stim_non_idx = combine_idx(~pref_dir, coh_idx, ipsi_idx)
+        contra_stim_pref_idx = combine_idx(pref_dir, coh_idx, contra_idx)
+        contra_stim_non_idx = combine_idx(~pref_dir, coh_idx, contra_idx)
+        ipsi_stim_arr[ipsi_stim_pref_idx] = coh_code[coh]*pref_sign
+        ipsi_stim_arr[ipsi_stim_non_idx] = coh_code[coh]*non_sign
+        contra_stim_arr[contra_stim_pref_idx] = coh_code[coh]*pref_sign
+        contra_stim_arr[contra_stim_non_idx] = coh_code[coh]*non_sign
 
     #populate choice arr
-    ipsi_choice_arr = np.zeros((h.shape[1],))        
-    contra_choice_arr = np.zeros((h.shape[1],))        
-    ipsi_choice_arr[combine_idx(choice_color[-1, :]==1, ipsi_idx)] = red_sign *2
-    ipsi_choice_arr[combine_idx(choice_color[-1, :]==0, ipsi_idx)] = green_sign *2
-    contra_choice_arr[combine_idx(choice_color[-1, :]==1, contra_idx)] = red_sign *2
-    contra_choice_arr[combine_idx(choice_color[-1, :]==0, contra_idx)] = green_sign *2
+    ipsi_choice_arr = np.zeros(pref_targ_c.shape)        
+    contra_choice_arr = np.zeros(pref_targ_c.shape)        
+    ipsi_choice_arr[combine_idx(pref_targ_c, ipsi_idx)] = pref_sign *2
+    ipsi_choice_arr[combine_idx(~pref_targ_c, ipsi_idx)] = non_sign *2
+    contra_choice_arr[combine_idx(pref_targ_c, contra_idx)] = pref_sign *2
+    contra_choice_arr[combine_idx(~pref_targ_c, contra_idx)] = non_sign *2
     
 
     # average fr to reduce noise

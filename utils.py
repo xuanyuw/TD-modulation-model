@@ -115,6 +115,13 @@ def find_pref_targ_color(h, desired_out, stim_dir, m1_targ_rng, m2_targ_rng):
     pref_targ_color[m2_targ_rng] = contra_green_mean[m2_targ_rng] > contra_red_mean[m2_targ_rng] #ipsi-lateral targets are the opposite of contra lateral targets
     return pref_targ_color
 
+def find_pref_targ_color_motion_cell(h, n):
+    choice_c = get_choice_color(n.y, n.desired_out, n.stim_dir)[-1, :] # return choice color (green = 0, red = 1)
+    pref_red = find_pref_dir(n.stim_level, n.stim_dir, h)
+    choice_c_temp = np.tile(choice_c, (len(pref_red), 1)).T
+    pref_red_temp = np.tile(pref_red, (len(choice_c), 1))
+    return pref_red_temp == choice_c_temp
+
 
 def find_pref_sac(y, h, stim_st_time=STIM_ST_TIME):
     choice = np.argmax(y, 2)[-1, :]

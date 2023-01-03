@@ -32,8 +32,8 @@ pCorr_stim = zeros(size(h, 1), size(h, 3));
 pCorr_choice = zeros(size(h, 1), size(h, 3));
 for t=1:size(h, 1)
     for c=1:size(h,3)
-        pCorr_stim(t, c) = abs(partialcorr(h(t, :, c)', stim_arr', choice_arr'));
-        pCorr_choice(t, c) = abs(partialcorr(h(t, :, c)', choice_arr', stim_arr'));
+        pCorr_stim(t, c) = partialcorr(h(t, :, c)', stim_arr(:, c), choice_arr(:, c));
+        pCorr_choice(t, c) = partialcorr(h(t, :, c)', choice_arr(:, c), stim_arr(:, c));
     end
 end
 end
