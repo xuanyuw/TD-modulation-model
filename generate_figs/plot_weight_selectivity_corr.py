@@ -15,7 +15,7 @@ import tables
 from utils import pick_selective_neurons, min_max_normalize,recover_targ_loc, relu
 from generate_figs.plot_weight_comp import locate_neurons
 from calc_params import par
-from scipy.stats import rankdata
+from scipy.stats import rankdata, ttest_1samp
 
 # plot settings
 
@@ -24,17 +24,22 @@ mpl.rcParams['axes.spines.top'] = False
 mpl.rcParams['font.family'] = 'Arial'
 mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
-plt.rcParams['figure.figsize'] = [10, 4]
+# plt.rcParams['figure.figsize'] = [6, 4]
 
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+plt_dir = os.path.join('generate_figs', 'Fig7', '7b_w_sel_corr')
+if not os.path.exists(plt_dir):
+    os.makedirs(plt_dir)
+
+
 model_type = f_dir.split('_')[-2]
 total_rep = 50
 total_shuf = 100
 lr = 2e-2
 plot_sel = True
 rerun_calculation = False
-plot_trained = False
+plot_trained = True
 use_sel_rank =True
 use_w_rank = False
 
@@ -155,11 +160,17 @@ def load_data():
     return df
 
 def plot_corr(df, title):
-    p = sns.stripplot(x="conn_type", y="corrcoef", data=df, dodge=True, palette="dark", alpha=.6)
+    df['corrcoef'] = df['corrcoef']*(-1)
+    df['conn_type'] = np.where(df['conn_type']=='ff', 'Feedforward', 'Feedback')
+
+    colors = ['#FF0000','#0080FE']
+    fig, ax = plt.subplots()
+    sns.stripplot(x="conn_type", y="corrcoef", data=df, dodge=True, palette=colors, alpha=.8)
     # plot the mean line
     sns.boxplot(showmeans=True,
                 meanline=True,
-                meanprops={'color': 'k', 'ls': '-', 'lw': 2},
+                meanprops={'color': 'gray', 'ls': '--', 'lw': 2},
+                width = 0.3,
                 medianprops={'visible': False},
                 whiskerprops={'visible': False},
                 zorder=10,
@@ -169,16 +180,24 @@ def plot_corr(df, title):
                 showfliers=False,
                 showbox=False,
                 showcaps=False,
-                ax=p)
-    plt.ylim(-0.25, 0.1)
-    plt.title(title)
-    fn_png = title + '.png'
-    fn_pdf = title + '.pdf'
+                ax=ax)
+    plt.tight_layout()
+    ax.set(xlabel="", ylabel="Correlation Coefficients")
 
-    plt.savefig(join(f_dir, fn_png))
-    plt.savefig(join(f_dir, fn_pdf))
+    plt.savefig(join(plt_dir, '%s.png'%title), format='png')
+    plt.savefig(join(plt_dir, '%s.pdf'%title), format='pdf')
+    plt.savefig(join(plt_dir, '%s.eps'%title), format='eps')
     plt.close()
-    
+
+    # calculate mean and pVal
+    ff_mean = df['corrcoef'][df['conn_type']=='Feedforward'].mean()
+    fb_mean = df['corrcoef'][df['conn_type']=='Feedback'].mean()
+
+    ff_pval = ttest_1samp(df['corrcoef'][df['conn_type']=='Feedforward'].to_numpy(), 0).pvalue
+    fb_pval = ttest_1samp(df['corrcoef'][df['conn_type']=='Feedback'].to_numpy(), 0).pvalue
+
+    with open(os.path.join(plt_dir, 'stat_test.txt'), 'w') as f:
+        f.writelines('\n'.join(['Feedforward mean = %f, pval = %.4e'%(ff_mean, ff_pval), 'Feedback mean = %f, pval = %.4e'%(fb_mean, fb_pval)]))
 
 def main():
     df = load_data()

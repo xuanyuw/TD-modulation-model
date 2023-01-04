@@ -29,7 +29,7 @@ mpl.rcParams['lines.linewidth'] = 2
 
 f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 plt_dir = os.path.join('generate_figs', 'Fig7', '7a_paired_weight_ff_fb_comp')
-if ~os.path.exists(plt_dir):
+if not os.path.exists(plt_dir):
     os.makedirs(plt_dir)
 
 
@@ -152,26 +152,27 @@ def load_data():
     else:
         df = pd.read_csv(join(f_dir, title+'_data.csv'))
     return df
-
    
 def plot_w_distr(df, rep=None):
 
     # if rep is None:
     df['conn_cat'] = np.where(np.logical_or(df['conn'] == 'mr-tr', df['conn'] == 'mg-tg'), 'Paired', 'Non-paired')
     df['conn_type'] = np.where(df['conn_type']=='ff', 'Feedforward', 'Feedback')
-    
 
+    popu_df = df[['rep', 'conn_cat', 'conn_type', 'weights']].groupby(['rep', 'conn_cat', 'conn_type']).mean().reset_index()
+    
     fig, ax = plt.subplots()
     # color_palette = {'H': '#FF0000', 'M': '#00FF00', 'L':'#0000FF', 'Z': 'k'}
-    colors = ['#FF0000','#0000FF']
+    colors = ['#FF0000','#0080FE']
     # sns.violinplot(x = 'conn_cat', y = 'weights', hue = 'conn_type', data = df, inner='points', ax=ax, palette=colors)
-    sns.barplot(x = 'conn_cat', y = 'weights', hue = 'conn_type', data = df,  ax=ax, palette=colors, alpha=0.8)
+    sns.barplot(x = 'conn_type', y = 'weights', hue = 'conn_cat', data = popu_df,  ax=ax, palette=colors)
+    # plt.setp(ax.collections, alpha=.9)
     ax.set(xlabel="", ylabel="Weight")
-    plt.legend(frameon=False)
+    plt.legend(frameon=False, loc='best')
 
     # plot significance values
-    pairs = [(('Paired', 'Feedforward'), ('Non-paired', 'Feedforward')), (('Paired', 'Feedback'), ('Non-paired', 'Feedback'))]
-    annot = Annotator(ax, pairs, data=df, x='conn_cat', y='weights', hue='conn_type')
+    pairs = [(('Feedforward', 'Paired'), ( 'Feedforward', 'Non-paired')), (('Feedback', 'Paired'), ('Feedback', 'Non-paired'))]
+    annot = Annotator(ax, pairs, data=popu_df, x='conn_type', y='weights', hue='conn_cat')
     annot.configure(test='t-test_ind', text_format='star', loc='outside')
     annot.apply_and_annotate()
     plt.tight_layout()
@@ -179,6 +180,8 @@ def plot_w_distr(df, rep=None):
     plt.savefig(join(plt_dir, title + '.png'), format='png', bbox_inches='tight')
     plt.savefig(join(plt_dir, title + '.pdf'), format='pdf', bbox_inches='tight')
     plt.savefig(join(plt_dir, title + '.eps'), format='eps', bbox_inches='tight')
+
+    
     
 
 def main():
