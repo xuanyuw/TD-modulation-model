@@ -140,3 +140,4 @@ dmypy.json
 *.asv
 *.eps
 *.txt
+*.csv

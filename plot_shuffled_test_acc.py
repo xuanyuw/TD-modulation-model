@@ -21,14 +21,16 @@ rerun_calculation = False
 
 def shuf_main():
     if rerun_calculation:
-        all_acc_df = pd.DataFrame(columns=['coh', 'acc'])
+        all_acc_df = pd.DataFrame(columns=['rep', 'shuf', 'coh', 'acc'])
         for rep in range(total_rep):
             print('Plotting rep %d' % rep)
-            rep_acc_df = pd.DataFrame(columns=['coh', 'acc'])
+            rep_acc_df = pd.DataFrame(columns=['rep', 'shuf', 'coh', 'acc'])
             for shuf in range(total_shuf):
                 with open(join(f_dir, 'test_results_%d_shuf%d.pkl' %(rep, shuf)), 'rb') as f:
                     data = load(f)
                 acc_df = pd.DataFrame({
+                    "rep": [rep]*4,
+                    "shuf": [shuf]*4,
                     "coh":['H', 'M', 'L', 'Z'], 
                     "acc":[data['H_acc'][0], data['M_acc'][0], data['L_acc'][0], data['Z_acc'][0]]
                                         })
@@ -49,11 +51,12 @@ def shuf_main():
 
 def no_shuf_main():
     if rerun_calculation:
-        all_acc_df = pd.DataFrame(columns=['coh', 'acc'])
+        all_acc_df = pd.DataFrame(columns=['coh', 'acc', 'rep'])
         for rep in range(total_rep):
             with open(join(f_dir, 'test_results_%d.pkl' %(rep)), 'rb') as f:
                 data = load(f)
             acc_df = pd.DataFrame({
+                "rep":[rep]*4,
                 "coh":['H', 'M', 'L', 'Z'], 
                 "acc":[data['H_acc'][0], data['M_acc'][0], data['L_acc'][0], data['Z_acc'][0]]
                                     })
