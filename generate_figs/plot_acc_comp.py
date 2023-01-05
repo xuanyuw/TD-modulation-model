@@ -10,10 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from pickle import load
 import pandas as pd
-from os.path import join
 import numpy as np
-import tables
-from calc_params import par
 from statannotations.Annotator import Annotator
 from matplotlib.collections import PolyCollection
 from matplotlib.legend_handler import HandlerTuple
@@ -54,7 +51,7 @@ def main():
     fig, ax = plt.subplots()
     colors = ['#FF0000', '#00FF00', '#0000FF', '#424242']
     handles = []
-    sns.violinplot(x = 'coh', y = 'acc', hue = 'model', data = df, inner='points', ax=ax,  palette=['.2', '.5'], hue_order=['Full Model', 'No feedback', 'Shuffled feedback'])
+    sns.violinplot(x = 'coh', y = 'acc', hue = 'model', data = df, inner='points', ax=ax,  palette=['.2', '.5'], hue_order=['Full model', 'No feedback', 'Shuffled feedback'])
 
     for ind, violin in enumerate(ax.findobj(PolyCollection)):
         rgb = to_rgb(colors[ind // 3])
@@ -70,10 +67,10 @@ def main():
 
 
     # add statistical test results
-    pairs = [(('H', 'Full Model'), ('H', 'No feedback')), (('H', 'Full Model'), ('H', 'Shuffled feedback')),
-                (('M', 'Full Model'), ('M', 'No feedback')), (('M', 'Full Model'), ('M', 'Shuffled feedback')), 
-                (('L', 'Full Model'), ('L', 'No feedback')), (('L', 'Full Model'), ('L', 'Shuffled feedback')), 
-                (('Z', 'Full Model'), ('Z', 'No feedback')), (('Z', 'Full Model'), ('Z', 'Shuffled feedback'))]
+    pairs = [(('H', 'Full model'), ('H', 'No feedback')), (('H', 'Full model'), ('H', 'Shuffled feedback')),
+                (('M', 'Full model'), ('M', 'No feedback')), (('M', 'Full model'), ('M', 'Shuffled feedback')), 
+                (('L', 'Full model'), ('L', 'No feedback')), (('L', 'Full model'), ('L', 'Shuffled feedback')), 
+                (('Z', 'Full model'), ('Z', 'No feedback')), (('Z', 'Full model'), ('Z', 'Shuffled feedback'))]
 
     f =  open(os.path.join(plt_dir, "stat_test.txt"), 'w') 
     sys.stdout = f
@@ -117,7 +114,7 @@ def load_acc():
                 pbar = tqdm(total = total_rep)
                 for rep in range(total_rep):
                     for shuf in range(total_shuf):
-                        with open(join(f_dir, 'test_results_%d_shuf%d.pkl' %(rep, shuf)), 'rb') as f:
+                        with open(os.path.join(f_dir, 'test_results_%d_shuf%d.pkl' %(rep, shuf)), 'rb') as f:
                             data = load(f)
                         acc_df = pd.DataFrame({
                             "rep": [rep]*4,
@@ -127,12 +124,12 @@ def load_acc():
                                                 })
                         all_acc_df = pd.concat([all_acc_df, acc_df], ignore_index=True)
                     pbar.update(1)
-                all_acc_df.to_csv(join(f_dir, 'all_test_acc.csv'))
+                all_acc_df.to_csv(os.path.join(f_dir, 'all_test_acc.csv'))
                 shuf_acc_df = all_acc_df
             else:
                 all_acc_df = pd.DataFrame(columns=['rep', 'coh', 'acc'])
                 for rep in range(total_rep):
-                    with open(join(f_dir, 'test_results_%d.pkl' %(rep)), 'rb') as f:
+                    with open(os.path.join(f_dir, 'test_results_%d.pkl' %(rep)), 'rb') as f:
                         data = load(f)
                     acc_df = pd.DataFrame({
                         "rep":[rep]*4,
@@ -140,7 +137,7 @@ def load_acc():
                         "acc":[data['H_acc'][0], data['M_acc'][0], data['L_acc'][0], data['Z_acc'][0]]
                                             })
                     all_acc_df = pd.concat([all_acc_df, acc_df], ignore_index=True)
-                all_acc_df.to_csv(join(f_dir, 'all_test_acc.csv'))
+                all_acc_df.to_csv(os.path.join(f_dir, 'all_test_acc.csv'))
                 if "noFeedback" in f_dir:
                     nofb_acc_df = all_acc_df
                 else:
@@ -152,7 +149,7 @@ def load_acc():
     
     # combine all acc df
     shuf_df_temp = shuf_acc_df[['rep', 'coh', 'acc']].groupby(['rep', 'coh']).mean().reset_index()
-    full_acc_df['model'] = ['Full Model']*len(full_acc_df.index)
+    full_acc_df['model'] = ['Full model']*len(full_acc_df.index)
     nofb_acc_df['model'] = ['No feedback']*len(nofb_acc_df.index)
     shuf_df_temp['model'] = ['Shuffled feedback']*len(shuf_df_temp.index)
 
