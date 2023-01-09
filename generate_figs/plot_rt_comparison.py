@@ -43,12 +43,7 @@ rerun_calculation = False
 
 def main():
     all_rt_df = load_rt()
-    df = pd.DataFrame(columns=['rep', 'coh', 'rt', 'model'])
-    for model in ['Full model', 'No feedback', 'Shuffled feedback']:
-        temp_rt_df = all_rt_df[all_rt_df['model']==model][['rep', 'coh', 'rt']].groupby(['rep', 'coh']).mean().reset_index()
-        temp_rt_df['model'] = [model]*len(temp_rt_df.index)
-        df = pd.concat((df, temp_rt_df))
-
+    df = all_rt_df[['rep', 'coh', 'rt', 'model']].groupby(['model', 'rep', 'coh']).mean().reset_index()
 
     fig, ax = plt.subplots()
     colors = ['#FF0000', '#00FF00', '#0000FF', '#424242']

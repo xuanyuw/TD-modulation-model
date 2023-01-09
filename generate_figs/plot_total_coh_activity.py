@@ -22,9 +22,9 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
 model_type = f_dir.split('_')[-2]
-total_rep = 50
+total_rep = 1
 all_lr = [2e-2]
 plot_sel = True
 
@@ -39,20 +39,20 @@ def main(lr, total_rep):
     sac_sel_pvnp_norm = load_new_line_dict(sac_sel_pvnp_norm)
     sac_sel_lvr_norm = load_new_line_dict(sac_sel_lvr_norm)
 
-    dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw_%dnet.pkl"%total_rep), 'rb'))
-    dir_sel_orig = load_new_line_dict(dir_sel_orig)
-    sac_sel_pvnp_orig = load_new_line_dict(sac_sel_pvnp_orig)
-    sac_sel_lvr_orig = load_new_line_dict(sac_sel_lvr_orig)
+    # dir_sel_orig, sac_sel_pvnp_orig, sac_sel_lvr_orig = load(open(os.path.join(f_dir, "all_selectivity_data_raw_%dnet.pkl"%total_rep), 'rb'))
+    # dir_sel_orig = load_new_line_dict(dir_sel_orig)
+    # sac_sel_pvnp_orig = load_new_line_dict(sac_sel_pvnp_orig)
+    # sac_sel_lvr_orig = load_new_line_dict(sac_sel_lvr_orig)
 
 
     plot_total_dir_selectivity(dir_sel_norm, "%s_Motion_dir_sel_norm_avg_combined"%model_type, True, plot_sel=plot_sel)
-    plot_total_dir_selectivity(dir_sel_orig, "%s_Motion_dir_sel_raw_avg_combined"%model_type, True, plot_sel=plot_sel)
+    # plot_total_dir_selectivity(dir_sel_orig, "%s_Motion_dir_sel_raw_avg_combined"%model_type, True, plot_sel=plot_sel)
     
     plot_total_sac_selectivity_pvnp(sac_sel_pvnp_norm, "%s_Target_sac_sel_pvnp_norm_avg_combined"%model_type, True, plot_sel=plot_sel)
-    plot_total_sac_selectivity_pvnp(sac_sel_pvnp_orig, "%s_Target_sac_sel_pvnp_raw_avg_combined"%model_type, True, plot_sel=plot_sel)
+    # plot_total_sac_selectivity_pvnp(sac_sel_pvnp_orig, "%s_Target_sac_sel_pvnp_raw_avg_combined"%model_type, True, plot_sel=plot_sel)
 
     plot_total_sac_selectivity_lvr(sac_sel_lvr_norm, "%s_Target_sac_sel_lvr_norm_avg_combined"%model_type, True, plot_sel=plot_sel)
-    plot_total_sac_selectivity_lvr(sac_sel_lvr_orig, "%s_Target_sac_sel_lvr_raw_avg_combined"%model_type, True, plot_sel=plot_sel)
+    # plot_total_sac_selectivity_lvr(sac_sel_lvr_orig, "%s_Target_sac_sel_lvr_raw_avg_combined"%model_type, True, plot_sel=plot_sel)
 
 def load_new_line_dict(old_dict):
     new_dict = {}
@@ -125,8 +125,9 @@ def plot_total_dir_selectivity(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg" % (folder_n))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title), format='pdf')
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title), format='png')
+        plt.savefig(os.path.join(pic_dir, "%s.eps" % title), format='eps')
         plt.close(fig)
 
 
@@ -146,8 +147,9 @@ def plot_total_sac_selectivity_pvnp(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg" % (folder_n))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title), format='pdf')
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title), format='png')
+        plt.savefig(os.path.join(pic_dir, "%s.eps" % title), format='eps')
         plt.close(fig)
 
 
@@ -168,8 +170,9 @@ def plot_total_sac_selectivity_lvr(line_dict, title, save_plt, plot_sel=False):
         pic_dir = os.path.join(f_dir, "%s_avg" % (folder_n))
         if not os.path.exists(pic_dir):
             os.makedirs(pic_dir)
-        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title))
-        plt.savefig(os.path.join(pic_dir, "%s.png" % title))
+        plt.savefig(os.path.join(pic_dir, "%s.pdf" % title), format='pdf')
+        plt.savefig(os.path.join(pic_dir, "%s.png" % title), format='png')
+        plt.savefig(os.path.join(pic_dir, "%s.eps" % title), format='eps')
         plt.close(fig)
 
 
