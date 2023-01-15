@@ -32,17 +32,17 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
-total_rep = 50
+f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model"
+total_rep = 1
 # f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
 lr = 0.02
 
 stim_st_time = 45
 target_st_time = 25
-rerun_calc = False
+rerun_calc = True
 normalize = False
-sep_sac = True
+sep_sac = False
 plot_sel = True
 
 if not sep_sac:
@@ -275,25 +275,14 @@ def rocN(x, y, N=100):
 
 
 def calc_ROC(h, n, coh_idx, pref_idx):
-    # tic = perf_counter()
     all_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
-    # all_ROC = np.zeros((h.shape[0], h.shape[2]))
     for i in range(h.shape[2]):
         pre_idx = combine_idx(pref_idx[:, i], n.correct_idx,coh_idx)
         non_idx = combine_idx(~pref_idx[:, i], n.correct_idx,coh_idx)
-        # for j in range(h.shape[0]):
-        #     h_pre = h[j, pre_idx, i]
-        #     h_non = h[j, non_idx, i]
-            # all_ROC[j, i] = rocN(h_pre, h_non)
-        # tic2 = perf_counter()
         for j in range(h.shape[0]-5):
             h_pre = np.mean(h[j:j+5, pre_idx, i], axis=0)
             h_non = np.mean(h[j:j+5, non_idx, i], axis=0)
             all_ROC[j, i] = rocN(h_pre, h_non)
-        # toc2 = perf_counter()
-        # print(f"Inner loop ran in {toc2 - tic2:0.4f} seconds")
-    # toc = perf_counter()
-    # print(f"ROC ran in {toc - tic:0.4f} seconds")
     return all_ROC
    
 
