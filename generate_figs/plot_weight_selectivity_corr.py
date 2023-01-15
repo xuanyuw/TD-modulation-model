@@ -16,6 +16,7 @@ from utils import pick_selective_neurons, min_max_normalize,recover_targ_loc, re
 from generate_figs.plot_weight_comp import locate_neurons
 from calc_params import par
 from scipy.stats import rankdata, ttest_1samp
+from tqdm import tqdm
 
 # plot settings
 
@@ -38,10 +39,10 @@ total_rep = 50
 total_shuf = 100
 lr = 2e-2
 plot_sel = True
-rerun_calculation = False
+rerun_calculation = True
 plot_trained = True
 use_sel_rank =True
-use_w_rank = False
+use_w_rank = True
 
 title = "%s_weight_selectivity_correlation"%model_type
 
@@ -97,6 +98,8 @@ def find_corr(from_arr, to_arr, mask, w, normalized_h, stim_labels, targ_labels,
         weights.append(w[idx[0], idx[1]])
     if use_w_rank:
         weights = rankdata(weights, method='dense')
+        # reverse the rank from highest to lowest so lower weights will have a higher score.
+        weights = len(weights)-weights
 
     return np.corrcoef(weights, sel_diff)[0, 1]
 
@@ -105,9 +108,8 @@ def load_data():
     if rerun_calculation:
     
         df = pd.DataFrame(columns=['corrcoef', 'conn_type', 'rep'])
-        
+        pbar = tqdm(total=total_rep)
         for rep in range(total_rep):
-            print('Loading rep {}'.format(rep))
             # laod files
             if plot_trained:
                 trained_w = np.load(join(f_dir, 'weight_%d_lr%f.pth'%(rep, lr)), allow_pickle=True)
@@ -154,13 +156,14 @@ def load_data():
             temp_df = pd.DataFrame({'corrcoef': [m2t_corr, t2m_corr], 'conn_type': ['ff', 'fb'],'rep': [rep]*2})
           
             df = pd.concat([df, temp_df])
+            
+            pbar.update(1)
         df.to_csv(join(f_dir, title+'_corr_data.csv'))
     else:
         df = pd.read_csv(join(f_dir, title+'_corr_data.csv'))
     return df
 
 def plot_corr(df, title):
-    df['corrcoef'] = df['corrcoef']*(-1)
     df['conn_type'] = np.where(df['conn_type']=='ff', 'Feedforward', 'Feedback')
 
     colors = ['#FF0000','#0080FE']
