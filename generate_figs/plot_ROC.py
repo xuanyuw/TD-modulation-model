@@ -22,6 +22,7 @@ from pickle import dump, load
 from tqdm import tqdm
 from time import perf_counter
 from scipy.stats import ttest_ind, sem
+from joblib import Parallel, delayed
 
 # plot settings
 
@@ -37,6 +38,7 @@ total_rep = 1
 # f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
 lr = 0.02
+n_jobs = 8
 
 stim_st_time = 45
 target_st_time = 25
@@ -116,22 +118,22 @@ def main():
                 pbar.update(1)
             else:
                 
-                H_dir_ROC[rep, :, motion_rng] = calc_ROC(h[17:, :, motion_rng], n, H_idx, pref_dir[:, motion_rng])
+                H_dir_ROC[rep, :, :] = calc_ROC(h[17:, :, motion_rng], n, H_idx, pref_dir[:, motion_rng])
                 pbar.update(1)
-                M_dir_ROC[rep, :, motion_rng] = calc_ROC(h[17:, :, motion_rng], n, M_idx, pref_dir[:, motion_rng])
+                M_dir_ROC[rep, :, :] = calc_ROC(h[17:, :, motion_rng], n, M_idx, pref_dir[:, motion_rng])
                 pbar.update(1)
-                L_dir_ROC[rep, :, motion_rng] = calc_ROC(h[17:, :, motion_rng], n, L_idx, pref_dir[:, motion_rng])
+                L_dir_ROC[rep, :, :] = calc_ROC(h[17:, :, motion_rng], n, L_idx, pref_dir[:, motion_rng])
                 pbar.update(1)
-                Z_dir_ROC[rep, :, motion_rng] = calc_ROC(h[17:, :, motion_rng], n, Z_idx, pref_dir[:, motion_rng])
+                Z_dir_ROC[rep, :, :] = calc_ROC(h[17:, :, motion_rng], n, Z_idx, pref_dir[:, motion_rng])
                 pbar.update(1)
                 
-                H_sac_ROC[rep, :, target_rng] = calc_ROC(h[17:, :, target_rng], n, H_idx, pref_sac[:, target_rng])
+                H_sac_ROC[rep, :, :] = calc_ROC(h[17:, :, target_rng], n, H_idx, pref_sac[:, target_rng])
                 pbar.update(1)
-                M_sac_ROC[rep, :, target_rng] = calc_ROC(h[17:, :, target_rng], n, M_idx, pref_sac[:, target_rng])
+                M_sac_ROC[rep, :, :] = calc_ROC(h[17:, :, target_rng], n, M_idx, pref_sac[:, target_rng])
                 pbar.update(1)
-                L_sac_ROC[rep, :, target_rng] = calc_ROC(h[17:, :, target_rng], n, L_idx, pref_sac[:, target_rng])
+                L_sac_ROC[rep, :, :] = calc_ROC(h[17:, :, target_rng], n, L_idx, pref_sac[:, target_rng])
                 pbar.update(1)
-                Z_sac_ROC[rep, :, target_rng] = calc_ROC(h[17:, :, target_rng], n, Z_idx, pref_sac[:, target_rng])
+                Z_sac_ROC[rep, :, :] = calc_ROC(h[17:, :, target_rng], n, Z_idx, pref_sac[:, target_rng])
                 pbar.update(1)
         
         pbar.close()
@@ -275,15 +277,23 @@ def rocN(x, y, N=100):
 
 
 def calc_ROC(h, n, coh_idx, pref_idx):
-    all_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
-    for i in range(h.shape[2]):
+    # all_ROC = np.zeros((h.shape[0]-5, h.shape[2]))
+    def cell_roc(i):
+        roc = np.zeros((h.shape[0]-5,))
         pre_idx = combine_idx(pref_idx[:, i], n.correct_idx,coh_idx)
         non_idx = combine_idx(~pref_idx[:, i], n.correct_idx,coh_idx)
         for j in range(h.shape[0]-5):
             h_pre = np.mean(h[j:j+5, pre_idx, i], axis=0)
             h_non = np.mean(h[j:j+5, non_idx, i], axis=0)
-            all_ROC[j, i] = rocN(h_pre, h_non)
-    return all_ROC
+            if len(h_pre)==0 or len(h_non)==0:
+                roc[j] = np.nan
+            else:
+                roc[j] = rocN(h_pre, h_non)
+
+        return roc
+
+    all_ROC = Parallel(n_jobs=n_jobs)(delayed(cell_roc)(i) for i in range(h.shape[2]))
+    return np.array(all_ROC).T
    
 
 def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
@@ -439,5 +449,5 @@ def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
         plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.pdf'), format='pdf')
         plt.savefig(os.path.join(pic_dir,'all_ROC_dir_sep_sac.eps'), format='eps')
         plt.close(fig)
-
-main()
+if __name__=='__main__':
+    main()

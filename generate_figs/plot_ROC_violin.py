@@ -220,7 +220,7 @@ def plot_sac_roc_diff(df):
     pairs = [(('H', 'Full model'), ('H', 'Shuffled feedback')), (('M', 'Full model'), ('M', 'Shuffled feedback')), 
     (('L', 'Full model'), ('L', 'Shuffled feedback')), (('Z', 'Full model'), ('Z', 'Shuffled feedback'))]
 
-    annot = Annotator(ax, pairs, data=df, x='coh', y='roc', hue='model', order=['H', 'M', 'L', 'Z'])
+    annot = Annotator(ax, pairs, data=new_df, x='coh', y='roc_diff', hue='model', order=['H', 'M', 'L', 'Z'])
     annot.configure(test='t-test_ind', text_format='star', loc='outside')
     annot.apply_and_annotate()
 
