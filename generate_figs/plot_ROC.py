@@ -21,8 +21,11 @@ from types import SimpleNamespace
 from pickle import dump, load
 from tqdm import tqdm
 from time import perf_counter
-from scipy.stats import ttest_ind, sem
+from scipy.stats import ttest_ind, sem, ttest_1samp
 from joblib import Parallel, delayed
+import pandas as pd
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
 
 # plot settings
 
@@ -33,8 +36,8 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model"
-total_rep = 1
+f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+total_rep = 50
 # f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
 lr = 0.02
@@ -42,24 +45,23 @@ n_jobs = 8
 
 stim_st_time = 45
 target_st_time = 25
-rerun_calc = True
+rerun_calc = False
 normalize = False
-sep_sac = False
+sep_sac = True
 plot_sel = True
 
-if not sep_sac:
-    plt.rcParams['figure.figsize'] = [6, 4]
-else:
-    plt.rcParams['figure.figsize'] = [10, 4]
+# if not sep_sac:
+plt.rcParams['figure.figsize'] = [6, 4]
+# else:
+# plt.rcParams['figure.figsize'] = [10, 4]
 
 h_len = 70-19-3
 
 
-if sep_sac:
-    fn = os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep)
-else:
-    fn_dir = os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep)
-    fn_sac = os.path.join(f_dir, 'all_ROC_sac_%dnet.pkl'%total_rep)
+
+fn = os.path.join(f_dir, 'sep_sac_ROC_dir_%dnet.pkl'%total_rep)
+fn_dir = os.path.join(f_dir, 'all_ROC_dir_%dnet.pkl'%total_rep)
+fn_sac = os.path.join(f_dir, 'all_ROC_sac_%dnet.pkl'%total_rep)
     
 
 def main():
@@ -147,91 +149,92 @@ def main():
                 dump([H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC], f)
         
         
-    else:    
-        if sep_sac:
-            with open(fn, 'rb') as f:
-                H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC = load(f)
-        else:
-            with open(fn_dir, 'rb') as f:
-                [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC] = load(f)
-            with open(fn_sac, 'rb') as f:
-                [H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
-    if not sep_sac:
-        if not plot_sel:
-            plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
-            plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, 'sac')
-        else:
-            motion_selective, saccade_selective = get_sel_cells()
+    else: 
+        with open(fn, 'rb') as f:
+            H_ipsi_dir_ROC, H_contra_dir_ROC, M_ipsi_dir_ROC, M_contra_dir_ROC, L_ipsi_dir_ROC, L_contra_dir_ROC, Z_ipsi_dir_ROC, Z_contra_dir_ROC = load(f)
+        with open(fn_dir, 'rb') as f:
+            [H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC] = load(f)
+        with open(fn_sac, 'rb') as f:
+            [H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
 
-            H_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
-            M_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
-            L_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
-            Z_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
-            H_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
-            M_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
-            L_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
-            Z_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+    f =  open(os.path.join('generate_figs', 'Fig5', "stat_test_%dnet.txt"%total_rep), 'w') 
+    sys.stdout = f  
 
-            for rep in all_rep:
-                m_sel = motion_selective[rep, motion_rng].astype(bool)
-                s_sel = saccade_selective[rep, target_rng].astype(bool)
-
-                H_dir_ROC_sel[rep, :, :sum(m_sel)] = H_dir_ROC[rep][:, m_sel]
-                M_dir_ROC_sel[rep, :, :sum(m_sel)] = M_dir_ROC[rep][:, m_sel]
-                L_dir_ROC_sel[rep, :, :sum(m_sel)] = L_dir_ROC[rep][:, m_sel]
-                Z_dir_ROC_sel[rep, :, :sum(m_sel)] = Z_dir_ROC[rep][:, m_sel]
-                H_sac_ROC_sel[rep, :, :sum(s_sel)] = H_sac_ROC[rep][:, s_sel]
-                M_sac_ROC_sel[rep, :, :sum(s_sel)] = M_sac_ROC[rep][:, s_sel]
-                L_sac_ROC_sel[rep, :, :sum(s_sel)] = L_sac_ROC[rep][:, s_sel]
-                Z_sac_ROC_sel[rep, :, :sum(s_sel)] = Z_sac_ROC[rep][:, s_sel]
-            plot_all_avg_ROC(H_dir_ROC_sel, M_dir_ROC_sel, L_dir_ROC_sel, Z_dir_ROC_sel, 'dir')
-            plot_all_avg_ROC(H_sac_ROC_sel, M_sac_ROC_sel, L_sac_ROC_sel, Z_sac_ROC_sel, 'sac')
- 
-
+    if not plot_sel:
+        plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, 'dir')
+        plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, 'sac')
     else:
-        if not plot_sel:
-            line_dict = {'H_ipsi': H_ipsi_dir_ROC, 'H_contra': H_contra_dir_ROC,
-                'M_ipsi': M_ipsi_dir_ROC, 'M_contra': M_contra_dir_ROC,
-                'L_ipsi': L_ipsi_dir_ROC, 'L_contra': L_contra_dir_ROC,
-                'Z_ipsi': Z_ipsi_dir_ROC, 'Z_contra': Z_contra_dir_ROC}
-            plot_all_avg_ROC_sep_sac(line_dict)
-        else:
-            motion_selective, _ = get_sel_cells()
-            H_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            H_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            M_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            M_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            L_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            L_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            Z_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            Z_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
-            
-            idx = 0
-            for rep in all_rep:
-                m_sel = motion_selective[rep, motion_rng].astype(bool)
+        motion_selective, saccade_selective = get_sel_cells()
 
-                H_ipsi_dir_ROC_temp = H_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
-                H_contra_dir_ROC_temp = H_contra_dir_ROC[:, rep*100:(rep+1)*100]
-                M_ipsi_dir_ROC_temp = M_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
-                M_contra_dir_ROC_temp = M_contra_dir_ROC[:, rep*100:(rep+1)*100]
-                L_ipsi_dir_ROC_temp = L_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
-                L_contra_dir_ROC_temp = L_contra_dir_ROC[:, rep*100:(rep+1)*100]
-                Z_ipsi_dir_ROC_temp = Z_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
-                Z_contra_dir_ROC_temp = Z_contra_dir_ROC[:, rep*100:(rep+1)*100]
+        H_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+        M_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+        L_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+        Z_dir_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+        H_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+        M_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+        L_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
+        Z_sac_ROC_sel = np.empty((len(all_rep),h_len, 100)) * np.nan
 
-                H_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = H_ipsi_dir_ROC_temp[:, m_sel]
-                H_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = H_contra_dir_ROC_temp[:, m_sel]
-                M_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = M_ipsi_dir_ROC_temp[:, m_sel]
-                M_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = M_contra_dir_ROC_temp[:, m_sel]
-                L_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = L_ipsi_dir_ROC_temp[:, m_sel]
-                L_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = L_contra_dir_ROC_temp[:, m_sel]
-                Z_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = Z_ipsi_dir_ROC_temp[:, m_sel]
-                Z_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = Z_contra_dir_ROC_temp[:, m_sel]
-            line_dict = {'H_ipsi': H_ipsi_dir_ROC_sel, 'H_contra': H_contra_dir_ROC_sel,
-                'M_ipsi': M_ipsi_dir_ROC_sel, 'M_contra': M_contra_dir_ROC_sel,
-                'L_ipsi': L_ipsi_dir_ROC_sel, 'L_contra': L_contra_dir_ROC_sel,
-                'Z_ipsi': Z_ipsi_dir_ROC_sel, 'Z_contra': Z_contra_dir_ROC_sel}
-            plot_all_avg_ROC_sep_sac(line_dict)
+        for rep in all_rep:
+            m_sel = motion_selective[rep, motion_rng].astype(bool)
+            s_sel = saccade_selective[rep, target_rng].astype(bool)
+
+            H_dir_ROC_sel[rep, :, :sum(m_sel)] = H_dir_ROC[rep][:, m_sel]
+            M_dir_ROC_sel[rep, :, :sum(m_sel)] = M_dir_ROC[rep][:, m_sel]
+            L_dir_ROC_sel[rep, :, :sum(m_sel)] = L_dir_ROC[rep][:, m_sel]
+            Z_dir_ROC_sel[rep, :, :sum(m_sel)] = Z_dir_ROC[rep][:, m_sel]
+            H_sac_ROC_sel[rep, :, :sum(s_sel)] = H_sac_ROC[rep][:, s_sel]
+            M_sac_ROC_sel[rep, :, :sum(s_sel)] = M_sac_ROC[rep][:, s_sel]
+            L_sac_ROC_sel[rep, :, :sum(s_sel)] = L_sac_ROC[rep][:, s_sel]
+            Z_sac_ROC_sel[rep, :, :sum(s_sel)] = Z_sac_ROC[rep][:, s_sel]
+        plot_all_avg_ROC(H_dir_ROC_sel, M_dir_ROC_sel, L_dir_ROC_sel, Z_dir_ROC_sel, 'dir')
+        plot_all_avg_ROC(H_sac_ROC_sel, M_sac_ROC_sel, L_sac_ROC_sel, Z_sac_ROC_sel, 'sac')
+
+
+    if not plot_sel:
+        line_dict = {'H_ipsi': H_ipsi_dir_ROC, 'H_contra': H_contra_dir_ROC,
+            'M_ipsi': M_ipsi_dir_ROC, 'M_contra': M_contra_dir_ROC,
+            'L_ipsi': L_ipsi_dir_ROC, 'L_contra': L_contra_dir_ROC,
+            'Z_ipsi': Z_ipsi_dir_ROC, 'Z_contra': Z_contra_dir_ROC}
+        plot_all_avg_ROC_sep_sac(line_dict)
+    else:
+        motion_selective, _ = get_sel_cells()
+        H_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        H_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        M_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        M_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        L_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        L_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        Z_ipsi_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        Z_contra_dir_ROC_sel = np.empty((h_len, 100*len(all_rep))) * np.nan
+        
+        idx = 0
+        for rep in all_rep:
+            m_sel = motion_selective[rep, motion_rng].astype(bool)
+
+            H_ipsi_dir_ROC_temp = H_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
+            H_contra_dir_ROC_temp = H_contra_dir_ROC[:, rep*100:(rep+1)*100]
+            M_ipsi_dir_ROC_temp = M_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
+            M_contra_dir_ROC_temp = M_contra_dir_ROC[:, rep*100:(rep+1)*100]
+            L_ipsi_dir_ROC_temp = L_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
+            L_contra_dir_ROC_temp = L_contra_dir_ROC[:, rep*100:(rep+1)*100]
+            Z_ipsi_dir_ROC_temp = Z_ipsi_dir_ROC[:, rep*100:(rep+1)*100]
+            Z_contra_dir_ROC_temp = Z_contra_dir_ROC[:, rep*100:(rep+1)*100]
+
+            H_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = H_ipsi_dir_ROC_temp[:, m_sel]
+            H_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = H_contra_dir_ROC_temp[:, m_sel]
+            M_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = M_ipsi_dir_ROC_temp[:, m_sel]
+            M_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = M_contra_dir_ROC_temp[:, m_sel]
+            L_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = L_ipsi_dir_ROC_temp[:, m_sel]
+            L_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = L_contra_dir_ROC_temp[:, m_sel]
+            Z_ipsi_dir_ROC_sel[:, idx:idx+sum(m_sel)] = Z_ipsi_dir_ROC_temp[:, m_sel]
+            Z_contra_dir_ROC_sel[:, idx:idx+sum(m_sel)] = Z_contra_dir_ROC_temp[:, m_sel]
+        line_dict = {'H_ipsi': H_ipsi_dir_ROC_sel, 'H_contra': H_contra_dir_ROC_sel,
+            'M_ipsi': M_ipsi_dir_ROC_sel, 'M_contra': M_contra_dir_ROC_sel,
+            'L_ipsi': L_ipsi_dir_ROC_sel, 'L_contra': L_contra_dir_ROC_sel,
+            'Z_ipsi': Z_ipsi_dir_ROC_sel, 'Z_contra': Z_contra_dir_ROC_sel}
+        plot_all_avg_ROC_sep_sac(line_dict)
+    f.close()
 
 def get_sel_cells():
     if not os.path.exists(os.path.join(f_dir, 'motion_selective_cell_idx.npy')) or not os.path.exists(os.path.join(f_dir, 'saccade_selective_cell_idx.npy')):
@@ -327,8 +330,6 @@ def calc_sac_sep_ROC(h, n, m1_rng, coh_idx, pref_idx):
 
 def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=True):
 
-
-    # if cell_idx is None:
     H_line = np.nanmean(H_ROC, axis=(0, 2))
     M_line = np.nanmean(M_ROC, axis=(0, 2))
     L_line = np.nanmean(L_ROC, axis=(0, 2))
@@ -346,11 +347,27 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
         L_ste = sem(L_ROC[0, :, :], axis=1, nan_policy='omit')
         Z_ste = sem(Z_ROC[0, :, :], axis=1, nan_policy='omit')
 
-    # else:
-    #     H_line = H_ROC[0,cell_idx,:]
-    #     M_line = M_ROC[0,cell_idx,:]
-    #     L_line = L_ROC[0,cell_idx,:]
-    #     Z_line = Z_ROC[0,cell_idx,:]
+    if mode=='sac':
+        # perform t-test for sacade selectivity
+        if total_rep==1:
+            H_mean = np.nanmean(H_ROC[0, -10:, :], axis=1)
+            M_mean = np.nanmean(M_ROC[0, -10:, :], axis=1)
+            L_mean = np.nanmean(L_ROC[0, -10:, :], axis=1)
+            Z_mean = np.nanmean(Z_ROC[0, -10:, :], axis=1)
+        else:
+            H_mean = np.nanmean(H_ROC[:, -10:, :], axis=(1, 2))
+            M_mean = np.nanmean(M_ROC[:, -10:, :], axis=(1, 2))
+            L_mean = np.nanmean(L_ROC[:, -10:, :], axis=(1, 2))
+            Z_mean = np.nanmean(Z_ROC[:, -10:, :], axis=(1, 2))
+        print('One sample t-test result for saccade selectivity:')
+        print('H:')
+        print(ttest_1samp(H_mean, 0.5))
+        print('M:')
+        print(ttest_1samp(M_mean, 0.5))
+        print('L:')
+        print(ttest_1samp(L_mean, 0.5))
+        print('Z:')
+        print(ttest_1samp(Z_mean, 0.5))
 
     fig, ax = plt.subplots()
     ax.plot(H_line, label='H', color='r')
@@ -390,22 +407,48 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
 
 
 def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
-    ax1.plot(np.nanmean(line_dict['H_ipsi'], axis=1), label='H', color='r', linestyle='--')
-    ax1.plot(np.nanmean(line_dict['M_ipsi'], axis=1), label='M', color='g', linestyle='--')
-    ax1.plot(np.nanmean(line_dict['H_contra'], axis=1), label='H', color='r')
-    ax1.plot(np.nanmean(line_dict['M_contra'], axis=1), label='M', color='g')
+    fig, ax = plt.subplots()
+    # fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    ax.plot(np.nanmean(line_dict['H_ipsi'], axis=1), label='H', color='r', linestyle='--')
+    ax.plot(np.nanmean(line_dict['M_ipsi'], axis=1), label='M', color='g', linestyle='--')
+    ax.plot(np.nanmean(line_dict['H_contra'], axis=1), label='H', color='r')
+    ax.plot(np.nanmean(line_dict['M_contra'], axis=1), label='M', color='g')
     h_pval = ttest_ind(line_dict['H_ipsi'], line_dict['H_contra'], axis=1, nan_policy='omit').pvalue
     m_pval = ttest_ind(line_dict['M_ipsi'], line_dict['M_contra'], axis=1, nan_policy='omit').pvalue
     
-    ax2.plot(np.nanmean(line_dict['L_ipsi'], axis=1), label='L', color='b', linestyle='--')
-    ax2.plot(np.nanmean(line_dict['Z_ipsi'], axis=1), label='Z', color='k', linestyle='--')
-    ax2.plot(np.nanmean(line_dict['L_contra'], axis=1), label='L', color='b')
-    ax2.plot(np.nanmean(line_dict['Z_contra'], axis=1), label='Z', color='k')
+    ax.plot(np.nanmean(line_dict['L_ipsi'], axis=1), label='L', color='b', linestyle='--')
+    ax.plot(np.nanmean(line_dict['Z_ipsi'], axis=1), label='Z', color='k', linestyle='--')
+    ax.plot(np.nanmean(line_dict['L_contra'], axis=1), label='L', color='b')
+    ax.plot(np.nanmean(line_dict['Z_contra'], axis=1), label='Z', color='k')
     l_pval = ttest_ind(line_dict['L_ipsi'], line_dict['L_contra'], axis=1, nan_policy='omit').pvalue
     z_pval = ttest_ind(line_dict['Z_ipsi'], line_dict['Z_contra'], axis=1, nan_policy='omit').pvalue
     # ax2.legend(loc='best', prop={'size': 10}, frameon=False)
+
+
+    # perform ANOVA
+    if total_rep==1:
+        H_mean_ipsi = np.mean(line_dict['H_ipsi'][-20:, :], axis=0)
+        M_mean_ipsi = np.mean(line_dict['M_ipsi'][-20:, :], axis=0)
+        L_mean_ipsi = np.mean(line_dict['L_ipsi'][-20:, :], axis=0)
+
+        H_mean_contra = np.mean(line_dict['H_contra'][-20:, :], axis=0)
+        M_mean_contra = np.mean(line_dict['M_contra'][-20:, :], axis=0)
+        L_mean_contra = np.mean(line_dict['L_contra'][-20:, :], axis=0)
+
+        coh_arr = ['H', 'M', 'L'] * 2
+        sac_arr = ['ipsi'] * 3 + ['contra'] * 3
+        roc_arr = [H_mean_ipsi, M_mean_ipsi, L_mean_ipsi, H_mean_contra, M_mean_contra, L_mean_contra]
+        df = pd.DataFrame({'coh': coh_arr, 'sac':sac_arr, 'roc': roc_arr})
+        df = df.explode('roc')
+        df = df[~pd.isnull(df['roc'])]
+        df['roc'] = pd.to_numeric(df['roc'])
+        model = ols('roc ~ C(sac) + C(coh) +\
+            C(sac):C(coh)',
+                        data=df).fit()
+        twoway_result = sm.stats.anova_lm(model, type=2)
+        print('\n')
+        print('Saccade selectivity two way ANOVA result:')
+        print(twoway_result)
 
     h_pval_x = np.where(h_pval<=0.01)[0]
     m_pval_x = np.where(m_pval<=0.01)[0]
@@ -414,30 +457,32 @@ def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
 
     pval_y1 = max(np.nanmean(line_dict['H_ipsi'], axis=1))+0.11
     pval_y2 = pval_y1 - 0.01
+    pval_y3 = pval_y2 - 0.01
+    pval_y4 = pval_y3 - 0.01
     
 
     xticks = np.array([0, round(h_len/2), h_len])
 
-    ax1.set_xlim(0, h_len)
-    ax1.set_xticks(xticks)
-    ax1.set_xticklabels([-500, 0, 500])
-    ax1.set_ylabel("Average AUC")
-    ax1.set_xlabel("Time")
-    ax1.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax1.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax1.scatter(h_pval_x, np.ones(h_pval_x.shape)*pval_y1, color = 'r', marker='*', linewidths=2)
-    ax1.scatter(m_pval_x, np.ones(m_pval_x.shape)*pval_y2, color = 'g', marker='*', linewidths=2)
+    ax.set_xlim(0, h_len)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([-500, 0, 500])
+    ax.set_ylabel("Average AUC")
+    ax.set_xlabel("Time")
+    ax.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax.scatter(h_pval_x, np.ones(h_pval_x.shape)*pval_y1, color = 'r', marker='*', linewidths=2)
+    ax.scatter(m_pval_x, np.ones(m_pval_x.shape)*pval_y2, color = 'g', marker='*', linewidths=2)
 
 
-    ax2.set_xlim(0, h_len)
-    ax2.set_xticks(xticks)
-    ax2.set_xticklabels([-500, 0, 500])
-    ax2.set_ylabel("Average AUC")
-    ax2.set_xlabel("Time")
-    ax2.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax2.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
-    ax2.scatter(l_pval_x, np.ones(l_pval_x.shape)*pval_y1, color = 'b', marker='*', linewidths=2)
-    ax2.scatter(z_pval_x, np.ones(z_pval_x.shape)*pval_y2, color = 'k', marker='*', linewidths=2)
+    ax.set_xlim(0, h_len)
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([-500, 0, 500])
+    ax.set_ylabel("Average AUC")
+    ax.set_xlabel("Time")
+    ax.axvline(x=round(h_len/2), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax.axvline(x=round(h_len/2) - (stim_st_time-target_st_time), color='k', alpha=0.8, linestyle='--', linewidth=1)
+    ax.scatter(l_pval_x, np.ones(l_pval_x.shape)*pval_y3, color = 'b', marker='*', linewidths=2)
+    ax.scatter(z_pval_x, np.ones(z_pval_x.shape)*pval_y4, color = 'k', marker='*', linewidths=2)
     
     plt.tight_layout()
 

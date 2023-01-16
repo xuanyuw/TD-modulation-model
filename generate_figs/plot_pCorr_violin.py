@@ -112,7 +112,7 @@ def main():
     contra_choice= df.loc[150:199]['mean_pCorr'].to_numpy()
     stim_diff = contra_stim - ipsi_stim
     choice_diff = contra_choice - ipsi_choice
-    p_val = ttest_ind(stim_diff, choice_diff).pvalue
+
     
 
 
@@ -144,7 +144,8 @@ def main():
     annot.configure(test='t-test_ind', text_format='star', loc='outside')
     annot.apply_and_annotate()
 
-    print("Group difference p-val = {:.2e}".format(p_val))
+    print("Group difference:")
+    print(ttest_ind(stim_diff, choice_diff))
 
     f.close()
 

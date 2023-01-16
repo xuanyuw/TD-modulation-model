@@ -70,8 +70,8 @@ n_jobs = 8
 def main():
     sep_sac_df, comb_sac_df = load_roc()
 
-    f =  open(os.path.join(plt_dir, "stat_test.txt"), 'w') 
-    sys.stdout = f
+    # f =  open(os.path.join(plt_dir, "stat_test.txt"), 'w') 
+    # sys.stdout = f
 
     for model_type in ['Full model', 'No feedback', 'Shuffled feedback']:
         print('%s Sep Sac Stats'%model_type)
@@ -94,7 +94,7 @@ def main():
     print('Ipsi v.s. Contra Diff Comparison (Full vs. Shuf')
     plot_sac_roc_diff(sep_sac_df)
 
-    f.close()
+    # f.close()
 
 
 def plot_violin(df, roc_type):
@@ -156,10 +156,23 @@ def plot_violin(df, roc_type):
     print('\n')
     print('Two-way ANOVA Results:')
     print(twoway_result)
+
     
 
 
 def plot_violin_sep_sac(df, model_type):
+
+    # calculate anova 
+    print('\n')
+    print('%s two-way ANOVA result:'%model_type)
+    model = ols('roc ~ C(sac) + C(coh) +\
+    C(sac):C(coh)',
+                data=df[df['coh']!='Z']).fit()
+    twoway_result = sm.stats.anova_lm(model, type=2)
+    print('\n')
+    print('Two-way ANOVA Results:')
+    print(twoway_result)
+
     fig, ax = plt.subplots()
     # color_palette = {'H': '#FF0000', 'M': '#00FF00', 'L':'#0000FF', 'Z': 'k'}
     colors = ['#FF0000', '#00FF00', '#0000FF', '#424242']

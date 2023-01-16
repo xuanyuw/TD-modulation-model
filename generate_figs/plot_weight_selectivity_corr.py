@@ -39,7 +39,7 @@ total_rep = 50
 total_shuf = 100
 lr = 2e-2
 plot_sel = True
-rerun_calculation = True
+rerun_calculation = False
 plot_trained = True
 use_sel_rank =True
 use_w_rank = True
@@ -192,15 +192,32 @@ def plot_corr(df, title):
     plt.savefig(join(plt_dir, '%s.eps'%title), format='eps')
     plt.close()
 
+
+    f =  open(os.path.join(plt_dir, "stat_test.txt"), 'w') 
+    sys.stdout = f
     # calculate mean and pVal
     ff_mean = df['corrcoef'][df['conn_type']=='Feedforward'].mean()
     fb_mean = df['corrcoef'][df['conn_type']=='Feedback'].mean()
+    total_mean = df['corrcoef'].mean()
 
-    ff_pval = ttest_1samp(df['corrcoef'][df['conn_type']=='Feedforward'].to_numpy(), 0).pvalue
-    fb_pval = ttest_1samp(df['corrcoef'][df['conn_type']=='Feedback'].to_numpy(), 0).pvalue
+    ff_stats = ttest_1samp(df['corrcoef'][df['conn_type']=='Feedforward'].to_numpy(), 0)
+    fb_stats = ttest_1samp(df['corrcoef'][df['conn_type']=='Feedback'].to_numpy(), 0)
+    total_stats = ttest_1samp(df['corrcoef'][df['conn_type']=='Feedback'].to_numpy(), 0)
 
-    with open(os.path.join(plt_dir, 'stat_test.txt'), 'w') as f:
-        f.writelines('\n'.join(['Feedforward mean = %f, pval = %.4e'%(ff_mean, ff_pval), 'Feedback mean = %f, pval = %.4e'%(fb_mean, fb_pval)]))
+    print('Feedforward mean = %f'%ff_mean)
+    print('Feedback mean = %f'%fb_mean)
+    print('Total mean = %f'%total_mean)
+
+    print('T-test results:')
+    print('Feedforward:')
+    print(ff_stats)
+    print('Feedback:')
+    print(fb_stats)
+    print('Total:')
+    print(total_stats)
+    f.close()
+
+
 
 def main():
     df = load_data()
