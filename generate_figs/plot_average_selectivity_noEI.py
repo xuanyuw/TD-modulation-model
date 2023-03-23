@@ -22,7 +22,7 @@ mpl.rcParams['font.family'] = 'Arial'
 mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
-f_dir = "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
+f_dir = "crossOutput_noInterneuron_noMTConn_removeFB_model"
 model_type = f_dir.split('_')[-2]
 total_rep = 50
 total_shuf = 100

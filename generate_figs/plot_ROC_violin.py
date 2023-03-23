@@ -24,6 +24,8 @@ from joblib import Parallel, delayed
 from scipy.stats import f_oneway
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+from sklearn.linear_model import LinearRegression
+from scipy.stats import ttest_1samp
 
 # plot settings
 
@@ -34,17 +36,17 @@ mpl.rcParams.update({'font.size': 15})
 mpl.rcParams['lines.linewidth'] = 2
 
 
-f_dirs = [
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
-]
 # f_dirs = [
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
 #     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
 # ]
+f_dirs = [
+    "crossOutput_noInterneuron_noMTConn_removeFB_model"
+]
 
-plt_dir = os.path.join('generate_figs', 'ROC_population_plots')
-data_dir = os.path.join('generate_figs', 'ROC_population_data')
+plt_dir = os.path.join('generate_figs', 'rmv_fb_plots', 'ROC_population_plots')
+data_dir = os.path.join('generate_figs', 'rmv_fb_plots', 'ROC_population_data')
 if not os.path.exists(plt_dir):
     os.makedirs(plt_dir)
 if not os.path.exists(data_dir):
@@ -62,7 +64,7 @@ stim_st_time = 45
 target_st_time = 25
 normalize = True
 plot_sel = True
-rerun_calc = False
+rerun_calc = True
 save_plot = True
 
 n_jobs = 8
@@ -70,10 +72,11 @@ n_jobs = 8
 def main():
     sep_sac_df, comb_sac_df = load_roc()
 
-    # f =  open(os.path.join(plt_dir, "stat_test.txt"), 'w') 
-    # sys.stdout = f
+    f =  open(os.path.join(plt_dir, "stat_test.txt"), 'w') 
+    sys.stdout = f
 
-    for model_type in ['Full model', 'No feedback', 'Shuffled feedback']:
+    for model_type in ['Remove feedback']:
+    # for model_type in ['Full model', 'No feedback', 'Shuffled feedback']:
         print('%s Sep Sac Stats'%model_type)
         df = sep_sac_df[sep_sac_df['model']==model_type]
         df = df.groupby(['rep', 'coh', 'sac']).mean().reset_index()
@@ -81,20 +84,20 @@ def main():
         print('---------------------------')
         print('\n')
     
-    print('Dir Sel Comb Sac Stats')
-    plot_violin(comb_sac_df[comb_sac_df['type']=='dir'], 'dir')
+    # print('Dir Sel Comb Sac Stats')
+    # plot_violin(comb_sac_df[comb_sac_df['type']=='dir'], 'dir')
 
-    print('---------------------------')
-    print('\n')
-    print('Sac Sel Comb Sac Stats')
-    plot_violin(comb_sac_df[comb_sac_df['type']=='sac'], 'sac')
-    print('---------------------------')
-    print('\n')
+    # print('---------------------------')
+    # print('\n')
+    # print('Sac Sel Comb Sac Stats')
+    # plot_violin(comb_sac_df[comb_sac_df['type']=='sac'], 'sac')
+    # print('---------------------------')
+    # print('\n')
 
-    print('Ipsi v.s. Contra Diff Comparison (Full vs. Shuf')
-    plot_sac_roc_diff(sep_sac_df)
+    # print('Ipsi v.s. Contra Diff Comparison (Full vs. Shuf')
+    # plot_sac_roc_diff(sep_sac_df)
 
-    # f.close()
+    f.close()
 
 
 def plot_violin(df, roc_type):
@@ -147,17 +150,38 @@ def plot_violin(df, roc_type):
         print(model + 'one-way ANOVA result:')
         oneway_result = f_oneway(temp_df[temp_df['coh']=='H']['roc'], temp_df[temp_df['coh']=='M']['roc'], 
         temp_df[temp_df['coh']=='L']['roc'], temp_df[temp_df['coh']=='Z']['roc'])
+        # oneway_result = f_oneway(temp_df[temp_df['coh']=='H']['roc'], temp_df[temp_df['coh']=='M']['roc'], 
+        # temp_df[temp_df['coh']=='L']['roc'])
         print(oneway_result)
-    
-    model = ols('roc ~ C(model) + C(coh) +\
-    C(model):C(coh)',
-                data=df[df['coh']!='Z']).fit()
-    twoway_result = sm.stats.anova_lm(model, type=2)
-    print('\n')
-    print('Two-way ANOVA Results:')
-    print(twoway_result)
 
+        print(model + ' linear regression result:')
+        print(calc_linear_corr_sig(temp_df))
+
+    for m in ['Shuffled feedback', 'No feedback']:
+        temp_df = df[(df['model']=='Full model')| (df['model']==m)]
+        model = ols('roc ~ C(model) + C(coh) +\
+        C(model):C(coh)',
+                    data=temp_df[temp_df['coh']!='Z']).fit()
+        twoway_result = sm.stats.anova_lm(model, type=2)
+        print('\n')
+        print('Two-way ANOVA compare %s Results:'%m)
+        print(twoway_result)
+
+def calc_linear_corr_sig(df):
+    r_arr = []
+    def get_roc(temp, coh):
+        return temp[temp.coh==coh].roc.to_numpy()[0]
     
+    for rep in df['rep'].unique():
+        temp = df[df['rep']==rep]
+        x = np.array([0.75, 0.55, 0.35, 0]).reshape((-1, 1))
+        y = np.array([get_roc(temp, 'H'), get_roc(temp, 'M'), get_roc(temp, 'L'), get_roc(temp, 'Z')])
+        model = LinearRegression().fit(x, y)
+        r_arr.append(model.coef_)
+    print('Mean slop = %.4f'%np.mean(r_arr))
+    return ttest_1samp(r_arr, 0) 
+        
+        
 
 
 def plot_violin_sep_sac(df, model_type):
@@ -311,6 +335,9 @@ def calc_all_ROC():
                 if 'noFeedback' in f_dir:
                     temp_sep_sac_df['model'] = ['No feedback']*len(temp_sep_sac_df.index)
                     temp_comb_sac_df['model'] = ['No feedback']*len(temp_comb_sac_df.index)
+                elif 'removeFB' in f_dir:
+                    temp_sep_sac_df['model'] = ['Remove feedback']*len(temp_sep_sac_df.index)
+                    temp_comb_sac_df['model'] = ['Remove feedback']*len(temp_comb_sac_df.index)
                 else:
                     temp_sep_sac_df['model'] = ['Full model']*len(temp_sep_sac_df.index)
                     temp_comb_sac_df['model'] = ['Full model']*len(temp_comb_sac_df.index)
@@ -323,6 +350,9 @@ def calc_all_ROC():
             if 'noFeedback' in f_dir:
                 sep_sac_roc_df.to_csv(os.path.join(data_dir, 'noFeedback_all_nets_ROC_sep_sac.csv'))
                 comb_sac_roc_df.to_csv(os.path.join(data_dir, 'noFeedback_all_nets_ROC_comb_sac.csv'))
+            elif 'removeFB' in f_dir:
+                sep_sac_roc_df.to_csv(os.path.join(data_dir, 'removeFB_all_nets_ROC_sep_sac.csv'))
+                comb_sac_roc_df.to_csv(os.path.join(data_dir, 'removeFB_all_nets_ROC_comb_sac.csv'))
             else:
                 sep_sac_roc_df.to_csv(os.path.join(data_dir, 'fullModel_all_nets_ROC_sep_sac.csv'))
                 comb_sac_roc_df.to_csv(os.path.join(data_dir, 'fullModel_all_nets_ROC_comb_sac.csv'))
@@ -349,12 +379,13 @@ def calc_all_ROC():
 
 def load_roc():
     if rerun_calc:
-        # calc_all_ROC()
+        calc_all_ROC()
 
         sep_sac_df = pd.DataFrame(columns=['rep', 'coh', 'sac', 'roc', 'model'])
         comb_sac_df = pd.DataFrame(columns=['rep', 'coh', 'type', 'roc', 'model'])
         
-        mn = ['fullModel', 'noFeedback', 'shufFeedback']
+        # mn = ['fullModel', 'noFeedback', 'shufFeedback']
+        mn = ['removeFB']
         for i in mn:
             if 'shuf' in i:
                 for rep in all_rep:

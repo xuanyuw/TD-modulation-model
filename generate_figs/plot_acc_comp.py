@@ -28,12 +28,17 @@ mpl.rcParams['lines.linewidth'] = 2
 plt.rcParams['figure.figsize'] = [12, 5]
 
 
+# f_dirs = [
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
+# ]
 f_dirs = [
     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model"
+    "crossOutput_noInterneuron_noMTConn_removeFB_model"
 ]
-plt_dir = os.path.join('generate_figs', 'Fig7', '7c_ablation_acc_comp')
+# plt_dir = os.path.join('generate_figs', 'Fig7', '7c_ablation_acc_comp')
+plt_dir = os.path.join('generate_figs', 'rmv_fb_plots', 'acc_comp')
 if not os.path.exists(plt_dir):
     os.makedirs(plt_dir)
 
@@ -43,7 +48,7 @@ total_rep = 50
 total_shuf = 100
 lr = 2e-2
 plot_sel = True
-rerun_calculation = False
+rerun_calculation = True
 plot_trained = True
 
 def main():
@@ -51,26 +56,42 @@ def main():
     fig, ax = plt.subplots()
     colors = ['#FF0000', '#00FF00', '#0000FF', '#424242']
     handles = []
-    sns.violinplot(x = 'coh', y = 'acc', hue = 'model', data = df, inner='points', ax=ax,  palette=['.2', '.5'], hue_order=['Full model', 'No feedback', 'Shuffled feedback'])
+    # sns.violinplot(x = 'coh', y = 'acc', hue = 'model', data = df, inner='points', ax=ax,  palette=['.2', '.5'], hue_order=['Full model', 'No feedback', 'Shuffled feedback'])
+    sns.violinplot(x = 'coh', y = 'acc', hue = 'model', data = df, inner='points', ax=ax,  palette=['.2', '.5'], hue_order=['Full model', 'Remove feedback'])
 
+    # for ind, violin in enumerate(ax.findobj(PolyCollection)):
+    #     rgb = to_rgb(colors[ind // 3])
+    #     if ind % 3 == 1:
+    #         rgb = 0.4 + 0.6 * np.array(rgb)  # make whiter
+    #     if ind % 3 == 2:
+    #         rgb = 0.7 + 0.3 * np.array(rgb)  # make whiter
+    #     violin.set_facecolor(rgb)
+    #     handles.append(plt.Rectangle((0, 0), 0, 0, facecolor=rgb, edgecolor='black'))
+
+    
     for ind, violin in enumerate(ax.findobj(PolyCollection)):
-        rgb = to_rgb(colors[ind // 3])
-        if ind % 3 == 1:
+        rgb = to_rgb(colors[ind // 2])
+        if ind % 2 == 1:
             rgb = 0.4 + 0.6 * np.array(rgb)  # make whiter
-        if ind % 3 == 2:
-            rgb = 0.7 + 0.3 * np.array(rgb)  # make whiter
         violin.set_facecolor(rgb)
         handles.append(plt.Rectangle((0, 0), 0, 0, facecolor=rgb, edgecolor='black'))
 
-    ax.legend(handles=[tuple(handles[::3]), tuple(handles[1::3]), tuple(handles[2::3])], labels=df["model"].astype('category').cat.categories.to_list(),
+    # ax.legend(handles=[tuple(handles[::3]), tuple(handles[1::3]), tuple(handles[2::3])], labels=df["model"].astype('category').cat.categories.to_list(),
+    #         handlelength=4, handler_map={tuple: HandlerTuple(ndivide=None, pad=0)}, loc='lower left', frameon=False)
+    ax.legend(handles=[tuple(handles[::2]), tuple(handles[1::2])], labels=df["model"].astype('category').cat.categories.to_list(),
             handlelength=4, handler_map={tuple: HandlerTuple(ndivide=None, pad=0)}, loc='lower left', frameon=False)
 
 
     # add statistical test results
-    pairs = [(('H', 'Full model'), ('H', 'No feedback')), (('H', 'Full model'), ('H', 'Shuffled feedback')),
-                (('M', 'Full model'), ('M', 'No feedback')), (('M', 'Full model'), ('M', 'Shuffled feedback')), 
-                (('L', 'Full model'), ('L', 'No feedback')), (('L', 'Full model'), ('L', 'Shuffled feedback')), 
-                (('Z', 'Full model'), ('Z', 'No feedback')), (('Z', 'Full model'), ('Z', 'Shuffled feedback'))]
+    # pairs = [(('H', 'Full model'), ('H', 'No feedback')), (('H', 'Full model'), ('H', 'Shuffled feedback')),
+    #             (('M', 'Full model'), ('M', 'No feedback')), (('M', 'Full model'), ('M', 'Shuffled feedback')), 
+    #             (('L', 'Full model'), ('L', 'No feedback')), (('L', 'Full model'), ('L', 'Shuffled feedback')), 
+    #             (('Z', 'Full model'), ('Z', 'No feedback')), (('Z', 'Full model'), ('Z', 'Shuffled feedback'))]
+
+    pairs = [(('H', 'Full model'), ('H', 'Remove feedback')),
+                (('M', 'Full model'), ('M', 'Remove feedback')), 
+                (('L', 'Full model'), ('L', 'Remove feedback')), 
+                (('Z', 'Full model'), ('Z', 'Remove feedback'))]
 
     f =  open(os.path.join(plt_dir, "stat_test.txt"), 'w') 
     sys.stdout = f
@@ -84,6 +105,8 @@ def main():
     ax.tick_params(bottom=True, left=True)
     plt.tight_layout()
 
+    plt.show()
+
     plt.savefig(os.path.join(plt_dir, "ablation_acc_comp.pdf"), format='pdf')
     plt.savefig(os.path.join(plt_dir, "ablation_acc_comp.eps"), format='eps')
     plt.savefig(os.path.join(plt_dir, "ablation_acc_comp.png"), format='png')
@@ -93,12 +116,23 @@ def main():
 
 
     # Performing two-way ANOVA
+    # for m in ['Shuffled feedback', 'No feedback']:
+    #     temp_df = df[(df['model']=='Full model')| (df['model']==m)]
+    #     model = ols('acc ~ C(model) + C(coh) +\
+    #     C(model):C(coh)',
+    #                 data=temp_df[temp_df['coh']!='Z']).fit()
+    #     result = sm.stats.anova_lm(model, type=2)
+    #     print('\n')
+    #     print('Two-way ANOVA compare %s Results:'%m)
+    #     print(result)
+    m =  "Remove feedback"
+    temp_df = df[(df['model']=='Full model')| (df['model']==m)]
     model = ols('acc ~ C(model) + C(coh) +\
     C(model):C(coh)',
-                data=df[df['coh']!='Z']).fit()
+                data=temp_df[temp_df['coh']!='Z']).fit()
     result = sm.stats.anova_lm(model, type=2)
     print('\n')
-    print('Two-way ANOVA Result:')
+    print('Two-way ANOVA compare %s Results:'%m)
     print(result)
 
     f.close()
@@ -140,19 +174,25 @@ def load_acc():
                 all_acc_df.to_csv(os.path.join(f_dir, 'all_test_acc.csv'))
                 if "noFeedback" in f_dir:
                     nofb_acc_df = all_acc_df
+                elif "removeFB" in f_dir:
+                    rmvfb_acc_df = all_acc_df
                 else:
                     full_acc_df = all_acc_df
     else:
         full_acc_df = pd.read_csv(os.path.join(f_dirs[0], 'all_test_acc.csv'))
-        nofb_acc_df = pd.read_csv(os.path.join(f_dirs[1], 'all_test_acc.csv'))
-        shuf_acc_df = pd.read_csv(os.path.join(f_dirs[2], 'all_test_acc.csv'))
+        rmvfb_acc_df = pd.read_csv(os.path.join(f_dirs[0], 'all_test_acc.csv'))
+        # nofb_acc_df = pd.read_csv(os.path.join(f_dirs[1], 'all_test_acc.csv'))
+        # shuf_acc_df = pd.read_csv(os.path.join(f_dirs[2], 'all_test_acc.csv'))
     
     # combine all acc df
-    shuf_df_temp = shuf_acc_df[['rep', 'coh', 'acc']].groupby(['rep', 'coh']).mean().reset_index()
+    # shuf_df_temp = shuf_acc_df[['rep', 'coh', 'acc']].groupby(['rep', 'coh']).mean().reset_index()
     full_acc_df['model'] = ['Full model']*len(full_acc_df.index)
-    nofb_acc_df['model'] = ['No feedback']*len(nofb_acc_df.index)
-    shuf_df_temp['model'] = ['Shuffled feedback']*len(shuf_df_temp.index)
+    rmvfb_acc_df['model'] = ['Remove feedback']*len(rmvfb_acc_df.index)
 
-    return pd.concat([full_acc_df, nofb_acc_df, shuf_df_temp], ignore_index=True)
+    # nofb_acc_df['model'] = ['No feedback']*len(nofb_acc_df.index)
+    # shuf_df_temp['model'] = ['Shuffled feedback']*len(shuf_df_temp.index)
+
+    # return pd.concat([full_acc_df, nofb_acc_df, shuf_df_temp], ignore_index=True)
+    return pd.concat([full_acc_df, rmvfb_acc_df], ignore_index=True)
         
 main()

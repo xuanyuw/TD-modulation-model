@@ -8,7 +8,7 @@ from os.path import join
 bp.math.set_platform('cpu')
 
 
-class Model(bp.layers.Module):
+class Model(bp.dyn.DynamicalSystem):
 
     def __init__(self, par, stim, train=True):
         super(Model, self).__init__()
@@ -58,23 +58,26 @@ class Model(bp.layers.Module):
         self.b_rnn = bm.TrainVar(all_weights['b_rnn0'])
         self.b_out = bm.Variable(all_weights['b_out0'])
 
-        if not train:
-            # temp_conn = [
-            #     [1, 1, 1, 1],
-            #     [0, 1, 1, 1], 
-            #     [1, 1, 1, 1], 
-            #     [1, 1, 0, 1]
-            # ]
-            # conn = tile(temp_conn, (2, 2))
-            # self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * cut_conn(conn, all_weights['rnn_mask_init'].numpy()))
-            shuffle_temp = [
-                [0, 0, 0, 0], 
-                [1, 0, 0, 0], 
-                [0, 0, 0, 0], 
-                [0, 0, 1, 0], 
-            ]
-            shuffle = tile(shuffle_temp, (2, 2))
-            self.w_rnn = bm.TrainVar(shuffle_conn(shuffle, all_weights['w_rnn0']*all_weights['rnn_mask_init'].numpy()))
+        # if not train:
+            # if par['shuffle_num']==0: #do not shuffle test feedback conn
+            #     temp_conn = [
+            #         [1, 1, 1, 1],
+            #         [0, 1, 1, 1], 
+            #         [1, 1, 1, 1], 
+            #         [1, 1, 0, 1]
+            #     ]
+            #     conn = tile(temp_conn, (2, 2))
+            #     self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * cut_conn(conn, all_weights['rnn_mask_init'].numpy()))
+            # else:
+
+            #     shuffle_temp = [
+            #         [0, 0, 0, 0], 
+            #         [1, 0, 0, 0], 
+            #         [0, 0, 0, 0], 
+            #         [0, 0, 1, 0], 
+            #     ]
+            #     shuffle = tile(shuffle_temp, (2, 2))
+            #     self.w_rnn = bm.TrainVar(shuffle_conn(shuffle, all_weights['w_rnn0']*all_weights['rnn_mask_init'].numpy()))
 
         # Constants
 
