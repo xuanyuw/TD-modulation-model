@@ -13,10 +13,10 @@ class Model(bp.dyn.DynamicalSystem):
     def __init__(self, par, stim, train=True):
         super(Model, self).__init__()
 
-        self.syn_x = bm.Variable(par['syn_x_init'])
-        self.syn_u = bm.Variable(par['syn_u_init'])
-        self.u = bm.Variable(par['U'])
-        self.h = bm.Variable(par['x0'])
+        self.syn_x = bm.Variable(par['syn_x_init'], batch_axis=0)
+        self.syn_u = bm.Variable(par['syn_u_init'], batch_axis=0)
+        self.u = bm.asarray(par['U'])
+        self.h = bm.Variable(par['x0'], batch_axis=0)
         self.init_h = bm.TrainVar(par['x0'])
         self.alpha_std = bm.array(par['alpha_std'])
         self.alpha_stf = bm.array(par['alpha_stf'])
@@ -24,11 +24,11 @@ class Model(bp.dyn.DynamicalSystem):
         self.alpha = bm.array(par['alpha_neuron'])
         self.EI_matrix = bm.array(par['EI_matrix'])
 
-        # self.n_hidden = par['n_hidden']
-        # self.n_total = par['n_total']
+        self.n_hidden = par['n_hidden']
+        self.n_output = par['n_output']
 
         self.y = bm.Variable(
-            bm.ones((par['batch_size'], par['n_output'])))
+            bm.ones((par['batch_size'], par['n_output'])), batch_axis=0)
         self.y_hist = bm.Variable(
             bm.zeros((par['num_time_steps'], par['batch_size'], par['n_output'])))
         self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_total'])))
@@ -59,7 +59,7 @@ class Model(bp.dyn.DynamicalSystem):
         self.b_out = bm.Variable(all_weights['b_out0'])
 
         # if not train:
-            # if par['shuffle_num']==0: #do not shuffle test feedback conn
+            # if par['shuffle_num']==0: #do not shuffle test feedback conn, cut out them instead
             #     temp_conn = [
             #         [1, 1, 1, 1],
             #         [0, 1, 1, 1], 
@@ -107,7 +107,15 @@ class Model(bp.dyn.DynamicalSystem):
         self.spike_loss[:] = 0.
         self.weight_loss[:] = 0.
 
-    def update(self, input, **kwargs):
+    def reset_batch(self, bs=1):
+        # reset batch number to one for slow point analysis
+        self.h.value = 0.1*bm.ones((bs, self.n_hidden))
+        self.syn_x.value = bm.ones((bs, self.n_hidden))
+        self.syn_u.value = 0.3*bm.ones((bs, self.n_hidden))
+        self.y = bm.ones((bs, self.n_output))
+
+
+    def update(self, sha, input):
         if self.synapse_config != 'none':
             # implement both synaptic short term facilitation and depression
 
@@ -187,3 +195,12 @@ class Model(bp.dyn.DynamicalSystem):
         all_masks['rnn_mask_init'] = self.rnn_mask
         all_masks['out_mask_init'] = self.out_mask
         return all_masks
+
+
+
+# net = Net()
+
+
+# analyzer = bp.analysis.SlowPointFinder(net, args=(xx, ), inputs=[net.input, 'ass'])
+
+
