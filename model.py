@@ -1,8 +1,9 @@
 from init_weight import initialize_weights
-from utils import cut_conn, shuffle_conn
+from utils import cut_conn, shuffle_conn, load_test_data
+from types import SimpleNamespace
 import brainpy as bp
 import brainpy.math as bm
-from numpy import load, tile
+from numpy import load, tile, save, ndarray
 from numpy.random import normal
 from os.path import join
 bp.math.set_platform('cpu')
@@ -12,11 +13,19 @@ class Model(bp.dyn.DynamicalSystem):
 
     def __init__(self, par, stim, train=True):
         super(Model, self).__init__()
+        # if train:
+        #     self.syn_x = bm.Variable(par['syn_x_init'], batch_axis=0)
+        #     self.syn_u = bm.Variable(par['syn_u_init'], batch_axis=0)
 
         self.syn_x = bm.Variable(par['syn_x_init'], batch_axis=0)
         self.syn_u = bm.Variable(par['syn_u_init'], batch_axis=0)
+        # else:
+        #     n = SimpleNamespace(**load_test_data(par['model_dir'], "train_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"])))
+        #     self.syn_x = bm.Variable(n.syn_x, batch_axis=0)
+        #     self.syn_u = bm.Variable(n.syn_u, batch_axis=0)
         self.u = bm.asarray(par['U'])
         self.h = bm.Variable(par['x0'], batch_axis=0)
+        # self.h = bm.Variable(par['x0'])
         self.init_h = bm.TrainVar(par['x0'])
         self.alpha_std = bm.array(par['alpha_std'])
         self.alpha_stf = bm.array(par['alpha_stf'])
@@ -29,9 +38,13 @@ class Model(bp.dyn.DynamicalSystem):
 
         self.y = bm.Variable(
             bm.ones((par['batch_size'], par['n_output'])), batch_axis=0)
+        # self.y = bm.Variable(
+        #     bm.ones((par['batch_size'], par['n_output'])))
         self.y_hist = bm.Variable(
             bm.zeros((par['num_time_steps'], par['batch_size'], par['n_output'])))
         self.h_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_total'])))
+        self.syn_x_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_total'])))
+        self.syn_u_hist = bm.Variable(bm.zeros((par['num_time_steps'], par['batch_size'], par['n_total'])))
 
         # Loss
         self.loss = bm.Variable(bm.zeros(1))
@@ -43,9 +56,19 @@ class Model(bp.dyn.DynamicalSystem):
         if train:
             all_weights = initialize_weights(par['learning_rate'], par['rep'], stim)
         else:
+            # all_weights = load(
+            #     join(par['model_dir'], par['weight_fn']), allow_pickle=True)
             all_weights = load(
-                join(par['model_dir'], par['weight_fn']), allow_pickle=True)
+                join(par['save_dir'], par['weight_fn']), allow_pickle=True)
             all_weights = all_weights.item()
+            
+            # for k, v in all_weights.items():
+            #     if type(v) is not ndarray:
+            #         all_weights[k] = v.value
+            # with open(join(par["save_dir"], par["weight_fn"]), "wb") as f:
+            #     save(f, all_weights)
+
+
         self.in_mask = bm.array(all_weights['in_mask_init'])
         self.rnn_mask = bm.array(all_weights['rnn_mask_init'])
         self.out_mask = bm.array(all_weights['out_mask_init'])
@@ -153,20 +176,22 @@ class Model(bp.dyn.DynamicalSystem):
             self.h[:] = self.init_h
         else:
             self.h = self.init_h
-        scan = bm.make_loop(body_fun=self.update,
+        scan = bm.make_loop(body_fun=lambda x: self.update([], x),
                             dyn_vars=[self.syn_x, self.syn_u, self.h, self.y],
-                            out_vars=[self.y, self.h])
-        logits, hist_h = scan(inputs)
+                            out_vars=[self.y, self.h, self.syn_x, self.syn_u])
+        logits, h_hist, syn_x_hist, syn_u_hist = scan(inputs)
         # TODO: softmax y?
         if train:
             self.y_hist[:] = logits
-            self.h_hist[:] = hist_h
+            self.h_hist[:] = h_hist
+            self.syn_x_hist[:] = syn_x_hist
+            self.syn_u_hist[:] = syn_u_hist
         # self.y_hist = logits
 
-        return logits, hist_h
+        return logits, h_hist, syn_x_hist, syn_u_hist
 
     def loss_func(self, inputs, targets, mask):
-        logits, hist_h = self.predict(inputs, True)
+        logits, h_hist, _, _ = self.predict(inputs, True)
         # Calculate the performance loss
         perf_loss = bp.losses.cross_entropy_loss(
             bm.softmax(logits), targets, reduction='none') * mask
@@ -175,9 +200,9 @@ class Model(bp.dyn.DynamicalSystem):
 
         # L1/L2 penalty term on hidden state activity to encourage low spike rate solutions
         n = 2 if self.spike_regularization == 'L2' else 1
-        self.spike_loss[:] = bm.mean(hist_h ** n)
+        self.spike_loss[:] = bm.mean(h_hist ** n)
         self.weight_loss[:] = bm.mean(bm.relu(self.w_rnn) ** n)
-        # self.spike_loss = bm.mean(hist_h ** n)
+        # self.spike_loss = bm.mean(h_hist ** n)
         # self.weight_loss = bm.mean(bm.relu(self.w_rnn) ** n)
 
         # final loss

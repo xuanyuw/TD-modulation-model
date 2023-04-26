@@ -76,6 +76,8 @@ def trial(par, train=True):
         all_stim_level = []
         all_stim_dir = []
         all_h = []
+        all_syn_x = []
+        all_syn_u = []
         all_rt = []
         all_neural_in = []
         all_in_weight = []
@@ -121,6 +123,8 @@ def trial(par, train=True):
                     all_stim_level.append(trial_info["stim_level"])
                     all_stim_dir.append(trial_info["stim_dir"])
                     all_h.append(model.h_hist.numpy())
+                    all_syn_x.append(model.syn_x_hist.numpy())
+                    all_syn_u.append(model.syn_u_hist.numpy())
                     all_rt.append(get_reaction_time(model.y_hist, par))
                     all_neural_in.append(inputs.numpy())
                     all_in_weight.append(model.w_in.numpy())
@@ -151,7 +155,7 @@ def trial(par, train=True):
 
         else:
             # get metrics
-            logits, h_hist = model.predict(inputs, False)
+            logits, h_hist, syn_x_hist, syn_u_hist = model.predict(inputs, False)
             accuracy, total_accuracy = get_perf(
                 targets, logits, mask, trial_info["stim_level"], False
             )
@@ -174,6 +178,8 @@ def trial(par, train=True):
                 all_stim_level.append(trial_info["stim_level"])
                 all_stim_dir.append(trial_info["stim_dir"])
                 all_h.append(h_hist.numpy())
+                all_syn_x.append(syn_x_hist.numpy())
+                all_syn_u.append(syn_u_hist.numpy())
                 all_rt.append(get_reaction_time(model.y_hist, par))
                 all_neural_in.append(inputs.numpy())
             # print(
@@ -216,6 +222,8 @@ def trial(par, train=True):
                 "/", "stim_dir_iter{}".format(all_idx[n]), all_stim_dir[n]
             )
             train_file.create_array("/", "h_iter{}".format(all_idx[n]), all_h[n])
+            train_file.create_array("/", "syn_x_iter{}".format(all_idx[n]), all_syn_x[n])
+            train_file.create_array("/", "syn_u_iter{}".format(all_idx[n]), all_syn_u[n])
             train_file.create_array("/", "rt_iter{}".format(all_idx[n]), all_rt[n])
             train_file.create_array(
                 "/", "neural_in_iter{}".format(all_idx[n]), all_neural_in[n]
@@ -237,10 +245,15 @@ def trial(par, train=True):
             )
         train_file.close()
     if not train and par["save_test_out"]:
+        if par['shuffle_num'] != 0:
+            fn =  "test_output_lr%f_rep%d_shuf%d.h5" % (par["learning_rate"], par["rep"], par['shuffle'])
+        else:
+            fn =  "test_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"])
+
         test_file = tables.open_file(
             join(
                 par["save_dir"],
-                "test_output_lr%f_rep%d_shuf%d.h5" % (par["learning_rate"], par["rep"], par['shuffle']),
+                fn,
             ),
             mode="w",
             title="Test output",
@@ -259,6 +272,8 @@ def trial(par, train=True):
                 "/", "stim_dir_iter{}".format(all_idx[n]), all_stim_dir[n]
             )
             test_file.create_array("/", "h_iter{}".format(all_idx[n]), all_h[n])
+            test_file.create_array("/", "syn_x_iter{}".format(all_idx[n]), all_syn_x[n])
+            test_file.create_array("/", "syn_u_iter{}".format(all_idx[n]), all_syn_u[n])
             test_file.create_array("/", "rt_iter{}".format(all_idx[n]), all_rt[n])
             test_file.create_array(
                 "/", "neural_in_iter{}".format(all_idx[n]), all_neural_in[n]
@@ -279,10 +294,10 @@ def trial(par, train=True):
         w = model.train_vars().unique().dict()
         for k, v in w.items():
             temp = k.split(".")
-            weights[temp[1] + "0"] = v
-        weights['w_in0'] = model.w_in
-        weights['w_out0'] = model.w_out
-        weights['b_out0'] = model.b_out
+            weights[temp[1] + "0"] = v.value
+        weights['w_in0'] = model.w_in.value
+        weights['w_out0'] = model.w_out.value
+        weights['b_out0'] = model.b_out.value
 
         # Save weight masks
         all_masks = model.get_all_masks()

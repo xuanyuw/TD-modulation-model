@@ -1,6 +1,6 @@
 {
-    "save_dir": "./crossOutput_noInterneuron_noMTConn_removeFB_model/",
-    "model_dir": "crossOutput_noInterneuron_noMTConn_removeFB_model/",
+    "save_dir": "./full_model_test/",
+    "model_dir": "full_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
