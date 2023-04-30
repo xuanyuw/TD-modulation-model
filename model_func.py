@@ -222,8 +222,12 @@ def trial(par, train=True):
                 "/", "stim_dir_iter{}".format(all_idx[n]), all_stim_dir[n]
             )
             train_file.create_array("/", "h_iter{}".format(all_idx[n]), all_h[n])
-            train_file.create_array("/", "syn_x_iter{}".format(all_idx[n]), all_syn_x[n])
-            train_file.create_array("/", "syn_u_iter{}".format(all_idx[n]), all_syn_u[n])
+            train_file.create_array(
+                "/", "syn_x_iter{}".format(all_idx[n]), all_syn_x[n]
+            )
+            train_file.create_array(
+                "/", "syn_u_iter{}".format(all_idx[n]), all_syn_u[n]
+            )
             train_file.create_array("/", "rt_iter{}".format(all_idx[n]), all_rt[n])
             train_file.create_array(
                 "/", "neural_in_iter{}".format(all_idx[n]), all_neural_in[n]
@@ -245,10 +249,14 @@ def trial(par, train=True):
             )
         train_file.close()
     if not train and par["save_test_out"]:
-        if par['shuffle_num'] != 0:
-            fn =  "test_output_lr%f_rep%d_shuf%d.h5" % (par["learning_rate"], par["rep"], par['shuffle'])
+        if par["shuffle_num"] != 0:
+            fn = "test_output_lr%f_rep%d_shuf%d.h5" % (
+                par["learning_rate"],
+                par["rep"],
+                par["shuffle"],
+            )
         else:
-            fn =  "test_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"])
+            fn = "test_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"])
 
         test_file = tables.open_file(
             join(
@@ -294,10 +302,10 @@ def trial(par, train=True):
         w = model.train_vars().unique().dict()
         for k, v in w.items():
             temp = k.split(".")
-            weights[temp[1] + "0"] = v.value
-        weights['w_in0'] = model.w_in.value
-        weights['w_out0'] = model.w_out.value
-        weights['b_out0'] = model.b_out.value
+            weights[temp[1] + "0"] = v
+        weights["w_in0"] = model.w_in.value
+        weights["w_out0"] = model.w_out.value
+        weights["b_out0"] = model.b_out.value
 
         # Save weight masks
         all_masks = model.get_all_masks()
@@ -307,12 +315,12 @@ def trial(par, train=True):
         with open(join(par["save_dir"], par["weight_fn"]), "wb") as f:
             save(f, weights)
     # else:  # plot test acc
-        # plot_test_acc(
-        #     [H_acc, M_acc, L_acc, Z_acc],
-        #     par["save_dir"],
-        #     par["learning_rate"],
-        #     par["rep"],
-        # )
+    # plot_test_acc(
+    #     [H_acc, M_acc, L_acc, Z_acc],
+    #     par["save_dir"],
+    #     par["learning_rate"],
+    #     par["rep"],
+    # )
     dump(model_performance, open(join(par["save_dir"], par["save_fn"]), "wb"))
 
 
@@ -341,6 +349,7 @@ def plot_acc(
     plt.savefig(join(f_dir, "TrainAcc_lr%f_rep%d.png" % (lr, rep)), format="png")
     # plt.show()
 
+
 def plot_test_acc(acc_arr, f_dir, lr, rep):
     fig, ax = plt.subplots()
     bars = ax.bar(["H", "M", "L", "Z"], acc_arr)
@@ -350,4 +359,3 @@ def plot_test_acc(acc_arr, f_dir, lr, rep):
     ax.bar_label(bars)
     # plt.show()
     plt.savefig(join(f_dir, "test_acc_lr%f_rep%d.png" % (lr, rep)), format="png")
-

@@ -45,7 +45,7 @@ def calc_parameters():
     # since term will be multiplied by par['alpha_neuron']
     par["noise_in"] = np.sqrt(2 / par["alpha_neuron"]) * par["noise_in_sd"]
     # weight cost in loss function
-    par['weight_cost'] = par['lambda_weight'] / par['n_hidden']**2
+    par["weight_cost"] = par["lambda_weight"] / par["n_hidden"] ** 2
     # initial neural activity
     par["x0"] = 0.1 * np.ones((par["batch_size"], par["n_total"]), dtype=np.float32)
 
@@ -85,8 +85,8 @@ def update_synaptic_config():
     par["alpha_std"][dep_idx] = par["dt"] / par["tau_dep"]
 
     par["U"] = np.ones((par["n_total"],), dtype=np.float32)
-    par["U"][fac_idx] = par['U_stf']
-    par["U"][dep_idx] = par['U_std']
+    par["U"][fac_idx] = par["U_stf"]
+    par["U"][dep_idx] = par["U_std"]
 
     par["syn_x_init"] = np.ones((par["batch_size"], par["n_total"]), dtype=np.float32)
 
@@ -102,10 +102,10 @@ def update_synaptic_config():
 
 
 def update_parameters(updates):
-    """ 
+    """
     Takes a list of strings and values for updating parameters in the parameter dictionary
     Example: updates = [(key, val), (key, val)] ,
-    Note: this function does not update weights, if the parameters changed are involved in weight or 
+    Note: this function does not update weights, if the parameters changed are involved in weight or
         mask calculation, need to call initialize_weight and update_weight after this function
     """
 

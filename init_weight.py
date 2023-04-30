@@ -4,13 +4,13 @@ import numpy as np
 import brainpy.math as bm
 from os.path import join
 from utils import get_module_idx, get_diff_stim, calc_input_sum, calculate_rf_rngs
-from time import time 
+from time import time
 
 
 def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
     """
     Generates a random mask block of certain size and connection probability
-    input: 
+    input:
         from_rng: source neurons of the projection (start, end)
         to_rng: target neurons of the projection (start, end)
         conn_prob: float,  the connection probability of this block
@@ -22,15 +22,11 @@ def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
     return mask
 
 
-
-
 def fill_mask(rf_rngs, conn_probs, mask):
     for i in range(len(rf_rngs)):
         for j in range(len(rf_rngs)):
             mask = fill_rand_conn(mask, rf_rngs[i], rf_rngs[j], conn_probs[i, j])
     return mask
-
-
 
 
 # def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
@@ -55,39 +51,46 @@ def generate_rnn_mask():
         par["cross_rf_conn_prob"],
         par["cross_module_conn_prob"],
     )
-    # temp_probs = np.array(
-    #     [
-    #         [h_prob, m_prob, l_prob, 0],
-    #         [0, h_prob, 0, l_prob],
-    #         [l_prob, 0, h_prob, m_prob],
-    #         [0, l_prob, 0, h_prob],
-    #     ]
-    # )
-    # inh_probs = np.array(
-    #     [
-    #         [h_prob, m_prob, 0, 0],
-    #         [0, h_prob, 0, 0],
-    #         [0, 0, h_prob, m_prob],
-    #         [0, 0, 0, h_prob],
-    #     ]
-    # )
+    if par["cut_fb_train"]:
+        # cut out feedback connection from target module to motion module
+        # increase connection probability when training model without feeedback connection
+        h_prob = h_prob * par["cut_fb_train_factor"]
+        m_prob = m_prob * par["cut_fb_train_factor"]
+        l_prob = l_prob * par["cut_fb_train_factor"]
 
-    temp_probs = np.array(
-        [
-            [h_prob, m_prob, l_prob, l_prob],
-            [m_prob, h_prob, l_prob, l_prob],
-            [l_prob, l_prob, h_prob, m_prob],
-            [l_prob, l_prob, m_prob, h_prob],
-        ]
-    )
-    inh_probs = np.array(
-        [
-            [h_prob, m_prob, l_prob, l_prob],
-            [m_prob, h_prob, l_prob, l_prob],
-            [l_prob, l_prob, h_prob, m_prob],
-            [l_prob, l_prob, m_prob, h_prob],
-        ]
-    )
+        temp_probs = np.array(
+            [
+                [h_prob, m_prob, l_prob, 0],
+                [0, h_prob, 0, l_prob],
+                [l_prob, 0, h_prob, m_prob],
+                [0, l_prob, 0, h_prob],
+            ]
+        )
+        inh_probs = np.array(
+            [
+                [h_prob, m_prob, 0, 0],
+                [0, h_prob, 0, 0],
+                [0, 0, h_prob, m_prob],
+                [0, 0, 0, h_prob],
+            ]
+        )
+    else:
+        temp_probs = np.array(
+            [
+                [h_prob, m_prob, l_prob, 0],
+                [m_prob, h_prob, 0, l_prob],
+                [l_prob, 0, h_prob, m_prob],
+                [0, l_prob, m_prob, h_prob],
+            ]
+        )
+        inh_probs = np.array(
+            [
+                [h_prob, m_prob, 0, 0],
+                [m_prob, h_prob, 0, 0],
+                [0, 0, h_prob, m_prob],
+                [0, 0, m_prob, h_prob],
+            ]
+        )
 
     # conn_probs = np.tile(temp_probs, (1, 2))
     conn_probs = np.vstack([np.tile(temp_probs, (1, 2)), np.tile(inh_probs, (1, 2))])
@@ -216,7 +219,11 @@ def re_init_win(in_weight, in_mask, stim):
 
         if re_init:
             # in_weight = initialize(0.1, (par["n_input"], par["n_total"]))
-            in_weight = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_input"], par["n_total"]))
+            in_weight = np.random.normal(
+                par["inout_weight_mean"],
+                par["inout_weight_std"],
+                size=(par["n_input"], par["n_total"]),
+            )
     end = time()
     print("elapsed time: %f" % (end - start))
     return in_weight
@@ -232,7 +239,11 @@ def re_init_wout(out_weight, out_mask):
     start = time()
     while min(all_sums) < 0.8 * max(all_sums):
         # out_weight = initialize(0.1, (par["n_total"], par["n_output"]))
-        out_weight = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_total"], par["n_output"]))
+        out_weight = np.random.normal(
+            par["inout_weight_mean"],
+            par["inout_weight_std"],
+            size=(par["n_total"], par["n_output"]),
+        )
         masked_weight = out_weight * out_mask
         all_sums = (
             (round(np.sum(masked_weight[:, 0]).astype("float"), 3)),
@@ -245,12 +256,16 @@ def re_init_wout(out_weight, out_mask):
 
 def generate_raw_weights():
     """
-    Initialize the weights without multiplying masks 
+    Initialize the weights without multiplying masks
     The masks will be applied later.
     """
     # w_in0 = initialize(0.1, (par["n_input"], par["n_total"]))
     # w_in0 =  np.random.uniform(0, 0.2, size=(par['n_input'], par['n_hidden']))
-    w_in0 = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_input"], par["n_total"]))
+    w_in0 = np.random.normal(
+        par["inout_weight_mean"],
+        par["inout_weight_std"],
+        size=(par["n_input"], par["n_total"]),
+    )
     w_rnn0 = initialize(0.1, (par["n_total"], par["n_total"]))
     w_rnn0[: par["n_hidden"], par["ind_inh"]] = initialize(
         0.2, (par["n_hidden"], len(par["ind_inh"]))
@@ -266,7 +281,11 @@ def generate_raw_weights():
     if par["synapse_config"] == "none":
         w_rnn0 = w_rnn0 / 3.0
     # w_out0 = initialize(0.1, (par["n_total"], par["n_output"]))
-    w_out0 = np.random.normal(par['inout_weight_mean'], par['inout_weight_std'], size=(par["n_total"], par["n_output"]))
+    w_out0 = np.random.normal(
+        par["inout_weight_mean"],
+        par["inout_weight_std"],
+        size=(par["n_total"], par["n_output"]),
+    )
     # w_out0 = np.random.uniform(0, 0.2, size=(par['n_hidden'], par['n_output']))
     b_rnn0 = np.zeros((1, par["n_total"]), dtype=np.float32)
     b_out0 = np.zeros((1, par["n_output"]), dtype=np.float32)
@@ -300,4 +319,3 @@ def initialize_weights(lr=0, rep=0, stim=None):
     with open(join(par["save_dir"], "init_weight_%d_lr%f.pth" % (rep, lr)), "wb") as f:
         np.save(f, all_weights)
     return all_weights
-

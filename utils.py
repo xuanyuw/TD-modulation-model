@@ -5,11 +5,12 @@ import os
 import tables
 from scipy.stats import f_oneway
 from math import ceil
+from types import SimpleNamespace
 
 
-STIM_ST_TIME = (par['time_fixation'] + par['time_target'])//par['dt']
-TARG_ST_TIME = par['time_fixation']//par['dt']
-DT = par['dt']
+STIM_ST_TIME = (par["time_fixation"] + par["time_target"]) // par["dt"]
+TARG_ST_TIME = par["time_fixation"] // par["dt"]
+DT = par["dt"]
 
 
 def find_coh_idx(stim_level):
@@ -105,18 +106,30 @@ def find_pref_dir(stim_level, stim_dir, h, stim_st_time=STIM_ST_TIME):
     pref_red = red_mean > green_mean
     return pref_red
 
+
 def find_pref_targ_color(h, desired_out, stim_dir, m1_targ_rng, m2_targ_rng):
     # prefer green target = 0, prefer red target = 1
     targ_loc = recover_targ_loc(desired_out, stim_dir)[-1, :]
-    contra_green_mean = np.mean(h[TARG_ST_TIME:STIM_ST_TIME, targ_loc==0, :], axis=(0, 1))
-    contra_red_mean = np.mean(h[TARG_ST_TIME:STIM_ST_TIME, targ_loc==1, :], axis=(0, 1))
+    contra_green_mean = np.mean(
+        h[TARG_ST_TIME:STIM_ST_TIME, targ_loc == 0, :], axis=(0, 1)
+    )
+    contra_red_mean = np.mean(
+        h[TARG_ST_TIME:STIM_ST_TIME, targ_loc == 1, :], axis=(0, 1)
+    )
     pref_targ_color = np.zeros((h.shape[2],))
-    pref_targ_color[m1_targ_rng] = contra_green_mean[m1_targ_rng] < contra_red_mean[m1_targ_rng] 
-    pref_targ_color[m2_targ_rng] = contra_green_mean[m2_targ_rng] > contra_red_mean[m2_targ_rng] #ipsi-lateral targets are the opposite of contra lateral targets
+    pref_targ_color[m1_targ_rng] = (
+        contra_green_mean[m1_targ_rng] < contra_red_mean[m1_targ_rng]
+    )
+    pref_targ_color[m2_targ_rng] = (
+        contra_green_mean[m2_targ_rng] > contra_red_mean[m2_targ_rng]
+    )  # ipsi-lateral targets are the opposite of contra lateral targets
     return pref_targ_color
 
+
 def find_pref_targ_color_motion_cell(h, n):
-    choice_c = get_choice_color(n.y, n.desired_out, n.stim_dir)[-1, :] # return choice color (green = 0, red = 1)
+    choice_c = get_choice_color(n.y, n.desired_out, n.stim_dir)[
+        -1, :
+    ]  # return choice color (green = 0, red = 1)
     pref_red = find_pref_dir(n.stim_level, n.stim_dir, h)
     choice_c_temp = np.tile(choice_c, (len(pref_red), 1)).T
     pref_red_temp = np.tile(pref_red, (len(choice_c), 1))
@@ -135,7 +148,6 @@ def find_pref_sac(y, h, stim_st_time=STIM_ST_TIME):
     return pref_ipsi, choice
 
 
-
 def get_pref_idx(n, h):
     # find the trial of preferred saccade direction
     pref_ipsi, choice = find_pref_sac(n.y, h)
@@ -150,7 +162,6 @@ def get_pref_idx(n, h):
     dir_red_temp = np.tile(np.reshape(dir_red, (-1, 1)), (1, len(pref_red)))
     pref_dir = pref_red_temp == dir_red_temp
     return pref_dir, pref_sac
-
 
 
 def min_max_normalize(arr):
@@ -195,9 +206,12 @@ def create_grp_mask(mask_shape, grp_idx, selectivity=None):
         idx = []
         for g_idx in grp_idx:
             if selectivity is not None:
-                idx = np.append(idx, np.intersect1d(
-                    np.arange(g_idx[0], g_idx[1]), np.where(selectivity)[0]
-                ))
+                idx = np.append(
+                    idx,
+                    np.intersect1d(
+                        np.arange(g_idx[0], g_idx[1]), np.where(selectivity)[0]
+                    ),
+                )
             else:
                 idx = np.append(idx, np.arange(g_idx[0], g_idx[1]))
     else:
@@ -207,7 +221,7 @@ def create_grp_mask(mask_shape, grp_idx, selectivity=None):
             )
         else:
             idx = np.arange(grp_idx[0], grp_idx[1])
-    idx =  idx.astype(int)
+    idx = idx.astype(int)
     mask[:, idx] = True
     return mask
 
@@ -300,7 +314,12 @@ def get_temp_h_avg(
         contra_h_nonpref = np.append(
             h[:, contra_nonpref_idx_m1], h[:, contra_nonpref_idx_m2], axis=1
         )
-        return np.mean(ipsi_h_pref, axis=1), np.mean(ipsi_h_nonpref, axis=1), np.mean(contra_h_pref, axis=1), np.mean(contra_h_nonpref, axis=1)
+        return (
+            np.mean(ipsi_h_pref, axis=1),
+            np.mean(ipsi_h_nonpref, axis=1),
+            np.mean(contra_h_pref, axis=1),
+            np.mean(contra_h_nonpref, axis=1),
+        )
     elif mode == "sac":
         return (
             np.mean(h[:, ipsi_pref_idx_m1], axis=1),
@@ -340,15 +359,13 @@ def calc_input_sum(in_weight, in_mask, stim, module_idx):
 
 
 def load_test_data(f_dir, f_name):
-    test_output = tables.open_file(
-        os.path.join(f_dir, f_name), mode="r"
-    )
+    test_output = tables.open_file(os.path.join(f_dir, f_name), mode="r")
     test_table = test_output.root
     max_iter = get_max_iter(test_table)
     h = test_table["h_iter%d" % max_iter][:]
     y = test_table["y_hist_iter%d" % max_iter][:]
-    syn_x = test_table["syn_x_iter%d" % max_iter][:]
-    syn_u = test_table["syn_u_iter%d" % max_iter][:]
+    # syn_x = test_table["syn_x_iter%d" % max_iter][:]
+    # syn_u = test_table["syn_u_iter%d" % max_iter][:]
     neural_input = test_table["neural_in_iter%d" % max_iter][:]
     choice = np.argmax(y, 2)[-1, :]
     desired_out = test_table["target_iter%d" % max_iter][:]
@@ -360,8 +377,8 @@ def load_test_data(f_dir, f_name):
     return {
         "h": h,
         "y": y,
-        "syn_x": syn_x,
-        "syn_u": syn_u,
+        # "syn_x": syn_x,
+        # "syn_u": syn_u,
         "neural_input": neural_input,
         "choice": choice,
         "desired_out": desired_out,
@@ -393,7 +410,6 @@ def plot_coh_popu_act(
     target_st_time=TARG_ST_TIME,
     stim_st_time=STIM_ST_TIME,
 ):
-
     assert all(
         k in ["dash", "solid", "ax1_title", "ax2_title", "sup_title"]
         for k in label_dict.keys()
@@ -433,27 +449,30 @@ def plot_coh_popu_act(
     xticks = np.array([0, 25, 50])
     ax1.set_xlim(0, 50)
     ax1.set_xticks(xticks)
-    ax1.set_xticklabels((xticks+20-stim_st_time)*DT)
-    ax1.axvline(x=target_st_time-20, color="k", linewidth=1, linestyle="--")
-    ax1.axvline(x=stim_st_time-20, color="k", linewidth=1, linestyle="--")
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(False)
+    ax1.set_xticklabels((xticks + 20 - stim_st_time) * DT)
+    ax1.axvline(x=target_st_time - 20, color="k", linewidth=1, linestyle="--")
+    ax1.axvline(x=stim_st_time - 20, color="k", linewidth=1, linestyle="--")
+    ax1.spines["top"].set_visible(False)
+    ax1.spines["right"].set_visible(False)
 
     ax2.set_title(label_dict["ax2_title"])
     ax2.set_xlabel("Time")
     ax2.set_xlim(0, 50)
     ax2.set_xticks(xticks)
-    ax2.set_xticklabels((xticks+20-stim_st_time)*DT)
-    ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5), prop={'size': 10}, frameon=False)
-    ax2.axvline(x=target_st_time-20, color="k", linewidth=1, linestyle="--")
-    ax2.axvline(x=stim_st_time-20, color="k", linewidth=1, linestyle="--")
-    ax2.spines['top'].set_visible(False)
-    ax2.spines['right'].set_visible(False)
+    ax2.set_xticklabels((xticks + 20 - stim_st_time) * DT)
+    ax2.legend(
+        loc="center left", bbox_to_anchor=(1, 0.5), prop={"size": 10}, frameon=False
+    )
+    ax2.axvline(x=target_st_time - 20, color="k", linewidth=1, linestyle="--")
+    ax2.axvline(x=stim_st_time - 20, color="k", linewidth=1, linestyle="--")
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
 
     plt.suptitle(label_dict["sup_title"])
 
     plt.tight_layout()
     return fig
+
 
 def get_sac_avg_h(
     coh_idx, h, choice, m1_idx, m2_idx, correct_idx=None, selectivity=None
@@ -467,12 +486,18 @@ def get_sac_avg_h(
         m2_cells = []
         for i in range(len(m1_idx)):
             if selectivity is not None:
-                m1_cells = np.append(m1_cells, np.intersect1d(
-                    np.arange(m1_idx[i][0], m1_idx[i][1]), np.where(selectivity)[0]
-                ))
-                m2_cells = np.append(m2_cells, np.intersect1d(
-                    np.arange(m2_idx[i][0], m2_idx[i][1]), np.where(selectivity)[0]
-                ))
+                m1_cells = np.append(
+                    m1_cells,
+                    np.intersect1d(
+                        np.arange(m1_idx[i][0], m1_idx[i][1]), np.where(selectivity)[0]
+                    ),
+                )
+                m2_cells = np.append(
+                    m2_cells,
+                    np.intersect1d(
+                        np.arange(m2_idx[i][0], m2_idx[i][1]), np.where(selectivity)[0]
+                    ),
+                )
             else:
                 m1_cells = np.append(m1_cells, np.arange(m1_idx[i][0], m1_idx[i][1]))
                 m2_cells = np.append(m2_cells, np.arange(m2_idx[i][0], m2_idx[i][1]))
@@ -496,6 +521,7 @@ def get_sac_avg_h(
     h_right_m2 = np.mean(h[:, right_idx, :][:, :, m2_cells], axis=(1, 2))
     return h_left_m1, h_right_m1, h_left_m2, h_right_m2
 
+
 def calculate_rf_rngs():
     """Generates the bounds for rf blocks"""
     ei = [par["exc_inh_prop"], 1 - par["exc_inh_prop"]]
@@ -508,16 +534,18 @@ def calculate_rf_rngs():
     rf_rngs = [(rf_bnd[n], rf_bnd[n + 1]) for n in range(len(rf_bnd) - 1)]
     return rf_rngs
 
+
 def cut_conn(conn, mask):
     rf_rngs = calculate_rf_rngs()
     for i in range(len(rf_rngs)):
         from_rng = rf_rngs[i]
         for j in range(len(rf_rngs)):
             to_rng = rf_rngs[j]
-            if conn[i, j]==0:
+            if conn[i, j] == 0:
                 sz = (from_rng[1] - from_rng[0], to_rng[1] - to_rng[0])
                 mask[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.zeros(sz)
     return mask
+
 
 def shuffle_conn(shuffle, weight):
     rf_rngs = calculate_rf_rngs()
@@ -525,6 +553,121 @@ def shuffle_conn(shuffle, weight):
         from_rng = rf_rngs[i]
         for j in range(len(rf_rngs)):
             to_rng = rf_rngs[j]
-            if shuffle[i, j]==1:
-                np.random.shuffle(weight[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]])
+            if shuffle[i, j] == 1:
+                np.random.shuffle(
+                    weight[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]]
+                )
     return weight
+
+
+def cut_spec_conn(neu_loc, w_rnn, EI_matrix, exc):
+    temp_w_rnn = EI_matrix @ relu(w_rnn)
+    if exc:
+        sel_loc = (neu_loc != 0) & (temp_w_rnn > 0)
+    else:
+        sel_loc = (neu_loc != 0) & (temp_w_rnn < 0)
+    # w_values = w_rnn[sel_loc]
+    # shuf_w_values = w_values
+    # shuf_w_values = np.random.permutation(w_values)
+    w_rnn[sel_loc] = np.zeros(np.sum(sel_loc))
+    return w_rnn
+
+
+def locate_conn(from_arr, to_arr, mask):
+    from_m = np.tile(np.expand_dims(from_arr, axis=1), (1, len(from_arr)))
+    to_m = np.tile(to_arr, (len(to_arr), 1))
+    neu_loc = from_m * to_m * mask.astype(bool)
+    return neu_loc
+
+
+def cut_fb_weight(w_rnn0, rnn_mask, cut_spec, cut_sel=True):
+    # find targ color encoding neurons
+    # prefer green target = 0, prefer red target = 1
+    m1_targ_rng = np.append(range(40, 80), range(170, 180))
+    m2_targ_rng = np.append(range(120, 160), range(190, 200))
+    n = SimpleNamespace(
+        **load_test_data(
+            par["model_dir"],
+            "train_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"]),
+        )
+    )
+    pref_targ_color = find_pref_targ_color(
+        n.h, n.desired_out, n.stim_dir, m1_targ_rng, m2_targ_rng
+    )
+    m1_green, m1_red, m2_green, m2_red = (
+        np.zeros(pref_targ_color.shape),
+        np.zeros(pref_targ_color.shape),
+        np.zeros(pref_targ_color.shape),
+        np.zeros(pref_targ_color.shape),
+    )
+    m1_green[m1_targ_rng] = pref_targ_color[m1_targ_rng] == 0
+    m2_green[m2_targ_rng] = pref_targ_color[m2_targ_rng] == 0
+    m1_red[m1_targ_rng] = pref_targ_color[m1_targ_rng] == 1
+    m2_red[m2_targ_rng] = pref_targ_color[m2_targ_rng] == 1
+    if cut_sel:
+        targ_loc = recover_targ_loc(n.desired_out, n.stim_dir)[-1, :]
+        normalized_h = min_max_normalize(n.h)
+        targ_sel = pick_selective_neurons(
+            normalized_h, targ_loc, window_st=25, window_ed=45, alpha=0.05
+        )
+        m1_green = m1_green * targ_sel
+        m2_green = m2_green * targ_sel
+        m1_red = m1_red * targ_sel
+        m2_red = m2_red * targ_sel
+
+    # find moving direction encoding neurons
+    m1_stim_rng = np.append(range(0, 40), range(160, 170))
+    m2_stim_rng = np.append(range(80, 120), range(180, 190))
+    pref_red = find_pref_dir(n.stim_level, n.stim_dir, n.h)
+    pref_green = ~pref_red.astype(bool)
+    m1_pref_red, m2_pref_red, m1_pref_green, m2_pref_green = (
+        np.zeros(pref_red.shape),
+        np.zeros(pref_red.shape),
+        np.zeros(pref_red.shape),
+        np.zeros(pref_red.shape),
+    )
+    m1_pref_red[m1_stim_rng] = pref_red[m1_stim_rng]
+    m2_pref_red[m2_stim_rng] = pref_red[m2_stim_rng]
+    m1_pref_green[m1_stim_rng] = pref_green[m1_stim_rng]
+    m2_pref_green[m2_stim_rng] = pref_green[m2_stim_rng]
+    if cut_sel:
+        stim_sel = pick_selective_neurons(normalized_h, n.stim_dir, alpha=0.05)
+        m1_pref_red = m1_pref_red * stim_sel
+        m2_pref_red = m2_pref_red * stim_sel
+        m1_pref_green = m1_pref_green * stim_sel
+        m2_pref_green = m2_pref_green * stim_sel
+    # w_rnn =  par['EI_matrix'] @ relu(w_rnn0)
+
+    m1_tr2mr = locate_conn(m1_red, m1_pref_red, rnn_mask)
+    m1_tg2mg = locate_conn(m1_green, m1_pref_green, rnn_mask)
+    m2_tr2mr = locate_conn(m2_red, m2_pref_red, rnn_mask)
+    m2_tg2mg = locate_conn(m2_green, m2_pref_green, rnn_mask)
+    match_conn_loc = np.logical_or(
+        np.logical_or(m1_tr2mr, m2_tr2mr), np.logical_or(m1_tg2mg, m2_tg2mg)
+    )
+
+    m1_tr2mg = locate_conn(m1_red, m1_pref_green, rnn_mask)
+    m1_tg2mr = locate_conn(m1_green, m1_pref_red, rnn_mask)
+    m2_tr2mg = locate_conn(m2_red, m2_pref_green, rnn_mask)
+    m2_tg2mr = locate_conn(m2_green, m2_pref_red, rnn_mask)
+    nonmatch_conn_loc = np.logical_or(
+        np.logical_or(m1_tr2mg, m2_tr2mg), np.logical_or(m1_tg2mr, m2_tg2mr)
+    )
+
+    # shuffle feedback conn
+    if cut_spec:
+        cut_w = cut_spec_conn(match_conn_loc, w_rnn0, par["EI_matrix"], exc=True)
+        cut_w = cut_spec_conn(nonmatch_conn_loc, cut_w, par["EI_matrix"], exc=False)
+
+    else:
+        cut_w = cut_spec_conn(match_conn_loc, w_rnn0, par["EI_matrix"], exc=False)
+        cut_w = cut_spec_conn(nonmatch_conn_loc, cut_w, par["EI_matrix"], exc=True)
+    # save shuffled weight
+    np.save(
+        os.path.join(
+            par["save_dir"],
+            "cut_w_rep%d.npy" % (par["rep"]),
+        ),
+        cut_w,
+    )
+    return cut_w
