@@ -16,17 +16,17 @@ class Model(bp.dyn.DynamicalSystem):
         # if train:
         #     self.syn_x = bm.Variable(par['syn_x_init'], batch_axis=0)
         #     self.syn_u = bm.Variable(par['syn_u_init'], batch_axis=0)
-        self.syn_x = bm.Variable(par["syn_x_init"])
-        self.syn_u = bm.Variable(par["syn_u_init"])
-        # self.syn_x = bm.Variable(par['syn_x_init'], batch_axis=0)
-        # self.syn_u = bm.Variable(par['syn_u_init'], batch_axis=0)
+        # self.syn_x = bm.Variable(par["syn_x_init"])
+        # self.syn_u = bm.Variable(par["syn_u_init"])
+        self.syn_x = bm.Variable(par["syn_x_init"], batch_axis=0)
+        self.syn_u = bm.Variable(par["syn_u_init"], batch_axis=0)
         # else:
         #     n = SimpleNamespace(**load_test_data(par['model_dir'], "train_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"])))
         #     self.syn_x = bm.Variable(n.syn_x, batch_axis=0)
         #     self.syn_u = bm.Variable(n.syn_u, batch_axis=0)
         self.u = bm.asarray(par["U"])
-        # self.h = bm.Variable(par['x0'], batch_axis=0)
-        self.h = bm.Variable(par["x0"])
+        self.h = bm.Variable(par["x0"], batch_axis=0)
+        # self.h = bm.Variable(par["x0"])
         self.init_h = bm.TrainVar(par["x0"])
         self.alpha_std = bm.array(par["alpha_std"])
         self.alpha_stf = bm.array(par["alpha_stf"])
@@ -37,9 +37,10 @@ class Model(bp.dyn.DynamicalSystem):
         self.n_hidden = par["n_hidden"]
         self.n_output = par["n_output"]
 
-        # self.y = bm.Variable(
-        #     bm.ones((par['batch_size'], par['n_output'])), batch_axis=0)
-        self.y = bm.Variable(bm.ones((par["batch_size"], par["n_output"])))
+        self.y = bm.Variable(
+            bm.ones((par["batch_size"], par["n_output"])), batch_axis=0
+        )
+        # self.y = bm.Variable(bm.ones((par["batch_size"], par["n_output"])))
         self.y_hist = bm.Variable(
             bm.zeros((par["num_time_steps"], par["batch_size"], par["n_output"]))
         )
@@ -67,7 +68,8 @@ class Model(bp.dyn.DynamicalSystem):
                 join(par["model_dir"], par["weight_fn"]), allow_pickle=True
             )
             # all_weights = load(
-            #     join(par['save_dir'], par['weight_fn']), allow_pickle=True)
+            #     join(par["save_dir"], par["weight_fn"]), allow_pickle=True
+            # )
             all_weights = all_weights.item()
 
             # for k, v in all_weights.items():

@@ -1,6 +1,6 @@
 {
-    "save_dir": "./trained_withoutFB_model/",
-    "model_dir": "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model/",
+    "save_dir": "./full_model/",
+    "model_dir": "full_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",
     "save_train_out": true,
