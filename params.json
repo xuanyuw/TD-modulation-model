@@ -1,5 +1,5 @@
 {
-    "save_dir": "./full_model/",
+    "save_dir": "./test_output_noFeedback_model/",
     "model_dir": "full_model/",
     "log_fn": "log.txt",
     "save_fn": "model_results.pkl",

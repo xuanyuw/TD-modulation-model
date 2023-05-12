@@ -51,6 +51,23 @@ def generate_rnn_mask():
         par["cross_rf_conn_prob"],
         par["cross_module_conn_prob"],
     )
+
+    # temp_probs = np.array(
+    #     [
+    #         [h_prob, m_prob, l_prob, 0],
+    #         [0, h_prob, 0, l_prob],
+    #         [l_prob, 0, h_prob, m_prob],
+    #         [0, l_prob, 0, h_prob],
+    #     ]
+    # )
+    # inh_probs = np.array(
+    #     [
+    #         [h_prob, m_prob, 0, 0],
+    #         [0, h_prob, 0, 0],
+    #         [0, 0, h_prob, m_prob],
+    #         [0, 0, 0, h_prob],
+    #     ]
+    # )
     if par["cut_fb_train"]:
         # cut out feedback connection from target module to motion module
         # increase connection probability when training model without feeedback connection

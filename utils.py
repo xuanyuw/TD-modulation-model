@@ -537,14 +537,17 @@ def calculate_rf_rngs():
 
 def cut_conn(conn, mask):
     rf_rngs = calculate_rf_rngs()
+    mask_copy = mask.copy()
     for i in range(len(rf_rngs)):
         from_rng = rf_rngs[i]
         for j in range(len(rf_rngs)):
             to_rng = rf_rngs[j]
             if conn[i, j] == 0:
                 sz = (from_rng[1] - from_rng[0], to_rng[1] - to_rng[0])
-                mask[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.zeros(sz)
-    return mask
+                mask_copy[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.zeros(
+                    sz
+                )
+    return mask_copy
 
 
 def shuffle_conn(shuffle, weight):

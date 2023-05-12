@@ -13,20 +13,22 @@ bp.math.set_platform("cpu")
 class Model(bp.dyn.DynamicalSystem):
     def __init__(self, par, stim, train=True):
         super(Model, self).__init__()
-        # if train:
-        #     self.syn_x = bm.Variable(par['syn_x_init'], batch_axis=0)
-        #     self.syn_u = bm.Variable(par['syn_u_init'], batch_axis=0)
-        # self.syn_x = bm.Variable(par["syn_x_init"])
-        # self.syn_u = bm.Variable(par["syn_u_init"])
-        self.syn_x = bm.Variable(par["syn_x_init"], batch_axis=0)
-        self.syn_u = bm.Variable(par["syn_u_init"], batch_axis=0)
-        # else:
-        #     n = SimpleNamespace(**load_test_data(par['model_dir'], "train_output_lr%f_rep%d.h5" % (par["learning_rate"], par["rep"])))
-        #     self.syn_x = bm.Variable(n.syn_x, batch_axis=0)
-        #     self.syn_u = bm.Variable(n.syn_u, batch_axis=0)
+        self.slow_point_update = False
+        if bp.__version__ == "2.3.4.1":
+            # define batch axis of variables for slow point analysis, only compatible with newer version of brainpy
+            self.syn_x = bm.Variable(par["syn_x_init"], batch_axis=0)
+            self.syn_u = bm.Variable(par["syn_u_init"], batch_axis=0)
+            self.h = bm.Variable(par["x0"], batch_axis=0)
+            self.y = bm.Variable(
+                bm.ones((par["batch_size"], par["n_output"])), batch_axis=0
+            )
+        else:
+            self.syn_x = bm.Variable(par["syn_x_init"])
+            self.syn_u = bm.Variable(par["syn_u_init"])
+            self.h = bm.Variable(par["x0"])
+            self.y = bm.Variable(bm.ones((par["batch_size"], par["n_output"])))
+
         self.u = bm.asarray(par["U"])
-        self.h = bm.Variable(par["x0"], batch_axis=0)
-        # self.h = bm.Variable(par["x0"])
         self.init_h = bm.TrainVar(par["x0"])
         self.alpha_std = bm.array(par["alpha_std"])
         self.alpha_stf = bm.array(par["alpha_stf"])
@@ -37,10 +39,6 @@ class Model(bp.dyn.DynamicalSystem):
         self.n_hidden = par["n_hidden"]
         self.n_output = par["n_output"]
 
-        self.y = bm.Variable(
-            bm.ones((par["batch_size"], par["n_output"])), batch_axis=0
-        )
-        # self.y = bm.Variable(bm.ones((par["batch_size"], par["n_output"])))
         self.y_hist = bm.Variable(
             bm.zeros((par["num_time_steps"], par["batch_size"], par["n_output"]))
         )
@@ -100,27 +98,50 @@ class Model(bp.dyn.DynamicalSystem):
         else:
             self.w_rnn = bm.TrainVar(all_weights["w_rnn0"])
 
+        if not train and par["cut_spec"] == []:
+            if par["shuffle_num"] == 0:
+                # do not shuffle test feedback conn, cut out them instead
+                temp_conn = [[1, 1, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [1, 1, 0, 1]]
+                conn = tile(temp_conn, (2, 2))
+                self.w_rnn = bm.TrainVar(
+                    all_weights["w_rnn0"]
+                    * cut_conn(conn, all_weights["rnn_mask_init"].numpy())
+                )
+            else:
+                shuffle_temp = [
+                    [0, 0, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 0, 0],
+                    [0, 0, 1, 0],
+                ]
+                shuffle = tile(shuffle_temp, (2, 2))
+                self.w_rnn = bm.TrainVar(
+                    shuffle_conn(
+                        shuffle,
+                        all_weights["w_rnn0"] * all_weights["rnn_mask_init"].numpy(),
+                    )
+                )
+
+        # save the new weights
         # if not train:
-        # if par['shuffle_num']==0: #do not shuffle test feedback conn, cut out them instead
-        #     temp_conn = [
-        #         [1, 1, 1, 1],
-        #         [0, 1, 1, 1],
-        #         [1, 1, 1, 1],
-        #         [1, 1, 0, 1]
-        #     ]
-        #     conn = tile(temp_conn, (2, 2))
-        #     self.w_rnn = bm.TrainVar(all_weights['w_rnn0'] * cut_conn(conn, all_weights['rnn_mask_init'].numpy()))
-        # else:
-
-        #     shuffle_temp = [
-        #         [0, 0, 0, 0],
-        #         [1, 0, 0, 0],
-        #         [0, 0, 0, 0],
-        #         [0, 0, 1, 0],
-        #     ]
-        #     shuffle = tile(shuffle_temp, (2, 2))
-        #     self.w_rnn = bm.TrainVar(shuffle_conn(shuffle, all_weights['w_rnn0']*all_weights['rnn_mask_init'].numpy()))
-
+        #     all_weights = {
+        #         "in_mask_init": all_weights["in_mask_init"].value,
+        #         "rnn_mask_init": all_weights["rnn_mask_init"].value,
+        #         "out_mask_init": all_weights["out_mask_init"].value,
+        #         "w_in0": all_weights["w_in0"].value,
+        #         "w_rnn0": self.w_rnn.value,
+        #         "w_out0": all_weights["w_out0"].value,
+        #         "b_rnn0": all_weights["b_rnn0"],
+        #         "b_out0": all_weights["b_out0"].value,
+        #     }
+        #     with open(
+        #         join(
+        #             par["save_dir"],
+        #             "init_weight_%d_lr%f.pth" % (par["rep"], par["learning_rate"]),
+        #         ),
+        #         "wb",
+        #     ) as f:
+        #         save(f, all_weights)
         # Constants
 
         self.u_init = bm.array(par["U"])
@@ -183,10 +204,14 @@ class Model(bp.dyn.DynamicalSystem):
         # w_rnn = w_rnn.at[: self.n_hidden, self.n_hidden : self.n_total].set(self.init_w_rnn[: self.n_hidden, self.n_hidden : self.n_total])
 
         w_rnn = self.EI_matrix @ w_rnn
-
-        state = self.alpha * bm.relu(
-            input @ bm.relu(self.w_in) + h_post @ w_rnn + self.b_rnn
-        ) + normal(0, self.noise_rnn, self.h.shape)
+        if not self.slow_point_update:
+            state = self.alpha * bm.relu(
+                input @ bm.relu(self.w_in) + h_post @ w_rnn + self.b_rnn
+            ) + normal(0, self.noise_rnn, self.h.shape)
+        else:
+            state = self.alpha * bm.relu(
+                input @ bm.relu(self.w_in) + h_post @ w_rnn + self.b_rnn
+            )
         self.h.value = state + self.h * (1 - self.alpha)
         self.y.value = self.h @ bm.relu(self.w_out) + self.b_out
 
