@@ -35,7 +35,7 @@ mpl.rcParams["lines.linewidth"] = 2
 plt.rcParams["figure.figsize"] = [10, 4]
 
 f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
-total_rep = 50
+total_rep = 1
 # f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
 lr = 0.02

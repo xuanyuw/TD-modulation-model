@@ -594,15 +594,15 @@ def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
         print("Saccade selectivity two way ANOVA result:")
         print(twoway_result)
 
-    h_pval_x = np.where(h_pval <= 0.01)[0]
-    m_pval_x = np.where(m_pval <= 0.01)[0]
-    l_pval_x = np.where(l_pval <= 0.01)[0]
-    z_pval_x = np.where(z_pval <= 0.01)[0]
+    h_pval_x = np.where(h_pval <= 0.005)[0]
+    m_pval_x = np.where(m_pval <= 0.005)[0]
+    l_pval_x = np.where(l_pval <= 0.005)[0]
+    z_pval_x = np.where(z_pval <= 0.005)[0]
 
     pval_y1 = max(np.nanmean(line_dict["H_ipsi"], axis=1)) + 0.11
-    pval_y2 = pval_y1 - 0.01
-    pval_y3 = pval_y2 - 0.01
-    pval_y4 = pval_y3 - 0.01
+    pval_y2 = pval_y1 - 0.005
+    pval_y3 = pval_y2 - 0.005
+    pval_y4 = pval_y3 - 0.005
 
     xticks = np.array([0, round(h_len / 2), h_len])
 

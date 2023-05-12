@@ -22,7 +22,7 @@ mpl.rcParams["font.family"] = "Arial"
 mpl.rcParams.update({"font.size": 15})
 mpl.rcParams["lines.linewidth"] = 2
 
-f_dir = "trained_withoutFB_model"
+f_dir = "test_output_noFeedback_model"
 # model_type = f_dir
 model_type = f_dir.split("_")[-2]
 total_rep = 50

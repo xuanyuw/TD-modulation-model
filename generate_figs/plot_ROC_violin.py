@@ -44,17 +44,19 @@ mpl.rcParams.update({"font.size": 15})
 mpl.rcParams["lines.linewidth"] = 2
 
 
-f_dirs = [
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
-    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model",
-]
 # f_dirs = [
-#     "crossOutput_noInterneuron_noMTConn_removeFB_model"
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
+#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_shufFeedback_model",
 # ]
+f_dirs = ["crossOutput_noInterneuron_noMTConn_removeFB_model"]
 
-plt_dir = os.path.join("generate_figs", "ROC_population_plots")
-data_dir = os.path.join("generate_figs", "ROC_population_data")
+# plt_dir = os.path.join("generate_figs", "ROC_population_plots")
+# data_dir = os.path.join("generate_figs", "ROC_population_data")
+
+plt_dir = os.path.join("generate_figs", "rmv_fb_plots", "ROC_population_plots")
+data_dir = os.path.join("generate_figs", "rmv_fb_plots", "ROC_population_data")
+
 if not os.path.exists(plt_dir):
     os.makedirs(plt_dir)
 if not os.path.exists(data_dir):
@@ -84,8 +86,8 @@ def main():
     f = open(os.path.join(plt_dir, "stat_test.txt"), "w")
     sys.stdout = f
 
-    # for model_type in ['Remove feedback']:
-    for model_type in ["Full model", "No feedback", "Shuffled feedback"]:
+    for model_type in ["Remove feedback"]:
+        # for model_type in ["Full model", "No feedback", "Shuffled feedback"]:
         print("%s Sep Sac Stats" % model_type)
         df = sep_sac_df[sep_sac_df["model"] == model_type]
         df = df.groupby(["rep", "coh", "sac"]).mean().reset_index()
@@ -93,18 +95,18 @@ def main():
         print("---------------------------")
         print("\n")
 
-    # print('Dir Sel Comb Sac Stats')
-    # plot_violin(comb_sac_df[comb_sac_df['type']=='dir'], 'dir')
+    print("Dir Sel Comb Sac Stats")
+    plot_violin(comb_sac_df[comb_sac_df["type"] == "dir"], "dir")
 
-    # print('---------------------------')
-    # print('\n')
-    # print('Sac Sel Comb Sac Stats')
-    # plot_violin(comb_sac_df[comb_sac_df['type']=='sac'], 'sac')
-    # print('---------------------------')
-    # print('\n')
+    print("---------------------------")
+    print("\n")
+    print("Sac Sel Comb Sac Stats")
+    plot_violin(comb_sac_df[comb_sac_df["type"] == "sac"], "sac")
+    print("---------------------------")
+    print("\n")
 
-    # print('Ipsi v.s. Contra Diff Comparison (Full vs. Shuf')
-    # plot_sac_roc_diff(sep_sac_df)
+    print("Ipsi v.s. Contra Diff Comparison (Full vs. Shuf")
+    plot_sac_roc_diff(sep_sac_df)
 
     f.close()
 
@@ -159,7 +161,7 @@ def plot_violin(df, roc_type):
     annot = Annotator(
         ax, pairs, data=df, x="coh", y="roc", hue="model", order=["H", "M", "L", "Z"]
     )
-    annot.configure(test="t-test_ind", text_format="star", loc="outside")
+    annot.configure(test="t-test_paired", text_format="star", loc="outside")
     annot.apply_and_annotate()
 
     ax.set(xlabel="Coherence", ylabel="Average ROC")
@@ -366,7 +368,7 @@ def plot_sac_roc_diff(df):
         hue="model",
         order=["H", "M", "L", "Z"],
     )
-    annot.configure(test="t-test_ind", text_format="star", loc="outside")
+    annot.configure(test="t-test_paired", text_format="star", loc="outside")
     annot.apply_and_annotate()
 
     ax.set(xlabel="Coherence", ylabel="AUC Differences")
