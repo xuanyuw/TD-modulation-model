@@ -141,3 +141,5 @@ dmypy.json
 *.eps
 *.txt
 *.csv
+*.fig
+*.mat
