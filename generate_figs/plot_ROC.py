@@ -50,6 +50,7 @@ rerun_calc = False
 normalize = False
 sep_sac = True
 plot_sel = True
+save_plot = False
 
 # if not sep_sac:
 plt.rcParams["figure.figsize"] = [6, 4]
@@ -230,8 +231,12 @@ def main():
     sys.stdout = f
 
     if not plot_sel:
-        plot_all_avg_ROC(H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, "dir")
-        plot_all_avg_ROC(H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, "sac")
+        plot_all_avg_ROC(
+            H_dir_ROC, M_dir_ROC, L_dir_ROC, Z_dir_ROC, "dir", save_plt=save_plot
+        )
+        plot_all_avg_ROC(
+            H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC, "sac", save_plt=save_plot
+        )
     else:
         motion_selective, saccade_selective = get_sel_cells()
 
@@ -257,10 +262,20 @@ def main():
             L_sac_ROC_sel[rep, :, : sum(s_sel)] = L_sac_ROC[rep][:, s_sel]
             Z_sac_ROC_sel[rep, :, : sum(s_sel)] = Z_sac_ROC[rep][:, s_sel]
         plot_all_avg_ROC(
-            H_dir_ROC_sel, M_dir_ROC_sel, L_dir_ROC_sel, Z_dir_ROC_sel, "dir"
+            H_dir_ROC_sel,
+            M_dir_ROC_sel,
+            L_dir_ROC_sel,
+            Z_dir_ROC_sel,
+            "dir",
+            save_plt=save_plot,
         )
         plot_all_avg_ROC(
-            H_sac_ROC_sel, M_sac_ROC_sel, L_sac_ROC_sel, Z_sac_ROC_sel, "sac"
+            H_sac_ROC_sel,
+            M_sac_ROC_sel,
+            L_sac_ROC_sel,
+            Z_sac_ROC_sel,
+            "sac",
+            save_plt=save_plot,
         )
 
     if not plot_sel:
@@ -274,7 +289,7 @@ def main():
             "Z_ipsi": Z_ipsi_dir_ROC,
             "Z_contra": Z_contra_dir_ROC,
         }
-        plot_all_avg_ROC_sep_sac(line_dict)
+        plot_all_avg_ROC_sep_sac(line_dict, save_plt=save_plot)
     else:
         motion_selective, _ = get_sel_cells()
         H_ipsi_dir_ROC_sel = np.empty((h_len, 100 * len(all_rep))) * np.nan
@@ -333,7 +348,7 @@ def main():
             "Z_ipsi": Z_ipsi_dir_ROC_sel,
             "Z_contra": Z_contra_dir_ROC_sel,
         }
-        plot_all_avg_ROC_sep_sac(line_dict)
+        plot_all_avg_ROC_sep_sac(line_dict, save_plt=save_plot)
     f.close()
 
 
@@ -457,27 +472,28 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
         L_ste = sem(L_ROC[0, :, :], axis=1, nan_policy="omit")
         Z_ste = sem(Z_ROC[0, :, :], axis=1, nan_policy="omit")
 
-    if mode == "sac":
-        # perform t-test for sacade selectivity
-        if total_rep == 1:
-            H_mean = np.nanmean(H_ROC[0, -10:, :], axis=1)
-            M_mean = np.nanmean(M_ROC[0, -10:, :], axis=1)
-            L_mean = np.nanmean(L_ROC[0, -10:, :], axis=1)
-            Z_mean = np.nanmean(Z_ROC[0, -10:, :], axis=1)
-        else:
-            H_mean = np.nanmean(H_ROC[:, -10:, :], axis=(1, 2))
-            M_mean = np.nanmean(M_ROC[:, -10:, :], axis=(1, 2))
-            L_mean = np.nanmean(L_ROC[:, -10:, :], axis=(1, 2))
-            Z_mean = np.nanmean(Z_ROC[:, -10:, :], axis=(1, 2))
-        print("One sample t-test result for saccade selectivity:")
-        print("H:")
-        print(ttest_1samp(H_mean, 0.5))
-        print("M:")
-        print(ttest_1samp(M_mean, 0.5))
-        print("L:")
-        print(ttest_1samp(L_mean, 0.5))
-        print("Z:")
-        print(ttest_1samp(Z_mean, 0.5))
+    # if mode == "sac":
+    # perform t-test for sacade selectivity
+    if total_rep == 1:
+        H_mean = np.nanmean(H_ROC[0, -10:, :], axis=1)
+        M_mean = np.nanmean(M_ROC[0, -10:, :], axis=1)
+        L_mean = np.nanmean(L_ROC[0, -10:, :], axis=1)
+        Z_mean = np.nanmean(Z_ROC[0, -10:, :], axis=1)
+    else:
+        H_mean = np.nanmean(H_ROC[:, -10:, :], axis=(1, 2))
+        M_mean = np.nanmean(M_ROC[:, -10:, :], axis=(1, 2))
+        L_mean = np.nanmean(L_ROC[:, -10:, :], axis=(1, 2))
+        Z_mean = np.nanmean(Z_ROC[:, -10:, :], axis=(1, 2))
+    # print("One sample t-test result for saccade selectivity:")
+    print("One sample t-test result for %s selectivity:" % mode)
+    print("H:")
+    print(ttest_1samp(H_mean, 0.5))
+    print("M:")
+    print(ttest_1samp(M_mean, 0.5))
+    print("L:")
+    print(ttest_1samp(L_mean, 0.5))
+    print("Z:")
+    print(ttest_1samp(Z_mean, 0.5))
 
     fig, ax = plt.subplots()
     ax.plot(H_line, label="H", color="r")
@@ -591,13 +607,14 @@ def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
         ).fit()
         twoway_result = sm.stats.anova_lm(model, type=2)
         print("\n")
-        print("Saccade selectivity two way ANOVA result:")
+        print("Direction selectivity two way ANOVA result:")
         print(twoway_result)
 
     h_pval_x = np.where(h_pval <= 0.005)[0]
     m_pval_x = np.where(m_pval <= 0.005)[0]
     l_pval_x = np.where(l_pval <= 0.005)[0]
     z_pval_x = np.where(z_pval <= 0.005)[0]
+
 
     pval_y1 = max(np.nanmean(line_dict["H_ipsi"], axis=1)) + 0.11
     pval_y2 = pval_y1 - 0.005

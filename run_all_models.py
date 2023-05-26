@@ -34,14 +34,15 @@ for rep in np.arange(par["rep"], par["rep_num"]):
                 "batch_size": par["train_batch_size"],
                 "num_iterations": par["num_train_iterations"],
                 "coherence_levels": par["train_coherence_levels"],
-                "weight_fn": "weight_%d_lr%f.pth" % (rep, lr),
+                # "weight_fn": "weight_%d_lr%f.pth" % (rep, lr),
+                "weight_fn": "weight_%d.pth" % (rep),
                 "learning_rate": lr,
             }
         )
         if not exists(dirname(par["save_dir"])):
             makedirs(dirname(par["save_dir"]))
-        print("Training model %d" % rep)
-        try_model(par, True)
+        # print("Training model %d" % rep)
+        # try_model(par, True)
 
         # Test model
         if par["shuffle_num"] == 0:  # do not shuffle test feedback conn

@@ -51,11 +51,16 @@ mpl.rcParams["lines.linewidth"] = 2
 # ]
 f_dirs = ["crossOutput_noInterneuron_noMTConn_removeFB_model"]
 
+# f_dirs = ["cutSpec_model", "cutNonspec_model"]
+
 # plt_dir = os.path.join("generate_figs", "ROC_population_plots")
 # data_dir = os.path.join("generate_figs", "ROC_population_data")
 
 plt_dir = os.path.join("generate_figs", "rmv_fb_plots", "ROC_population_plots")
 data_dir = os.path.join("generate_figs", "rmv_fb_plots", "ROC_population_data")
+
+# plt_dir = os.path.join("generate_figs", "cut_fb_plots", "ROC_population_plots")
+# data_dir = os.path.join("generate_figs", "cut_fb_plots", "ROC_population_data")
 
 if not os.path.exists(plt_dir):
     os.makedirs(plt_dir)
@@ -75,7 +80,7 @@ target_st_time = 25
 normalize = True
 plot_sel = True
 rerun_calc = False
-save_plot = True
+save_plot = False
 
 n_jobs = 8
 
@@ -87,26 +92,28 @@ def main():
     sys.stdout = f
 
     for model_type in ["Remove feedback"]:
-        # for model_type in ["Full model", "No feedback", "Shuffled feedback"]:
+        # for model_type in ["cutSpec", "cutNonspec"]:
+        # for model_type in ["Full model", "No feedback"]:  # , "Shuffled feedback"]:
         print("%s Sep Sac Stats" % model_type)
         df = sep_sac_df[sep_sac_df["model"] == model_type]
         df = df.groupby(["rep", "coh", "sac"]).mean().reset_index()
+
         plot_violin_sep_sac(df, model_type)
         print("---------------------------")
         print("\n")
 
-    print("Dir Sel Comb Sac Stats")
-    plot_violin(comb_sac_df[comb_sac_df["type"] == "dir"], "dir")
+    # print("Dir Sel Comb Sac Stats")
+    # plot_violin(comb_sac_df[comb_sac_df["type"] == "dir"], "dir")
 
-    print("---------------------------")
-    print("\n")
-    print("Sac Sel Comb Sac Stats")
-    plot_violin(comb_sac_df[comb_sac_df["type"] == "sac"], "sac")
-    print("---------------------------")
-    print("\n")
+    # print("---------------------------")
+    # print("\n")
+    # print("Sac Sel Comb Sac Stats")
+    # plot_violin(comb_sac_df[comb_sac_df["type"] == "sac"], "sac")
+    # print("---------------------------")
+    # print("\n")
 
-    print("Ipsi v.s. Contra Diff Comparison (Full vs. Shuf")
-    plot_sac_roc_diff(sep_sac_df)
+    # print("Ipsi v.s. Contra Diff Comparison (Full vs. Shuf")
+    # plot_sac_roc_diff(sep_sac_df)
 
     f.close()
 
@@ -529,6 +536,18 @@ def calc_all_ROC():
                     temp_comb_sac_df["model"] = ["Remove feedback"] * len(
                         temp_comb_sac_df.index
                     )
+                elif "cutSpec" in f_dir:
+                    temp_sep_sac_df["model"] = ["Cut spec"] * len(temp_sep_sac_df.index)
+                    temp_comb_sac_df["model"] = ["Cut spec"] * len(
+                        temp_comb_sac_df.index
+                    )
+                elif "cutNonspec" in f_dir:
+                    temp_sep_sac_df["model"] = ["Cut nonspec"] * len(
+                        temp_sep_sac_df.index
+                    )
+                    temp_comb_sac_df["model"] = ["Cut nonspec"] * len(
+                        temp_comb_sac_df.index
+                    )
                 else:
                     temp_sep_sac_df["model"] = ["Full model"] * len(
                         temp_sep_sac_df.index
@@ -555,6 +574,20 @@ def calc_all_ROC():
                 )
                 comb_sac_roc_df.to_csv(
                     os.path.join(data_dir, "removeFB_all_nets_ROC_comb_sac.csv")
+                )
+            elif "cutSpec" in f_dir:
+                sep_sac_roc_df.to_csv(
+                    os.path.join(data_dir, "cutSpec_all_nets_ROC_sep_sac.csv")
+                )
+                comb_sac_roc_df.to_csv(
+                    os.path.join(data_dir, "cutSpec_all_nets_ROC_comb_sac.csv")
+                )
+            elif "cutNonspec" in f_dir:
+                sep_sac_roc_df.to_csv(
+                    os.path.join(data_dir, "cutNonspec_all_nets_ROC_sep_sac.csv")
+                )
+                comb_sac_roc_df.to_csv(
+                    os.path.join(data_dir, "cutNonspec_all_nets_ROC_comb_sac.csv")
                 )
             else:
                 sep_sac_roc_df.to_csv(
@@ -613,13 +646,14 @@ def calc_all_ROC():
 
 def load_roc():
     if rerun_calc:
-        calc_all_ROC()
+        # calc_all_ROC()
 
         sep_sac_df = pd.DataFrame(columns=["rep", "coh", "sac", "roc", "model"])
         comb_sac_df = pd.DataFrame(columns=["rep", "coh", "type", "roc", "model"])
 
-        # mn = ['fullModel', 'noFeedback', 'shufFeedback']
+        # mn = ["fullModel", "noFeedback"]  # , "shufFeedback"]
         mn = ["removeFB"]
+        # mn = ["cutSpec", "cutNonspec"]
         for i in mn:
             if "shuf" in i:
                 for rep in all_rep:
