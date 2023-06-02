@@ -28,58 +28,65 @@ data_dir = "dPCA_allTrial_data"
 def main():
     for f_dir in f_dirs:
         model_type = f_dir.split("_")[-2]
-        sepStim_dir = os.path.join(data_dir, model_type, "sepStim")
-        if not os.path.exists(sepStim_dir):
-            os.makedirs(sepStim_dir)
-        sepSac_dir = os.path.join(data_dir, model_type, "sepSac")
-        if not os.path.exists(sepSac_dir):
-            os.makedirs(sepSac_dir)
+        # sepStim_dir = os.path.join(data_dir, model_type, "sepStim")
+        # if not os.path.exists(sepStim_dir):
+        #     os.makedirs(sepStim_dir)
+        # sepSac_dir = os.path.join(data_dir, model_type, "sepSac")
+        # if not os.path.exists(sepSac_dir):
+        #     os.makedirs(sepSac_dir)
 
-        save_fn_sepStim = os.path.join(
-            data_dir, model_type, "sepStim", "all_sepStim_acc.csv"
-        )
-        save_fn_sepSac = os.path.join(
-            data_dir, model_type, "sepSac", "all_sepSac_acc.csv"
-        )
+        # save_fn_sepStim = os.path.join(
+        #     data_dir, model_type, "sepStim", "all_sepStim_acc.csv"
+        # )
+        # save_fn_sepSac = os.path.join(
+        #     data_dir, model_type, "sepSac", "all_sepSac_acc.csv"
+        # )
+        allTrials_dir = os.path.join(data_dir, model_type, "allTrials")
+        save_fn_allTrials = os.path.join(allTrials_dir, "allTrials_acc.csv")
         if (
             rerun_calc
-            or not os.path.exists(save_fn_sepStim)
-            or not os.path.exists(save_fn_sepSac)
+            or not os.path.exists(save_fn_allTrials)
+            # or not os.path.exists(save_fn_sepStim)
+            # or not os.path.exists(save_fn_sepSac)
         ):
-            all_stim_df = pd.DataFrame()
-            all_sac_df = pd.DataFrame()
+            # all_stim_df = pd.DataFrame()
+            # all_sac_df = pd.DataFrame()
+            all_allTrials_df = pd.DataFrame()
             for rep in tqdm(range(total_rep)):
                 n = SimpleNamespace(
                     **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
                 )
-                stim_df, sac_df = get_acc_df(n, rep)
-                stim_df.to_csv(save_fn_sepStim)
-                sac_df.to_csv(save_fn_sepSac)
-                all_stim_df = pd.concat([all_stim_df, stim_df])
-                all_sac_df = pd.concat([all_sac_df, sac_df])
-            all_stim_df.to_csv(save_fn_sepStim)
-            all_sac_df.to_csv(save_fn_sepSac)
-        else:
-            all_stim_df = pd.read_csv(save_fn_sepStim)
-            all_sac_df = pd.read_csv(save_fn_sepSac)
+                allTrials_df = get_trialCnt_df_allTrials(n, rep)
+                all_allTrials_df = pd.concat([all_allTrials_df, allTrials_df])
+            all_allTrials_df.to_csv(save_fn_allTrials)
+            # stim_df, sac_df = get_acc_df(n, rep)
+            # stim_df.to_csv(save_fn_sepStim)
+            # sac_df.to_csv(save_fn_sepSac)
+            #     all_stim_df = pd.concat([all_stim_df, stim_df])
+            #     all_sac_df = pd.concat([all_sac_df, sac_df])
+            # all_stim_df.to_csv(save_fn_sepStim)
+            # all_sac_df.to_csv(save_fn_sepSac)
+        # else:
+        # all_stim_df = pd.read_csv(save_fn_sepStim)
+        # all_sac_df = pd.read_csv(save_fn_sepSac)
         # plot_acc_and_count(
         #     all_stim_df, "Stim_dir_targ_arr_combinations", sepStim_dir, save_plot
         # )
         # plot_acc_and_count(
         #     all_stim_df, "Sac_dir_targ_arr_combinations", sepSac_dir, save_plot
         # )
-        plot_acc_and_count_summary(
-            all_stim_df,
-            "%s_Stim_dir_targ_arr_combinations_summary" % model_type,
-            sepStim_dir,
-            save_plot,
-        )
-        plot_acc_and_count_summary(
-            all_sac_df,
-            "%s_Sac_dir_targ_arr_combinations_summary" % model_type,
-            sepSac_dir,
-            save_plot,
-        )
+        # plot_acc_and_count_summary(
+        #     all_stim_df,
+        #     "%s_Stim_dir_targ_arr_combinations_summary" % model_type,
+        #     sepStim_dir,
+        #     save_plot,
+        # )
+        # plot_acc_and_count_summary(
+        #     all_sac_df,
+        #     "%s_Sac_dir_targ_arr_combinations_summary" % model_type,
+        #     sepSac_dir,
+        #     save_plot,
+        # )
 
 
 def plot_acc_and_count_summary(df, title, save_dir, save_plot):
@@ -101,6 +108,47 @@ def plot_acc_and_count_summary(df, title, save_dir, save_plot):
     plt.tight_layout()
     if save_plot:
         plt.savefig(os.path.join(save_dir, title + ".png"))
+
+
+def get_trialCnt_df_allTrials(n, rep):
+    stim_dir = n.stim_dir
+    targ_arrange = recover_targ_loc(n.desired_out, n.stim_dir)[-1, :]
+
+    cond1_total = np.sum(combine_idx(n.choice == 0, stim_dir == 135, targ_arrange == 0))
+    cond2_total = np.sum(combine_idx(n.choice == 0, stim_dir == 135, targ_arrange == 1))
+    cond3_total = np.sum(combine_idx(n.choice == 0, stim_dir == 315, targ_arrange == 0))
+    cond4_total = np.sum(combine_idx(n.choice == 0, stim_dir == 315, targ_arrange == 1))
+    cond5_total = np.sum(combine_idx(n.choice == 1, stim_dir == 135, targ_arrange == 0))
+    cond6_total = np.sum(combine_idx(n.choice == 1, stim_dir == 135, targ_arrange == 1))
+    cond7_total = np.sum(combine_idx(n.choice == 1, stim_dir == 315, targ_arrange == 0))
+    cond8_total = np.sum(combine_idx(n.choice == 1, stim_dir == 315, targ_arrange == 1))
+
+    stim_label_arr = np.array([135, 135, 315, 315] * 2)
+    sac_label_arr = np.array(["left"] * 4 + ["right"] * 4)
+    targ_arrange_arr = np.array(["greenL", "redL"] * 4)
+
+    allTrials_df = pd.DataFrame(
+        {
+            "rep": np.array([rep] * len(stim_label_arr)),
+            "stim": stim_label_arr,
+            "targ_arrange": targ_arrange_arr,
+            "sac": sac_label_arr,
+            "total": np.array(
+                [
+                    cond1_total,
+                    cond2_total,
+                    cond3_total,
+                    cond4_total,
+                    cond5_total,
+                    cond6_total,
+                    cond7_total,
+                    cond8_total,
+                ]
+            ),
+        }
+    )
+
+    return allTrials_df
 
 
 def get_acc_df(n, rep):
