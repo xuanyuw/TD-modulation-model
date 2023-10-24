@@ -15,12 +15,14 @@ correct_only = True
 rerun_calc = False
 save_plot = True
 
-f_dirs = [
-    "test_output_full_model",
-    "test_output_noFeedback_model",
-    "cutSpec_model",
-    "cutNonspec_model",
-]
+# f_dirs = [
+#     "test_output_full_model",
+#     "test_output_noFeedback_model",
+#     "cutSpec_model",
+#     "cutNonspec_model",
+# ]
+
+f_dirs = ["trained_eqNum_removeFB_model"]
 
 data_dir = "dPCA_allTrial_data"
 
@@ -28,44 +30,44 @@ data_dir = "dPCA_allTrial_data"
 def main():
     for f_dir in f_dirs:
         model_type = f_dir.split("_")[-2]
-        # sepStim_dir = os.path.join(data_dir, model_type, "sepStim")
-        # if not os.path.exists(sepStim_dir):
-        #     os.makedirs(sepStim_dir)
-        # sepSac_dir = os.path.join(data_dir, model_type, "sepSac")
-        # if not os.path.exists(sepSac_dir):
-        #     os.makedirs(sepSac_dir)
+        sepStim_dir = os.path.join(data_dir, model_type, "sepStim")
+        if not os.path.exists(sepStim_dir):
+            os.makedirs(sepStim_dir)
+        sepSac_dir = os.path.join(data_dir, model_type, "sepSac")
+        if not os.path.exists(sepSac_dir):
+            os.makedirs(sepSac_dir)
 
-        # save_fn_sepStim = os.path.join(
-        #     data_dir, model_type, "sepStim", "all_sepStim_acc.csv"
-        # )
-        # save_fn_sepSac = os.path.join(
-        #     data_dir, model_type, "sepSac", "all_sepSac_acc.csv"
-        # )
-        allTrials_dir = os.path.join(data_dir, model_type, "allTrials")
-        save_fn_allTrials = os.path.join(allTrials_dir, "allTrials_acc.csv")
+        save_fn_sepStim = os.path.join(
+            data_dir, model_type, "sepStim", "all_sepStim_acc.csv"
+        )
+        save_fn_sepSac = os.path.join(
+            data_dir, model_type, "sepSac", "all_sepSac_acc.csv"
+        )
+        # allTrials_dir = os.path.join(data_dir, model_type, "allTrials")
+        # save_fn_allTrials = os.path.join(allTrials_dir, "allTrials_acc.csv")
         if (
             rerun_calc
-            or not os.path.exists(save_fn_allTrials)
-            # or not os.path.exists(save_fn_sepStim)
-            # or not os.path.exists(save_fn_sepSac)
+            # or not os.path.exists(save_fn_allTrials)
+            or not os.path.exists(save_fn_sepStim)
+            or not os.path.exists(save_fn_sepSac)
         ):
-            # all_stim_df = pd.DataFrame()
-            # all_sac_df = pd.DataFrame()
-            all_allTrials_df = pd.DataFrame()
+            all_stim_df = pd.DataFrame()
+            all_sac_df = pd.DataFrame()
+            # all_allTrials_df = pd.DataFrame()
             for rep in tqdm(range(total_rep)):
                 n = SimpleNamespace(
                     **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
                 )
-                allTrials_df = get_trialCnt_df_allTrials(n, rep)
-                all_allTrials_df = pd.concat([all_allTrials_df, allTrials_df])
-            all_allTrials_df.to_csv(save_fn_allTrials)
-            # stim_df, sac_df = get_acc_df(n, rep)
-            # stim_df.to_csv(save_fn_sepStim)
-            # sac_df.to_csv(save_fn_sepSac)
-            #     all_stim_df = pd.concat([all_stim_df, stim_df])
-            #     all_sac_df = pd.concat([all_sac_df, sac_df])
-            # all_stim_df.to_csv(save_fn_sepStim)
-            # all_sac_df.to_csv(save_fn_sepSac)
+                #     allTrials_df = get_trialCnt_df_allTrials(n, rep)
+                #     all_allTrials_df = pd.concat([all_allTrials_df, allTrials_df])
+                # all_allTrials_df.to_csv(save_fn_allTrials)
+                stim_df, sac_df = get_acc_df(n, rep)
+                # stim_df.to_csv(save_fn_sepStim)
+                # sac_df.to_csv(save_fn_sepSac)
+                all_stim_df = pd.concat([all_stim_df, stim_df])
+                all_sac_df = pd.concat([all_sac_df, sac_df])
+            all_stim_df.to_csv(save_fn_sepStim)
+            all_sac_df.to_csv(save_fn_sepSac)
         # else:
         # all_stim_df = pd.read_csv(save_fn_sepStim)
         # all_sac_df = pd.read_csv(save_fn_sepSac)

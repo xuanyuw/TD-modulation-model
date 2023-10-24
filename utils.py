@@ -364,8 +364,8 @@ def load_test_data(f_dir, f_name):
     max_iter = get_max_iter(test_table)
     h = test_table["h_iter%d" % max_iter][:]
     y = test_table["y_hist_iter%d" % max_iter][:]
-    syn_x = test_table["syn_x_iter%d" % max_iter][:]
-    syn_u = test_table["syn_u_iter%d" % max_iter][:]
+    # syn_x = test_table["syn_x_iter%d" % max_iter][:]
+    # syn_u = test_table["syn_u_iter%d" % max_iter][:]
     neural_input = test_table["neural_in_iter%d" % max_iter][:]
     choice = np.argmax(y, 2)[-1, :]
     desired_out = test_table["target_iter%d" % max_iter][:]
@@ -377,8 +377,8 @@ def load_test_data(f_dir, f_name):
     return {
         "h": h,
         "y": y,
-        "syn_x": syn_x,
-        "syn_u": syn_u,
+        # "syn_x": syn_x,
+        # "syn_u": syn_u,
         "neural_input": neural_input,
         "choice": choice,
         "desired_out": desired_out,

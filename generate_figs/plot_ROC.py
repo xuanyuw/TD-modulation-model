@@ -37,7 +37,9 @@ mpl.rcParams.update({"font.size": 15})
 mpl.rcParams["lines.linewidth"] = 2
 
 
-f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+f_dir = "F:\\Github\\TD-modulation-model\\full_model_ROC_recalc_withNorm"
+data_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+# f_dir = data_dir
 total_rep = 50
 # f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
@@ -46,11 +48,11 @@ n_jobs = 8
 
 stim_st_time = 45
 target_st_time = 25
-rerun_calc = False
-normalize = False
-sep_sac = True
+rerun_calc = True
+normalize = True
+sep_sac = False
 plot_sel = True
-save_plot = False
+save_plot = True
 
 # if not sep_sac:
 plt.rcParams["figure.figsize"] = [6, 4]
@@ -66,6 +68,9 @@ fn_sac = os.path.join(f_dir, "all_ROC_sac_%dnet.pkl" % total_rep)
 
 
 def main():
+    if not os.path.exists(f_dir):
+        os.makedirs(f_dir)
+
     motion_rng = np.concatenate(
         (np.arange(0, 40), np.arange(80, 120), np.arange(160, 170), np.arange(180, 190))
     )
@@ -108,7 +113,7 @@ def main():
         for rep in all_rep:
             # print('Running ROC calculation for rep %d ... '%rep)
             n = SimpleNamespace(
-                **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
+                **load_test_data(data_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
             )
             normalized_h = min_max_normalize(n.h)
             if normalize:
@@ -225,10 +230,13 @@ def main():
         with open(fn_sac, "rb") as f:
             [H_sac_ROC, M_sac_ROC, L_sac_ROC, Z_sac_ROC] = load(f)
 
-    f = open(
-        os.path.join("generate_figs", "Fig5", "stat_test_%dnet.txt" % total_rep), "w"
-    )
-    sys.stdout = f
+    # f = open(
+    #     os.path.join(
+    #         "generate_figs", "Fig5", "stat_test_%dnet.txt" % total_rep
+    #     ),
+    #     "w",
+    # )
+    # sys.stdout = f
 
     if not plot_sel:
         plot_all_avg_ROC(
@@ -349,19 +357,22 @@ def main():
             "Z_contra": Z_contra_dir_ROC_sel,
         }
         plot_all_avg_ROC_sep_sac(line_dict, save_plt=save_plot)
-    f.close()
+    # f.close()
+
+
+#
 
 
 def get_sel_cells():
     if not os.path.exists(
-        os.path.join(f_dir, "motion_selective_cell_idx.npy")
-    ) or not os.path.exists(os.path.join(f_dir, "saccade_selective_cell_idx.npy")):
+        os.path.join(data_dir, "motion_selective_cell_idx.npy")
+    ) or not os.path.exists(os.path.join(data_dir, "saccade_selective_cell_idx.npy")):
         motion_selective = np.zeros((len(all_rep), 200))
         saccade_selective = np.zeros((len(all_rep), 200))
         for rep in all_rep:
             # print('Running ROC calculation for rep %d ... '%rep)
             n = SimpleNamespace(
-                **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
+                **load_test_data(data_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
             )
             normalized_h = min_max_normalize(n.h)
             if plot_sel:
@@ -376,9 +387,9 @@ def get_sel_cells():
         with open(os.path.join(f_dir, "saccade_selective_cell_idx.npy"), "wb") as f:
             np.save(f, saccade_selective)
     else:
-        with open(os.path.join(f_dir, "motion_selective_cell_idx.npy"), "rb") as f:
+        with open(os.path.join(data_dir, "motion_selective_cell_idx.npy"), "rb") as f:
             motion_selective = np.load(f)
-        with open(os.path.join(f_dir, "saccade_selective_cell_idx.npy"), "rb") as f:
+        with open(os.path.join(data_dir, "saccade_selective_cell_idx.npy"), "rb") as f:
             saccade_selective = np.load(f)
     return motion_selective, saccade_selective
 
@@ -538,7 +549,7 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "all_ROC_%s.png" % mode))
         plt.savefig(os.path.join(pic_dir, "all_ROC_%s.pdf" % mode), format="pdf")
-        plt.savefig(os.path.join(pic_dir, "all_ROC_%s.eps" % mode), format="eps")
+        # plt.savefig(os.path.join(pic_dir, "all_ROC_%s.eps" % mode), format="eps")
         plt.close(fig)
 
 
@@ -615,7 +626,6 @@ def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
     l_pval_x = np.where(l_pval <= 0.005)[0]
     z_pval_x = np.where(z_pval <= 0.005)[0]
 
-
     pval_y1 = max(np.nanmean(line_dict["H_ipsi"], axis=1)) + 0.11
     pval_y2 = pval_y1 - 0.005
     pval_y3 = pval_y2 - 0.005
@@ -671,7 +681,7 @@ def plot_all_avg_ROC_sep_sac(line_dict, save_plt=True):
             os.makedirs(pic_dir)
         plt.savefig(os.path.join(pic_dir, "all_ROC_dir_sep_sac.png"))
         plt.savefig(os.path.join(pic_dir, "all_ROC_dir_sep_sac.pdf"), format="pdf")
-        plt.savefig(os.path.join(pic_dir, "all_ROC_dir_sep_sac.eps"), format="eps")
+        # plt.savefig(os.path.join(pic_dir, "all_ROC_dir_sep_sac.eps"), format="eps")
         plt.close(fig)
 
 

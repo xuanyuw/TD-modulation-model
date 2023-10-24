@@ -21,7 +21,7 @@ from utils import (
     get_pref_idx,
     find_pref_targ_color_motion_cell,
 )
-from scipy.stats import ttest_rel, sem
+from scipy.stats import ttest_rel, sem, ttest_ind, wilcoxon
 from scipy.io import savemat, loadmat
 from tqdm import tqdm
 
@@ -45,7 +45,7 @@ target_st_time = 25
 normalize = True
 plot_sel = True
 rerun_calc = False
-save_plot = True
+save_plot = False
 
 # define plot window
 st = 17
@@ -105,6 +105,14 @@ def plot_pCorr_data(rep):
     ipsi_choice_ste = sem(ipsi_pCorr_choice, axis=1)
     contra_choice_ste = sem(contra_pCorr_choice, axis=1)
 
+    ipsi_stim_var = np.var(ipsi_pCorr_stim, axis=1)
+    contra_stim_var = np.var(contra_pCorr_stim, axis=1)
+    ipsi_choice_var = np.var(ipsi_pCorr_choice, axis=1)
+    contra_choice_var = np.var(contra_pCorr_choice, axis=1)
+
+    stim_diff_var = np.var(ipsi_pCorr_stim - contra_pCorr_stim, axis=1)
+    choice_diff_var = np.var(ipsi_pCorr_choice - contra_pCorr_choice, axis=1)
+
     ipsi_stim_mean = np.mean(ipsi_pCorr_stim, axis=1)
     contra_stim_mean = np.mean(contra_pCorr_stim, axis=1)
     ipsi_choice_mean = np.mean(ipsi_pCorr_choice, axis=1)
@@ -163,6 +171,9 @@ def create_plot(data_dict):
 
     stim_pval = ttest_rel(ipsi_pCorr_stim, contra_pCorr_stim, axis=1).pvalue
     choice_pval = ttest_rel(ipsi_pCorr_choice, contra_pCorr_choice, axis=1).pvalue
+
+    # stim_pval = wilcoxon(ipsi_pCorr_stim, contra_pCorr_stim, axis=1).pvalue
+    # choice_pval = wilcoxon(ipsi_pCorr_choice, contra_pCorr_choice, axis=1).pvalue
     stim_pval_x = np.where(stim_pval <= 0.005)[0]
     choice_pval_x = np.where(choice_pval <= 0.005)[0]
 

@@ -35,13 +35,14 @@ mpl.rcParams.update({"font.size": 15})
 mpl.rcParams["lines.linewidth"] = 2
 
 
-# f_dir = (
-#     "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
-# )
+f_dir = (
+    "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
+)
 # plt_dir = os.path.join("generate_figs", "Fig7", "7a_paired_weight_ff_fb_comp")
 
-f_dir = "trained_eqNum_removeFB_model"
-plt_dir = os.path.join("generate_figs", "rmv_fb_plots", "rmv_fb_trained_eq_conn")
+# f_dir = "trained_eqNum_removeFB_model"
+# f_dir = "cutSpec_model"
+plt_dir = os.path.join("generate_figs", "Fig7")
 
 
 if not os.path.exists(plt_dir):
@@ -49,7 +50,9 @@ if not os.path.exists(plt_dir):
 
 
 model_type = f_dir.split("_")[-2]
-total_rep = 50
+total_rep = range(50)
+# total_rep = [2, 5, 8, 14, 16, 19, 25, 44]
+# total_rep = np.array([x for x in range(50) if x not in [2, 5, 8, 14, 16, 19, 25, 44]])
 total_shuf = 100
 lr = 2e-2
 plot_sel = True
@@ -83,7 +86,7 @@ def find_weights(from_arr, to_arr, mask, w):
 def load_data():
     if rerun_calculation:
         df = pd.DataFrame(columns=["conn", "weights", "conn_type", "module", "rep"])
-        for rep in range(total_rep):
+        for rep in total_rep:
             print("Loading rep {}".format(rep))
             # laod files
             if plot_trained:
@@ -230,34 +233,38 @@ def load_data():
 
 
 def plot_w_distr(df, rep=None):
+    df = df[df["rep"].isin(total_rep)]
     # if rep is None:
     # df["conn_cat"] = np.where(
     #     np.logical_or(df["conn"] == "mr-tr", df["conn"] == "mg-tg"),
     #     "Paired",
     #     "Non-paired",
     # )
-    # df["conn_type"] = np.where(df["conn_type"] == "ff", "Feedforward", "Feedback")
+    df["conn_type"] = np.where(df["conn_type"] == "ff", "Feedforward", "Feedback")
+
+    popu_df = (
+        df[["rep", "conn", "conn_type", "weights"]]
+        .groupby(["rep", "conn", "conn_type"])
+        .mean()
+        .reset_index()
+    )
 
     # popu_df = (
-    #     df[["rep", "conn_cat", "conn_type", "weights"]]
-    #     .groupby(["rep", "conn_cat", "conn_type"])
+    #     df[["rep", "conn", "weights", "conn_type"]]
+    #     .groupby(["rep", "conn", "conn_type"])
     #     .mean()
     #     .reset_index()
     # )
-
-    popu_df = (
-        df[["rep", "conn", "weights"]].groupby(["rep", "conn"]).mean().reset_index()
-    )
-
+    # popu_df.to_csv(join(plt_dir, title + "popu_data.csv"))
     fig, ax = plt.subplots()
     # color_palette = {'H': '#FF0000', 'M': '#00FF00', 'L':'#0000FF', 'Z': 'k'}
     colors = ["#FF0000", "#0080FE"]
     # sns.violinplot(x = 'conn_cat', y = 'weights', hue = 'conn_type', data = df, inner='points', ax=ax, palette=colors)
-    # sns.barplot(
-    #     x="conn_type", y="weights", hue="conn_cat", data=popu_df, ax=ax, palette=colors
-    # )
+    sns.barplot(
+        x="conn", y="weights", hue="conn_type", data=popu_df, ax=ax, palette=colors
+    )
 
-    sns.barplot(x="conn", y="weights", data=popu_df, ax=ax, palette=colors)
+    # sns.barplot(x="conn", y="weights", data=popu_df, ax=ax, palette=colors)
     # plt.setp(ax.collections, alpha=.9)
     ax.set(xlabel="", ylabel="Weight")
     plt.legend(frameon=False, loc="best")
@@ -267,18 +274,18 @@ def plot_w_distr(df, rep=None):
     #     (("Feedforward", "Paired"), ("Feedforward", "Non-paired")),
     #     (("Feedback", "Paired"), ("Feedback", "Non-paired")),
     # ]
-    pairs = [
-        ("mr-tr", "mg-tg"),
-        ("mr-tg", "mg-tr"),
-        ("mr-tr", "mr-tg"),
-        ("mg-tr", "mg-tg"),
-    ]
-    # annot = Annotator(
-    #     ax, pairs, data=popu_df, x="conn_type", y="weights", hue="conn_cat"
-    # )
-    annot = Annotator(ax, pairs, data=popu_df, x="conn", y="weights")
-    annot.configure(test="t-test_paired", text_format="star", loc="outside")
-    annot.apply_and_annotate()
+    # pairs = [
+    #     ("mr-tr", "mg-tg"),
+    #     ("mr-tg", "mg-tr"),
+    #     ("mr-tr", "mr-tg"),
+    #     ("mg-tr", "mg-tg"),
+    # ]
+    # # annot = Annotator(
+    # #     ax, pairs, data=popu_df, x="conn_type", y="weights", hue="conn_cat"
+    # # )
+    # annot = Annotator(ax, pairs, data=popu_df, x="conn", y="weights")
+    # annot.configure(test="t-test_paired", text_format="star", loc="outside")
+    # annot.apply_and_annotate()
     plt.tight_layout()
 
     plt.savefig(join(plt_dir, title + ".png"), format="png", bbox_inches="tight")
