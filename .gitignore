@@ -1,3 +1,5 @@
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -130,6 +132,7 @@ dmypy.json
 .vscode/
 *.pdf
 *.npy
+*.pkl
 *_model/
 *_plots/
 *.png
