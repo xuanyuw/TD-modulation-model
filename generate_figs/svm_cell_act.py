@@ -27,6 +27,11 @@ mpl.rcParams["font.family"] = "Arial"
 mpl.rcParams.update({"font.size": 15})
 mpl.rcParams["lines.linewidth"] = 2
 
+import warnings
+
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
+
 
 f_dirs = [#"crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model",
           "crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_noFeedback_model",
@@ -43,8 +48,8 @@ if not os.path.exists(data_dir):
 
 def main():
     # plot_exp_var_ratio(f_dirs)
-    run_pca_all_model(f_dirs, True)
-    # run_SVM_all_model(f_dirs, True)
+    all_act_mat_pca = run_pca_all_model(f_dirs, False)
+    run_SVM_all_model(f_dirs, all_act_mat_pca, True)
     
     return
 
@@ -114,32 +119,49 @@ def run_pca_all_model(f_dirs, rerun_calc, total_rep=50, n_components=4):
 
 ############## run SVM #####################
 
-
-def run_SVM_all_model(f_dirs, rerun_calc, total_rep=2, n_components=4, k=10):
-    if rerun_calc:
-        all_acc = []
-        for f_dir in f_dirs:
-            acc = []
+def run_SVM_all_model(f_dirs, act_all_pca, rerun_calc, total_rep=50, n_components=4, k=10):
+    all_model_acc_li = []
+    all_coef_li = []
+    all_intercept_li = []
+    for i,f_dir in enumerate(f_dirs):
+        if rerun_calc:
+            model_acc = []
+            model_coef_li = []
+            model_intercept_li = []
             for rep in tqdm(range(total_rep)):
-                _, act_mat, label = load_sac_act(f_dir, rep, True)
-                acc_t = np.zeros((act_mat.shape[-1]))
+                act_mat = act_all_pca[i][rep]
+                _, _, label = load_sac_act(f_dir, rep, True)
+                acc_t = []
+                coef_t = []
+                intercept_t = []
                 # ste_t = np.zeros((act_mat.shape[-1]))
                 for t in range(act_mat.shape[-1]):
                     # run SVM with cross validation
                     clf = LinearSVC(random_state=0)
-                    cv_result = cross_validate(clf, act_mat[:, :, t], label, cv=k, return_estimator=True)
+                    cv_result = cross_validate(clf, act_mat[:, :, t].T, label, cv=k, return_estimator=True)
                     clf_li = cv_result['estimator']
-
-                    acc_t[t] = cv_result['test_score']
-                    # ste_t[t] = sem(cv_result['test_score'])    
-                acc.append(acc_t)
-            np.stack(acc, axis=-1)
-            all_acc.append(acc)
-        all_acc = np.stack(all_acc, axis=-1)
-        np.save(os.path.join(pic_dir, "all_acc.npy"), all_acc)
-    else:
-        all_acc = np.load(os.path.join(pic_dir, "all_acc.npy"), allow_pickle=True)
-    return all_acc
+                    acc_t.append(cv_result['test_score']) # save the accuracy of the fitted SVM model at each time point t
+                    # save the coefficient and the intercept of the fitted SVM model
+                    coef = np.vstack([x.coef_ for x in clf_li])
+                    intercept = np.vstack([x.intercept_ for x in clf_li])
+                    coef_t.append(coef)
+                    intercept_t.append(intercept)
+                acc_t = np.stack(acc_t, axis=0) # the shape of acc_t is: # time points x # CV
+                coef_t = np.stack(coef_t, axis=0) # the shape of coef_t is: # time points x # CV x n_components
+                intercept_t = np.squeeze(np.stack(intercept_t, axis=0)) # the shape of intercept_t is # time points x # CV
+                model_acc.append(acc_t) # save the acurracy for each model repetition
+                model_intercept_li.append(intercept_t)
+                model_coef_li.append(coef_t)
+            model_acc = np.stack(model_acc, axis=-1) # the shape of all_acc is: # time points x # CV x # model reps
+            model_coef_li = np.stack(model_coef_li, axis=-1) # the shape of all_coef is: # time points x # CV x n_components x # model reps
+            model_intercept_li = np.stack(model_intercept_li, axis=-1) # the shape of all_intercept is: # time points x # CV x # model reps
+            dump((model_acc, model_coef_li, model_intercept_li), open(os.path.join(data_dir, "all_svm_acc_%s.npy"%(f_dir.split("_")[-2])), "wb"))
+        else:
+            model_acc, model_coef_li, model_intercept_li = load(open(os.path.join(data_dir, "all_svm_acc_%s.npy"%(f_dir.split("_")[-2])), "rb"))
+        all_model_acc_li.append(model_acc)   
+        all_coef_li.append(model_coef_li)
+        all_intercept_li.append(model_intercept_li)
+    return all_model_acc_li, all_coef_li, all_intercept_li
 
 
 ############## tool functions #####################
