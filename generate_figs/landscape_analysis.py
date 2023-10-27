@@ -57,11 +57,10 @@ def find_choice_axis(coefficients, intercept):
     """
     get the vector perpendicular to the SVM hyperplane as the choice axis
     """
-    # TODO: correct orthogonal vector calculation
-    vector = np.array(coefficients + [intercept])
-    random_vector = np.random.randn(*vector.shape)
-    orthogonal_vector = random_vector - np.dot(random_vector, vector) * vector
-    return orthogonal_vector
+    v = np.array(coefficients + [intercept])
+    u = np.copy(v)
+    u[-1] = -(v[:-1] @ u[:-1]) / v[-1]
+    return u
 
 def project_to_choice_axis(perpendicular_vector, data):
     """
@@ -82,7 +81,7 @@ def project_all_data(all_act_mat_pca, all_coef_li, all_intercept_li, all_model_a
             model_intercept = intercept[-1, best_model_idx, rep]
             model_coef = coef[-1, best_model_idx, :, rep]
             perpendicular_vector = find_choice_axis(model_coef, model_intercept)
-            proj = project_to_choice_axis(perpendicular_vector, act_mat_pca)
+            proj = project_to_choice_axis(perpendicular_vector, act_mat_pca[rep])
             all_proj_li.append(proj)
     return all_proj_li
 

@@ -50,9 +50,9 @@ if not os.path.exists(data_dir):
 
 def main():
     # plot_exp_var_ratio(f_dirs)
-    all_act_mat_pca = run_pca_all_model(f_dirs, False)
+    all_act_mat_pca = run_pca_all_model(f_dirs, True)
     all_model_acc_li, _, _ = run_SVM_all_model(
-        f_dirs, all_act_mat_pca, rerun_calc=False
+        f_dirs, all_act_mat_pca, rerun_calc=True
     )
     plot_svm_acc(all_model_acc_li)
     return
@@ -92,7 +92,7 @@ def plot_exp_var_ratio(f_dirs, pic_dir=pic_dir, n_components=20):
 
 
 ############## run PCA on single trial #####################
-def fit_PCA(act_mat, n_components=4):
+def fit_PCA(act_mat, n_components=3):
     """
     Run PCA on the activity matrix
     """
@@ -101,9 +101,9 @@ def fit_PCA(act_mat, n_components=4):
     return pca
 
 
-def run_pca_single_model(f_dir, rep, n_components=4, reload_data=False):
+def run_pca_single_model(f_dir, rep, n_components=3, reload_data=False):
     mean_act_mat, act_mat, _ = load_sac_act(f_dir, rep, reload=reload_data)
-    pca = fit_PCA(mean_act_mat, n_components=4)
+    pca = fit_PCA(mean_act_mat, n_components=3)
     act_mat_pca = np.empty((n_components, act_mat.shape[1], act_mat.shape[-1]))
     for trial in range(act_mat.shape[1]):
         for t in range(act_mat.shape[-1]):
@@ -118,7 +118,7 @@ def run_pca_single_model(f_dir, rep, n_components=4, reload_data=False):
     return act_mat_pca
 
 
-def run_pca_all_model(f_dirs, rerun_calc, total_rep=50, n_components=4):
+def run_pca_all_model(f_dirs, rerun_calc, total_rep=50, n_components=3):
     all_act_mat_pca = []
     for f_dir in f_dirs:
         if rerun_calc:
@@ -153,7 +153,7 @@ def run_pca_all_model(f_dirs, rerun_calc, total_rep=50, n_components=4):
 
 
 def run_SVM_all_model(
-    f_dirs, act_all_pca, rerun_calc, total_rep=50, n_components=4, k=10
+    f_dirs, act_all_pca, rerun_calc, total_rep=50, n_components=3, k=10
 ):
     all_model_acc_li = []
     all_coef_li = []
