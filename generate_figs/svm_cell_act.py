@@ -50,11 +50,11 @@ if not os.path.exists(data_dir):
 
 def main():
     # plot_exp_var_ratio(f_dirs)
-    all_act_mat_pca = run_pca_all_model(f_dirs, True)
+    all_act_mat_pca = run_pca_all_model(f_dirs, False, n_components=5)
     all_model_acc_li, _, _ = run_SVM_all_model(
         f_dirs, all_act_mat_pca, rerun_calc=True
     )
-    plot_svm_acc(all_model_acc_li)
+    # plot_svm_acc(all_model_acc_li) # depricated, only for plotting time-series SVM accuracy
     return
 
 
@@ -103,7 +103,7 @@ def fit_PCA(act_mat, n_components=3):
 
 def run_pca_single_model(f_dir, rep, n_components=3, reload_data=False):
     mean_act_mat, act_mat, _ = load_sac_act(f_dir, rep, reload=reload_data)
-    pca = fit_PCA(mean_act_mat, n_components=3)
+    pca = fit_PCA(mean_act_mat, n_components=n_components)
     act_mat_pca = np.empty((n_components, act_mat.shape[1], act_mat.shape[-1]))
     for trial in range(act_mat.shape[1]):
         for t in range(act_mat.shape[-1]):
@@ -153,7 +153,7 @@ def run_pca_all_model(f_dirs, rerun_calc, total_rep=50, n_components=3):
 
 
 def run_SVM_all_model(
-    f_dirs, act_all_pca, rerun_calc, total_rep=50, n_components=3, k=10
+    f_dirs, act_all_pca, rerun_calc, total_rep=50, n_components=3, k=10, decision_win_size=5
 ):
     all_model_acc_li = []
     all_coef_li = []
@@ -166,46 +166,29 @@ def run_SVM_all_model(
             for rep in tqdm(range(total_rep)):
                 act_mat = act_all_pca[i][rep]
                 _, _, label = load_sac_act(f_dir, rep, True)
-                acc_t = []
-                coef_t = []
-                intercept_t = []
-                # ste_t = np.zeros((act_mat.shape[-1]))
-                for t in range(act_mat.shape[-1]):
-                    # run SVM with cross validation
-                    clf = LinearSVC(random_state=0)
-                    cv_result = cross_validate(
-                        clf, act_mat[:, :, t].T, label, cv=k, return_estimator=True
+
+                mean_decision_act = np.mean(act_mat[:, :, -decision_win_size:], axis=-1).T
+                clf = LinearSVC(random_state=0)
+                cv_result = cross_validate(
+                        clf, mean_decision_act, label, cv=k, return_estimator=True
                     )
-                    clf_li = cv_result["estimator"]
-                    acc_t.append(
-                        cv_result["test_score"]
-                    )  # save the accuracy of the fitted SVM model at each time point t
-                    # save the coefficient and the intercept of the fitted SVM model
-                    coef = np.vstack([x.coef_ for x in clf_li])
-                    intercept = np.vstack([x.intercept_ for x in clf_li])
-                    coef_t.append(coef)
-                    intercept_t.append(intercept)
-                acc_t = np.stack(
-                    acc_t, axis=0
-                )  # the shape of acc_t is: # time points x # CV
-                coef_t = np.stack(
-                    coef_t, axis=0
-                )  # the shape of coef_t is: # time points x # CV x n_components
-                intercept_t = np.squeeze(
-                    np.stack(intercept_t, axis=0)
-                )  # the shape of intercept_t is # time points x # CV
-                model_acc.append(acc_t)  # save the acurracy for each model repetition
-                model_intercept_li.append(intercept_t)
-                model_coef_li.append(coef_t)
+                clf_li = cv_result["estimator"]
+                coef = np.vstack([x.coef_ for x in clf_li])
+                intercept = np.vstack([x.intercept_ for x in clf_li])
+                model_acc.append(cv_result["test_score"])  # save the acurracy for each model repetition
+                model_intercept_li.append(intercept)
+                model_coef_li.append(coef)
+
+
             model_acc = np.stack(
                 model_acc, axis=-1
-            )  # the shape of all_acc is: # time points x # CV x # model reps
+            )  # the shape of all_acc is:  # CV x # model reps
             model_coef_li = np.stack(
                 model_coef_li, axis=-1
-            )  # the shape of all_coef is: # time points x # CV x n_components x # model reps
+            )  # the shape of all_coef is: # CV x n_components x # model reps
             model_intercept_li = np.stack(
                 model_intercept_li, axis=-1
-            )  # the shape of all_intercept is: # time points x # CV x # model reps
+            )  # the shape of all_intercept is:  # CV x # model reps
             dump(
                 (model_acc, model_coef_li, model_intercept_li),
                 open(
@@ -244,7 +227,7 @@ def plot_svm_acc(all_model_acc_li):
             color=plt.gca().lines[-1].get_color(),
         )
     ylim = plt.gca().get_ylim()
-    plt.vlines(20, min(ylim), max(ylim), linestyles="dashed", colors="k")
+    plt.vlines(25, min(ylim), max(ylim), linestyles="dashed", colors="k")
     plt.legend()
     plt.xlabel("Time (ms)")
     plt.ylabel("Accuracy")
