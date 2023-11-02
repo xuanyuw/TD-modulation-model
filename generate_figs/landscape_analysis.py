@@ -63,9 +63,19 @@ def main():
         all_model_acc_li,
         rerun_calc=False,
     )
+
+    # find max and min in all_pos_li, define spatial bins
+    min_pos = np.inf
+    max_pos = -np.inf
+    for i in range(len(all_proj_li)):
+        for j in range(len(all_proj_li[i])):
+            min_pos = min(min_pos, np.min(np.vstack(all_proj_li[i][j])))
+            max_pos = max(max_pos, np.max(np.vstack(all_proj_li[i][j])))
+    bins = np.linspace(min_pos, max_pos, 60)
+
     # plot_proj_example(all_proj_li, 3)
     all_potential_li, all_pos_li, all_mean_act_li = calc_all_potential(
-        all_proj_li, rerun_calc=False
+        all_proj_li, bins, rerun_calc=False
     )
     all_potential_agg = []
     model_fig_dir = os.path.join(pic_dir, "temp_landscape")
@@ -84,6 +94,7 @@ def main():
                 model_fig_dir,
                 data_dir,
                 f_dirs,
+                bins,
             )
         else:
             rep_potential_agg = []
@@ -98,76 +109,10 @@ def main():
     avg_potential_agg = np.nanmean(all_potential_agg, axis=0)
     avg_mean_act = np.mean(np.array(all_mean_act_li), axis=1)
 
-    # find max and min in all_pos_li
-    min_pos = np.inf
-    max_pos = -np.inf
-    for i in range(len(all_pos_li)):
-        for j in range(len(all_pos_li[i])):
-            min_pos = min(min_pos, np.min(np.vstack(all_pos_li[i][j])))
-            max_pos = max(max_pos, np.max(np.vstack(all_pos_li[i][j])))
-    bins = np.linspace(min_pos, max_pos, 60)
-
     plot_mean_potential_heatmap(avg_potential_agg, avg_mean_act, bins, model_fig_dir)
 
-    # for i in range(len(f_dirs)):
-    #     model_fig_dir = os.path.join(
-    #         pic_dir, "temp_landscape_%s" % (f_dirs[i].split("_")[-2])
-    #     )
-    #     if not os.path.exists(model_fig_dir):
-    #         os.makedirs(model_fig_dir)
-    #     plot_model_potential_heatmap(
-    #         all_potential_li[i], all_pos_li[i], all_mean_act_li[i], model_fig_dir
-    #     )
 
-
-def plot_proj_example(all_proj_li, rep):
-    _, _, label = load_sac_act(f_dirs[0], rep, reload=False)
-    example = all_proj_li[0][rep][:, -1]
-    plt.scatter(example[label == 0], np.ones(sum(label == 0)), c="g")
-    plt.scatter(example[label == 1], np.ones(sum(label == 1)) * 2, c="r")
-    plt.show()
-
-
-def plot_SVM_example(all_act_mat_pca, all_coef_li, all_intercept_li, rep):
-    _, _, label = load_sac_act(f_dirs[0], rep, reload=False)
-    plot_SVM(
-        all_act_mat_pca[0][rep][:, :, -1],
-        label,
-        all_coef_li[0][-1][0, :, rep],
-        all_intercept_li[0][-1, 0, rep],
-    )
-    # save plot
-    # plt.savefig(os.path.join(pic_dir, "SVM_example.png"), dpi=300, bbox_inches="tight")
-
-
-def plot_SVM(X, Y, coef, intercept):
-    """
-    plot the SVM hyperplane and the choice axis
-    """
-    # plot the SVM hyperplane
-
-    z = lambda x, y: (-intercept - coef[0] * x - coef[1] * y) / coef[2]
-
-    tmp = np.linspace(-10, 10, 30)
-    x, y = np.meshgrid(tmp, tmp)
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    X = X.T
-    ax.plot3D(X[Y == 0, 0], X[Y == 0, 1], X[Y == 0, 2], "og", alpha=0.5)
-    ax.plot3D(X[Y == 1, 0], X[Y == 1, 1], X[Y == 1, 2], "or", alpha=0.5)
-    ax.plot_surface(x, y, z(x, y))
-
-    # plot the choice axis
-    orth_base = np.linspace(-10, 10, 100)
-    ax.plot3D(
-        orth_base * coef[0],
-        orth_base * coef[1],
-        orth_base * coef[2],
-        color="black",
-    )
-    ax.view_init(8, -12)
-
-
+################################# data projection #################################
 def project_to_choice_axis(choice_axis, model_intercept, data):
     """
     project data to the choice axis
@@ -215,37 +160,59 @@ def project_all_data(
     return all_proj_li
 
 
+################################# potential calculation #################################
+
+
 def calc_potential_t(pos_t, speed_t):
-    unique_pos_t = np.unique(pos_t)
-    potential_t = []
-    for pos in unique_pos_t:
+    potential_t = np.nan * np.ones(len(pos_t))
+    for pos in np.unique(pos_t):
         idx = pos_t <= pos
         potential_tx = np.sum(speed_t[idx])
-        potential_t.append(potential_tx)
+        potential_t[pos_t == pos] = potential_tx
     return np.array(potential_t)
 
 
-def calculate_potential(proj, label):
+def calculate_potential(proj, label, bins):
     """
     Output:
-        potential: list, len=#conditions, each element is a 2d array, shape=(#unique_pos, #time)
-        positions: nested list, len=#conditions, each element is a 2d array, shape=(#unique_pos, #time)
+        potential: list, len=#conditions, each element is a 2d array, shape=(#bins, #time)
+        positions: nested list, len=#conditions, each element is a 2d array, shape=(#pos, #time)
         mean_act: 2d array, shape=(#conditions, # time)
     """
     cond = np.unique(label)
     potential = []
     positions = []
     mean_act = []
+    binned_proj = np.digitize(proj, bins) - 1
+
     for c in cond:
-        cond_mean = np.mean(proj[label == c], axis=0)
-        cond_arr = proj[label == c]
-        dxdt = np.diff(cond_arr, axis=1) * cond_mean[1:]
+        cond_Ext = np.empty((len(bins), proj.shape[1]))
+        for t in range(proj.shape[1]):
+            for x in range(len(bins)):
+                cond_x_arr = proj[(binned_proj[:, t] == x + 1) & (label == c), t]
+                if len(cond_x_arr) == 0:
+                    continue
+                Ext = np.mean(cond_x_arr, axis=0)
+                cond_Ext[x, t] = Ext
+        # find the corresponding Ext for each position and time point
+        cond_proj_arr = proj[label == c]
+        binned_cond_proj = binned_proj[label == c]
+        cond_point_Ext = np.ones(cond_proj_arr.shape)
+        for t in range(proj.shape[1]):
+            for x in range(len(bins)):
+                idx = binned_cond_proj[:, t] == x + 1
+                if np.sum(idx) == 0:
+                    continue
+                cond_point_Ext[idx, t] = cond_Ext[x, t]
+
+        cond_mean = np.mean(cond_proj_arr, axis=0)
+        dxdt = np.diff(cond_proj_arr, axis=1) * cond_point_Ext[:, :-1]
         cond_potential = []
         cond_pos = []
         for t in range(dxdt.shape[1]):
-            potential_t = calc_potential_t(cond_arr[:, t + 1], dxdt[:, t])
+            potential_t = calc_potential_t(binned_cond_proj[:, t + 1], dxdt[:, t])
             cond_potential.append(potential_t)
-            cond_pos.append(cond_arr[:, t + 1])
+            cond_pos.append(cond_proj_arr[:, t + 1])
         cond_potential = np.stack(cond_potential, axis=1)
         cond_pos = np.stack(cond_pos, axis=1)
 
@@ -256,7 +223,7 @@ def calculate_potential(proj, label):
     return potential, positions, mean_act
 
 
-def calc_all_potential(all_proj_li, rerun_calc=False):
+def calc_all_potential(all_proj_li, bins, rerun_calc=False):
     """
     Output:
         all_potential_li: list, len=#models, each element is a list, len=#reps, each element is a list, len=#conditions, each element is a 2d array, shape=(#unique_pos, #time)
@@ -274,7 +241,7 @@ def calc_all_potential(all_proj_li, rerun_calc=False):
             for rep in tqdm(range(len(model_proj_li))):
                 proj = model_proj_li[rep]
                 _, _, label = load_sac_act(f_dirs[m_idx], rep, reload=False)
-                potential, positions, mean_act = calculate_potential(proj, label)
+                potential, positions, mean_act = calculate_potential(proj, label, bins)
                 model_potential_li.append(potential)
                 model_pos_li.append(positions)
                 model_mean_act_li.append(mean_act)
@@ -298,6 +265,30 @@ def calc_all_potential(all_proj_li, rerun_calc=False):
     return all_potential_li, all_pos_li, all_mean_act_li
 
 
+def bin_potential(potential, positions, bins):
+    potential_mat = np.vstack(potential)
+    pos_mat = np.vstack(positions)
+    binned_pos = np.digitize(pos_mat, bins) - 1
+    potential_agg = aggregate_potential(potential_mat, binned_pos, bins)
+    return potential_agg
+
+
+def aggregate_potential(potential, binned_pos, bins):
+    """
+    aggregate potential to bins
+    """
+    unique_pos = np.unique(binned_pos)
+    agg_potential = np.nan * np.ones((len(bins), potential.shape[1]))
+    for pos in unique_pos:
+        for t in range(potential.shape[1]):
+            idx = binned_pos[:, t] == pos
+            if np.sum(idx) == 0:
+                continue
+            agg_potential[pos, t] = np.mean(potential[:, t][idx], axis=0)
+    return agg_potential
+
+
+################### plotting functions ####################
 def plot_mean_potential_heatmap(
     avg_all_potential_agg, avg_mean_act, bins, model_fig_dir
 ):
@@ -318,8 +309,8 @@ def plot_mean_potential_heatmap(
         potential_agg = avg_all_potential_agg[i]
         plt.imshow(
             potential_agg,
-            vmax=500,
-            vmin=min_potential,
+            vmax=1500,
+            vmin=-500,
             aspect="auto",
             cmap="jet",
             origin="lower",
@@ -353,27 +344,22 @@ def plot_mean_potential_heatmap(
 
 
 def plot_model_potential_heatmap(
-    rep, potential_li, unique_pos_li, mean_act_li, model_fig_dir, data_dir, f_dirs
+    rep, potential_li, unique_pos_li, mean_act_li, model_fig_dir, data_dir, f_dirs, bins
 ):
     # get postion range and potential range
-    min_potential = min_pos = np.inf
-    max_potential = max_pos = -np.inf
+    min_potential = np.inf
+    max_potential = -np.inf
     for i in range(len(potential_li)):
-        max_pos = max(max_pos, np.max(np.vstack(unique_pos_li[i])))
-        min_pos = min(min_pos, np.min(np.vstack(unique_pos_li[i])))
         max_potential = max(max_potential, np.max(np.vstack(potential_li[i])))
         min_potential = min(min_potential, np.min(np.vstack(potential_li[i])))
 
-    pos_range = (min_pos, max_pos)
     potential_range = (min_potential, max_potential)
 
     plt.figure(figsize=(12, 6))
     rep_potential_agg = []
     for i in range(len(potential_li)):
         plt.subplot(2, 2, i + 1)
-        potential_agg, bins = bin_potential(
-            potential_li[i], unique_pos_li[i], pos_range
-        )
+        potential_agg = bin_potential(potential_li[i], unique_pos_li[i], bins)
         potential_agg = plot_single_heatmap(
             potential_agg,
             bins,
@@ -427,39 +413,55 @@ def plot_single_heatmap(potential_agg, bins, mean_act, potential_range, n_pos_bi
     return potential_agg
 
 
-def bin_potential(potential, positions, pos_range, n_pos_bin=60):
-    potential_mat = np.vstack(potential)
-    pos_mat = np.vstack(positions)
-    binned_pos, bins = bin_pos(pos_mat, n_pos_bin, pos_range)
-    potential_agg = aggregate_potential(potential_mat, binned_pos, bins)
-    return potential_agg, bins
+############################### SVM illustration ###############################
 
 
-def aggregate_potential(potential, binned_pos, bins):
+def plot_proj_example(all_proj_li, rep):
+    _, _, label = load_sac_act(f_dirs[0], rep, reload=False)
+    example = all_proj_li[0][rep][:, -1]
+    plt.scatter(example[label == 0], np.ones(sum(label == 0)), c="g")
+    plt.scatter(example[label == 1], np.ones(sum(label == 1)) * 2, c="r")
+    plt.show()
+
+
+def plot_SVM_example(all_act_mat_pca, all_coef_li, all_intercept_li, rep):
+    _, _, label = load_sac_act(f_dirs[0], rep, reload=False)
+    plot_SVM(
+        all_act_mat_pca[0][rep][:, :, -1],
+        label,
+        all_coef_li[0][-1][0, :, rep],
+        all_intercept_li[0][-1, 0, rep],
+    )
+    # save plot
+    # plt.savefig(os.path.join(pic_dir, "SVM_example.png"), dpi=300, bbox_inches="tight")
+
+
+def plot_SVM(X, Y, coef, intercept):
     """
-    aggregate potential to bins
+    plot the SVM hyperplane and the choice axis
     """
-    unique_pos = np.unique(binned_pos)
-    agg_potential = np.nan * np.ones((len(bins), potential.shape[1]))
-    for pos in unique_pos:
-        for t in range(potential.shape[1]):
-            idx = binned_pos[:, t] == pos
-            if np.sum(idx) == 0:
-                continue
-            agg_potential[np.digitize(pos, bins) - 1, t] = np.mean(
-                potential[:, t][idx], axis=0
-            )
-    return agg_potential
+    # plot the SVM hyperplane
 
+    z = lambda x, y: (-intercept - coef[0] * x - coef[1] * y) / coef[2]
 
-def bin_pos(pos, n_pos_bin, pos_range):
-    # flat_pos = np.ravel(np.hstack(pos))
-    # min_pos = np.min(flat_pos)
-    # max_pos = np.max(flat_pos)
-    bins = np.linspace(min(pos_range), max(pos_range), n_pos_bin)
-    pos_bins = np.digitize(pos, bins)
-    binned_pos = (pos_bins - 1) * (bins[1] - bins[0]) + bins[0]
-    return binned_pos, bins
+    tmp = np.linspace(-10, 10, 30)
+    x, y = np.meshgrid(tmp, tmp)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    X = X.T
+    ax.plot3D(X[Y == 0, 0], X[Y == 0, 1], X[Y == 0, 2], "og", alpha=0.5)
+    ax.plot3D(X[Y == 1, 0], X[Y == 1, 1], X[Y == 1, 2], "or", alpha=0.5)
+    ax.plot_surface(x, y, z(x, y))
+
+    # plot the choice axis
+    orth_base = np.linspace(-10, 10, 100)
+    ax.plot3D(
+        orth_base * coef[0],
+        orth_base * coef[1],
+        orth_base * coef[2],
+        color="black",
+    )
+    ax.view_init(8, -12)
 
 
 if __name__ == "__main__":
