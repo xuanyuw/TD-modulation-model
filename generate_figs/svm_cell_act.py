@@ -50,10 +50,8 @@ if not os.path.exists(data_dir):
 
 def main():
     # plot_exp_var_ratio(f_dirs)
-    all_act_mat_pca = run_pca_all_model(f_dirs, False, n_components=5)
-    all_model_acc_li, _, _ = run_SVM_all_model(
-        f_dirs, all_act_mat_pca, rerun_calc=True
-    )
+    all_act_mat_pca = run_pca_all_model(f_dirs, True, n_components=5, reload_data=True)
+    all_model_acc_li, _, _ = run_SVM_all_model(f_dirs, all_act_mat_pca, rerun_calc=True)
     # plot_svm_acc(all_model_acc_li) # depricated, only for plotting time-series SVM accuracy
     return
 
@@ -118,14 +116,18 @@ def run_pca_single_model(f_dir, rep, n_components=3, reload_data=False):
     return act_mat_pca
 
 
-def run_pca_all_model(f_dirs, rerun_calc, total_rep=50, n_components=3):
+def run_pca_all_model(
+    f_dirs, rerun_calc, total_rep=50, n_components=3, reload_data=False
+):
     all_act_mat_pca = []
     for f_dir in f_dirs:
         if rerun_calc:
             act_mat_pca = []
             for rep in tqdm(range(total_rep)):
                 act_mat_pca.append(
-                    run_pca_single_model(f_dir, rep, n_components=n_components)
+                    run_pca_single_model(
+                        f_dir, rep, n_components=n_components, reload_data=reload_data
+                    )
                 )
             dump(
                 act_mat_pca,
@@ -153,7 +155,7 @@ def run_pca_all_model(f_dirs, rerun_calc, total_rep=50, n_components=3):
 
 
 def run_SVM_all_model(
-    f_dirs, act_all_pca, rerun_calc, total_rep=50, n_components=3, k=10, decision_win_size=5
+    f_dirs, act_all_pca, rerun_calc, total_rep=50, k=10, decision_win_size=5
 ):
     all_model_acc_li = []
     all_coef_li = []
@@ -167,18 +169,21 @@ def run_SVM_all_model(
                 act_mat = act_all_pca[i][rep]
                 _, _, label = load_sac_act(f_dir, rep, True)
 
-                mean_decision_act = np.mean(act_mat[:, :, -decision_win_size:], axis=-1).T
+                mean_decision_act = np.mean(
+                    act_mat[:, :, -decision_win_size:], axis=-1
+                ).T
                 clf = LinearSVC(random_state=0)
                 cv_result = cross_validate(
-                        clf, mean_decision_act, label, cv=k, return_estimator=True
-                    )
+                    clf, mean_decision_act, label, cv=k, return_estimator=True
+                )
                 clf_li = cv_result["estimator"]
                 coef = np.vstack([x.coef_ for x in clf_li])
                 intercept = np.vstack([x.intercept_ for x in clf_li])
-                model_acc.append(cv_result["test_score"])  # save the acurracy for each model repetition
+                model_acc.append(
+                    cv_result["test_score"]
+                )  # save the acurracy for each model repetition
                 model_intercept_li.append(intercept)
                 model_coef_li.append(coef)
-
 
             model_acc = np.stack(
                 model_acc, axis=-1
@@ -259,7 +264,7 @@ def load_sac_act(
     lr=0.02,
     normalize=True,
     plot_sel=True,
-    plot_correct=True,
+    plot_correct=False,
 ):
     """
     return:
