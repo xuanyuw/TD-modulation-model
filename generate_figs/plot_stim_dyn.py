@@ -13,20 +13,12 @@ from utils import *
 from types import SimpleNamespace
 from pickle import load, dump
 from tqdm import tqdm
-
-from sklearn.decomposition import PCA
-from sklearn.svm import LinearSVC
-from sklearn.model_selection import cross_validate
 from scipy.stats import sem
+import seaborn as sns
+import pandas as pd
 
-from itertools import chain
-
-from svm_cell_act import run_pca_all_model, run_SVM_all_model, load_sac_act
-from landscape_analysis import (
-    project_all_data,
-    calculate_potential,
-    aggregate_potential,
-)
+from svm_cell_act import run_pca_all_model, run_SVM_all_model
+from landscape_analysis import project_all_data, calc_exp_speed, calc_cond_potential
 
 # plot settings
 plt.rcParams["figure.figsize"] = [10, 4]
@@ -75,179 +67,222 @@ def main():
         for j in range(len(all_proj_li[i])):
             min_pos = min(min_pos, np.min(np.vstack(all_proj_li[i][j])))
             max_pos = max(max_pos, np.max(np.vstack(all_proj_li[i][j])))
-    bins = np.linspace(min_pos, max_pos, 60)
+    bins = np.linspace(min_pos, max_pos, 100)
 
     (
         all_potential_li,
-        all_pos_li,
-        all_mean_act_li,
+        _,
         stim_label_map,
-    ) = calc_all_stim_potential(all_proj_li, bins, rerun_calc=False)
+    ) = calc_all_stim_potential(all_proj_li, bins, rerun_calc=True)
     model_fig_dir = os.path.join(pic_dir, "stim_potential_stimOn200ms")
     if not os.path.exists(model_fig_dir):
         os.makedirs(model_fig_dir)
-    all_stim_potential = []
-    if replot_single_model:
-        for rep in tqdm(range(total_rep)):
-            rep_potential_li = [li[rep] for li in all_potential_li]
-            rep_pos_li = [li[rep] for li in all_pos_li]
-            rep_stim_potential = plot_model_stim_potential(
-                rep,
-                rep_potential_li,
-                rep_pos_li,
-                bins,
-                (24, 34),
-                stim_label_map,
-                f_dirs,
-                model_fig_dir,
+    plot_all_stim_potential(
+        all_potential_li, bins, (40, 41), stim_label_map, model_fig_dir
+    )
+
+
+def flip_arr(arr, bins):
+    if type(arr) == np.ma.core.MaskedArray:
+        arr = arr.filled(np.nan)
+    z_idx = np.digitize(0, bins)
+    non_nan_idx = np.where(~np.isnan(arr))[0]
+    non_nan_idx = non_nan_idx[non_nan_idx >= z_idx]
+    arr_seg = np.flip(arr[non_nan_idx])
+    flipped = np.ones_like(arr) * np.nan
+    flipped[z_idx - len(non_nan_idx) + 1 : z_idx + 1] = arr_seg
+    return flipped
+
+
+def plot_stim_low_point(
+    all_potential_li, bins, time_range, stim_label_map, model_fig_dir
+):
+    all_potential_li = np.array(all_potential_li)[
+        :, :, :, :, time_range[0] : time_range[1]
+    ]
+    potential_t = np.nanmean(all_potential_li, axis=4)
+    mean_potential = np.nanmean(potential_t, axis=1)
+    sem_potential = sem(potential_t, axis=1, nan_policy="omit")
+    min_idx = np.nanargmin(mean_potential, axis=2)
+    # get the min potential and sem
+    min_p = np.nanmin(mean_potential, axis=2)
+    min_sem = np.empty_like(min_p)
+    for i in range(min_p.shape[0]):
+        for j in range(min_p.shape[1]):
+            min_sem[i, j] = sem_potential[i, j, min_idx[i, j]]
+    df = pd.DataFrame(columns=["model", "condition", "min_potential", "sem"])
+    for i in range(min_p.shape[0]):
+        for j in range(min_p.shape[1]):
+            df = df.append(
+                {
+                    "model": f_dirs[i].split("_")[-2],
+                    "condition": list(stim_label_map.keys())[j],
+                    "min_potential": min_p[i, j],
+                    "sem": min_sem[i, j],
+                },
+                ignore_index=True,
             )
-            all_stim_potential.append(rep_stim_potential)
-        all_stim_potential = np.stack(all_stim_potential, axis=0)
-        with open(os.path.join(data_dir, "all_stim_potential.pkl"), "wb") as f:
-            dump(all_stim_potential, f)
-    else:
-        with open(os.path.join(data_dir, "all_stim_potential.pkl"), "rb") as f:
-            all_stim_potential = load(f)
-    plot_all_stim_potential(all_stim_potential, bins, stim_label_map, model_fig_dir)
+
+    # plot bar with error bar sem
+    plt.figure(figsize=(12, 6))
+    g = sns.barplot(
+        x="condition",
+        y="min_potential",
+        hue="model",
+        data=df,
+        palette=sns.color_palette("Set2"),
+        capsize=0.1,
+        order=[
+            "H_c0",
+            "M_c0",
+            "L_c0",
+            "Z_c0",
+            "H_c1",
+            "M_c1",
+            "L_c1",
+            "Z_c1",
+        ],
+    )
+    g.set_xticklabels(g.get_xticklabels(), rotation=30)
+    plt.tight_layout()
+    plt.savefig(os.path.join(model_fig_dir, "all_stim_potential_bar.png"), dpi=300)
+    plt.close()
 
 
-def plot_all_stim_potential(all_stim_potential, bins, stim_label_map, model_fig_dir):
+def plot_all_stim_potential(
+    all_potential_li, bins, time_range, stim_label_map, model_fig_dir
+):
+    # TODO: fix positions
     color_arr = [
         "#3F6454",
-        "#6D8B39",
         "#9CB027",
+        "#6D8B39",
         "#F4DE0A",
-        "#DF9F1E",
-        "#D78724",
-        "#C65734",
-        "#944027",
     ]
-    plt.figure(figsize=(10, 4))
-    for i in range(len(all_stim_potential[0])):
-        mean_potential = np.mean(all_stim_potential[:, i, :], axis=0)
 
-        for i in range(len(stim_label_map)):
-            mean_potential = np.mean(all_stim_potential[:, i], axis=0)
-            sem_potential = sem(all_stim_potential[:, i], axis=0)
-            plt.plot(
-                bins[:-1],
-                mean_potential,
-                color=color_arr[i],
-                label=list(stim_label_map.keys())[i + 1],
+    all_potential_li = np.array(all_potential_li)[
+        :, :, :, :, time_range[0] : time_range[1]
+    ]
+    potential_t = np.nanmean(all_potential_li, axis=4)
+    mean_potential = np.nanmean(potential_t, axis=1)
+    sem_potential = sem(potential_t, axis=1, nan_policy="omit")
+    z_idx = np.digitize(0, bins)
+
+    for i in range(mean_potential.shape[0]):
+        for j in range(mean_potential.shape[1]):
+            temp = potential_t[i, :, j, :]
+            # find positions with less than 4 valid values
+            valid_sum = np.sum(~np.isnan(temp), axis=0)
+            invalid_idx = np.where(valid_sum <= 3)[0]
+            invalid_st_idx = min(invalid_idx[invalid_idx > z_idx])
+            mean_potential[i, j, invalid_st_idx:] = np.nan
+            sem_potential[i, j, invalid_st_idx:] = np.nan
+
+    z_idx = np.digitize(0, bins)
+
+    plt.figure(figsize=(12, 6))
+    for i in range(potential_t.shape[0]):
+        if i == 0:
+            plt.subplot(2, 2, i + 1)
+        else:
+            plt.subplot(
+                2, 2, i + 1, sharey=plt.subplot(2, 2, 1), sharex=plt.subplot(2, 2, 1)
             )
+        for j in range(len(stim_label_map)):
+            # if j % 2 == 0:
+            #     mean_p = flip_arr(mean_potential[i, j, :], bins)
+            #     sem_p = flip_arr(sem_potential[i, j, :], bins)
+            # else:
+            mean_p = mean_potential[i, j, :]
+            sem_p = sem_potential[i, j, :]
+            mean_p[:z_idx] = np.nan
+            sem_p[:z_idx] = np.nan
+            plt.plot(
+                bins,
+                mean_p,
+                color=color_arr[j],
+                label=list(stim_label_map.keys())[j],
+            )
+            # plt.ylim(np.nanmin(mean_potential) - 0.1, np.nanmax(mean_potential) + 0.1)
+
             plt.fill_between(
-                bins[:-1],
-                mean_potential - sem_potential,
-                mean_potential + sem_potential,
-                color=color_arr[i],
+                bins,
+                mean_p - sem_p,
+                mean_p + sem_p,
+                color=color_arr[j],
                 alpha=0.3,
             )
-    plt.legend()
-    plt.xlabel("Position")
-    plt.ylabel("Potential")
-    plt.tight_layout()
-    plt.savefig(os.path.join(model_fig_dir, "all_stim_potential.png"), dpi=300)
-    plt.close()
-
-
-def plot_model_stim_potential(
-    rep, potential_li, pos_li, bins, time_range, stim_label_map, f_dirs, model_fig_dir
-):
-    rep_stim_potential = []
-    plt.figure(figsize=(10, 6))
-    for i in range(len(potential_li)):
-        plt.subplot(2, 2, i + 1)
-        single_stim_potential = plot_single_stim_potential(
-            potential_li[i], pos_li[i], bins, time_range, stim_label_map
-        )
-        rep_stim_potential.append(single_stim_potential)
+        plt.xlabel("Position")
+        plt.ylabel("Potential")
         plt.title(f_dirs[i].split("_")[-2])
+    plt.legend()
+    # plt.ylim(np.max(mean_potential) + 0.1, np.min(mean_potential) - 0.1)
+
     plt.tight_layout()
-    plt.savefig(os.path.join(model_fig_dir, "stim_potential_%d.png" % rep), dpi=300)
+    # plt.savefig(os.path.join(model_fig_dir, "all_stim_potential.png"), dpi=300)
+    plt.savefig(os.path.join(model_fig_dir, "all_stim_potential.pdf"), format="pdf")
     plt.close()
-    return np.stack(rep_stim_potential, axis=0)
-
-
-def plot_single_stim_potential(potential, pos, bins, time_range, stim_label_map):
-    color_arr = [
-        "#3F6454",
-        "#6D8B39",
-        "#9CB027",
-        "#F4DE0A",
-        "#DF9F1E",
-        "#D78724",
-        "#C65734",
-        "#944027",
-    ]
-    min_pos = np.inf
-    max_pos = -np.inf
-    all_mean_potential = []
-    for i in range(len(potential)):
-        binned_pos = np.digitize(pos[i], bins) - 1
-        min_pos = min(min_pos, np.min(binned_pos))
-        max_pos = max(max_pos, np.max(binned_pos))
-        agg_potential = aggregate_potential(potential[i], binned_pos, bins)
-        potential_seg = agg_potential[:, time_range[0] : time_range[1]]
-        mean_potential = np.nanmean(potential_seg, axis=1)
-        all_mean_potential.append(mean_potential)
-        sem_potential = sem(potential_seg, axis=1, nan_policy="omit")
-        plt.plot(
-            bins,
-            mean_potential,
-            color=color_arr[i],
-            label=list(stim_label_map.keys())[i],
-        )
-        plt.fill_between(
-            bins,
-            mean_potential - sem_potential,
-            mean_potential + sem_potential,
-            color=color_arr[i],
-            alpha=0.3,
-        )
-    # plt.legend()
-    plt.xlabel("Position")
-    plt.ylabel("Potential")
-    # plt.xticks(np.linspace(min_pos, max_pos, 5), labels=np.linspace(bins[min_pos], bins[max_pos], 5))
-    return np.stack(all_mean_potential, axis=0)
 
 
 def calc_all_stim_potential(all_proj_li, bins, rerun_calc=False):
     if rerun_calc:
         all_potential_li = []
-        all_pos_li = []
         all_mean_act_li = []
         for m_idx, model_proj_li in enumerate(all_proj_li):
             model_potential_li = []
-            model_pos_li = []
             model_mean_act_li = []
             for rep in tqdm(range(len(model_proj_li))):
                 proj = model_proj_li[rep]
                 stim_label, stim_label_map = get_stim_cond_idx(f_dirs[m_idx], rep, True)
-                potential, positions, mean_act = calculate_potential(
-                    proj, stim_label, bins
-                )
+                potential, mean_act = calc_model_potential(proj, stim_label, bins)
                 model_potential_li.append(potential)
-                model_pos_li.append(positions)
                 model_mean_act_li.append(mean_act)
             all_potential_li.append(model_potential_li)
-            all_pos_li.append(model_pos_li)
             all_mean_act_li.append(model_mean_act_li)
         with open(os.path.join(data_dir, "stim_potential_li.pkl"), "wb") as f:
             dump(all_potential_li, f)
-        with open(os.path.join(data_dir, "stim_pos_li.pkl"), "wb") as f:
-            dump(all_pos_li, f)
         with open(os.path.join(data_dir, "stim_mean_act_li.pkl"), "wb") as f:
             dump(all_mean_act_li, f)
     else:
         with open(os.path.join(data_dir, "stim_potential_li.pkl"), "rb") as f:
             all_potential_li = load(f)
-        with open(os.path.join(data_dir, "stim_pos_li.pkl"), "rb") as f:
-            all_pos_li = load(f)
         with open(os.path.join(data_dir, "stim_mean_act_li.pkl"), "rb") as f:
             all_mean_act_li = load(f)
         with open(os.path.join(data_dir, "stim_label_map.pkl"), "rb") as f:
             stim_label_map = load(f)
-    return all_potential_li, all_pos_li, all_mean_act_li, stim_label_map
+    return all_potential_li, all_mean_act_li, stim_label_map
+
+
+def calc_model_potential(proj, label, bins):
+    """
+    Output:
+        potential: 2d array, shape=(#bins, #time)
+        mean_act: 2d array, shape=(#conditions, # time)
+    """
+    n_labels = len(np.unique(label))
+    cond = np.arange(n_labels) + 1
+    mean_act = []
+    binned_proj = np.digitize(proj, bins) - 1
+    potential = []
+
+    all_exp_point_speed = np.nan * np.ones((len(bins), proj.shape[1] - 1))
+    for c in cond:
+        if sum(label == c) == 0:
+            potential.append(np.nan * np.ones((len(bins), proj.shape[1] - 1)))
+            mean_act.append(np.nan * np.ones((proj.shape[1])))
+            continue
+
+        binned_cond_proj = binned_proj[label == c]
+        cond_mean = np.nanmean(binned_cond_proj, axis=0)
+
+        x_diff = np.diff(binned_cond_proj, axis=1)
+        exp_speed = calc_exp_speed(binned_cond_proj, x_diff, len(bins))
+        cond_potential = calc_cond_potential(exp_speed, bins, c)
+        potential.append(cond_potential)
+
+        mean_act.append(cond_mean)
+    mean_act = np.stack(mean_act, axis=0)
+    return potential, mean_act
 
 
 def get_stim_cond_idx(
@@ -255,27 +290,28 @@ def get_stim_cond_idx(
     rep,
     reload,
     lr=0.02,
-    plot_correct=True,
+    plot_correct=False,
 ):
     if reload:
         n = SimpleNamespace(
             **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
         )
         coh_dict = find_coh_idx(n.stim_level)
-        stim_label = np.zeros(len(n.stim_dir))
+        stim_label = np.zeros(len(n.stim_level))
         stim_label_map = {}
         i = 1
         for coh in coh_dict.keys():
-            for stim in np.unique(n.stim_dir):
-                temp_key = "%s_%d" % (coh, stim)
-                stim_label_map[temp_key] = i
-                i += 1
+            # for c in np.unique(n.choice):
+            # temp_key = "%s_c%d" % (coh, c)
+            temp_key = coh
+            stim_label_map[temp_key] = i
+            i += 1
         j = 1
         for coh in coh_dict.keys():
-            for stim in np.unique(n.stim_dir):
-                temp_idx = combine_idx(coh_dict[coh], n.stim_dir == stim)
-                stim_label[temp_idx] = j
-                j += 1
+            # for c in np.unique(n.choice):
+            temp_idx = combine_idx(coh_dict[coh])
+            stim_label[temp_idx] = j
+            j += 1
         if plot_correct:
             stim_label = stim_label[n.correct_idx]
         # save stim_label and stim_label_map

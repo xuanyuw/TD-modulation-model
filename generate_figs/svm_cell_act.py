@@ -50,8 +50,12 @@ if not os.path.exists(data_dir):
 
 def main():
     # plot_exp_var_ratio(f_dirs)
-    all_act_mat_pca = run_pca_all_model(f_dirs, True, n_components=5, reload_data=True)
-    all_model_acc_li, _, _ = run_SVM_all_model(f_dirs, all_act_mat_pca, rerun_calc=True)
+    all_act_mat_pca = run_pca_all_model(
+        f_dirs, rerun_calc=True, n_components=5, reload_data=False
+    )
+    all_model_acc_li, _, _ = run_SVM_all_model(
+        f_dirs, all_act_mat_pca, rerun_calc=False
+    )
     # plot_svm_acc(all_model_acc_li) # depricated, only for plotting time-series SVM accuracy
     return
 

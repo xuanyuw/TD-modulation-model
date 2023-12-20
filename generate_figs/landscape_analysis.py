@@ -37,7 +37,9 @@ f_dirs = [
     "cutSpec_model",
 ]
 pic_dir = os.path.join("new_dyn_analysis", "plots")
+proj_data_dir = os.path.join("new_dyn_analysis", "data")
 data_dir = os.path.join("new_dyn_analysis", "data")
+# data_dir = os.path.join("new_dyn_analysis", "data", "50bins")
 
 total_rep = 50
 replot_single_model = False
@@ -67,28 +69,40 @@ def main():
     bins = np.linspace(min_pos, max_pos, 100)
 
     # plot_proj_example(all_proj_li, 3)
-    all_potential_li, all_mean_act_li = calc_all_potential(
+    all_potential_dict, all_mean_act_dict = calc_all_potential(
         all_proj_li, bins, rerun_calc=False
     )
-    model_fig_dir = os.path.join(pic_dir, "temp_landscape")
+    model_fig_dir = os.path.join(pic_dir, "temp_landscape_50bins")
     if not os.path.exists(model_fig_dir):
         os.makedirs(model_fig_dir)
-    for rep in tqdm(range(total_rep)):
-        if replot_single_model:
-            rep_potential_li = [li[rep] for li in all_potential_li]
-            rep_mean_act_li = [li[rep] for li in all_mean_act_li]
-            plot_model_potential_heatmap(
-                rep,
-                rep_potential_li,
-                rep_mean_act_li,
-                model_fig_dir,
-                data_dir,
-                f_dirs,
-                bins,
-            )
-    # plot mean potential heatmap
+        # for rep in tqdm(range(total_rep)):
+        #     if replot_single_model:
+        #         rep_potential_li = [li[rep] for li in all_potential_li]
+        #         rep_mean_act_li = [li[rep] for li in all_mean_act_li]
+        #         plot_model_potential_heatmap(
+        #             rep,
+        #             rep_potential_li,
+        #             rep_mean_act_li,
+        #             model_fig_dir,
+        #             data_dir,
+        #             f_dirs,
+        #             bins,
+        #         )
+        # plot mean potential heatmap
+        # find max and min of avg_all_potential_agg
+    avg_all_potential_agg = np.nanmean(np.array(all_potential_dict["all"]), axis=1)
+    min_potential = np.nanmin(avg_all_potential_agg)
+    max_potential = np.nanmax(avg_all_potential_agg)
 
-    plot_mean_potential_heatmap(all_potential_li, all_mean_act_li, bins, model_fig_dir)
+    for k in list(all_potential_dict.keys()):
+        plot_mean_potential_heatmap(
+            all_potential_dict[k],
+            all_mean_act_dict[k],
+            bins,
+            model_fig_dir,
+            k,
+            (min_potential, max_potential),
+        )
 
 
 ################################# data projection #################################
@@ -134,7 +148,7 @@ def project_all_data(
         with open(os.path.join(data_dir, "all_proj_li.pkl"), "wb") as f:
             dump(all_proj_li, f)
     else:
-        with open(os.path.join(data_dir, "all_proj_li.pkl"), "rb") as f:
+        with open(os.path.join(proj_data_dir, "all_proj_li.pkl"), "rb") as f:
             all_proj_li = load(f)
     return all_proj_li
 
@@ -149,28 +163,33 @@ def calc_exp_speed(binned_pos, speed, n_bins):
             idx = binned_pos[:, t] == pos
             if np.sum(idx) == 0:
                 continue
-            exp_speed[pos, t] = np.mean(speed[idx, t])
+            exp_speed[pos, t] = np.nanmean(speed[idx, t])
     return exp_speed
 
 
 def calc_cond_potential(dxdt, bins, c):
     potential = np.nan * np.ones(dxdt.shape)
+    z_idx = np.digitize(0, bins) - 1
+    all_potential_ref = []
     for t in range(dxdt.shape[1]):
+        potential_ref = np.nansum(dxdt[:z_idx, t]) * (-1)
+        all_potential_ref.append(potential_ref)
         for p in bins:
             p_idx = np.digitize(p, bins) - 1
-            select_idx = np.abs(bins) <= np.abs(p)
+            select_idx = bins < p
             if np.isnan(dxdt[select_idx, t]).all():
                 potential_tx = np.nan
             else:
-                potential_tx = np.nansum(dxdt[select_idx, t]) * -1
+                potential_tx = np.nansum(dxdt[select_idx, t]) * (-1) - potential_ref
             potential[p_idx, t] = potential_tx
-    z_idx = np.digitize(0, bins) - 1
+
     if c == 0:
-        potential[z_idx:, :] = np.nan
+        potential[z_idx + 1 :, :] = np.nan
     else:
-        potential[:z_idx, :] = np.nan
+        potential[: z_idx - 1, :] = np.nan
     potential = potential * (1 - np.isnan(dxdt))
     potential[potential == 0] = np.nan
+    potential[z_idx, :] = 0
     return potential
 
 
@@ -185,26 +204,31 @@ def calc_model_potential(proj, label, bins):
     binned_proj = np.digitize(proj, bins) - 1
     potential = []
     #
-    all_exp_point_speed = np.nan * np.ones((len(bins), proj.shape[1] - 1))
+    all_exp_speed = np.nan * np.ones((len(bins), proj.shape[1] - 1))
     for c in cond:
-        cond_proj_arr = proj[label == c]
         binned_cond_proj = binned_proj[label == c]
-        cond_mean = np.mean(cond_proj_arr, axis=0)
+        cond_mean = np.mean(binned_cond_proj, axis=0)
 
-        cond_proj_arr = np.abs(cond_proj_arr)
-
-        x_diff = np.diff(cond_proj_arr, axis=1)
+        x_diff = np.diff(binned_cond_proj, axis=1)
         exp_speed = calc_exp_speed(binned_cond_proj, x_diff, len(bins))
+
+        z_idx = np.digitize(0, bins) - 1
+        if c == 0:
+            all_exp_speed[:z_idx, :] = exp_speed[:z_idx, :]
+        else:
+            all_exp_speed[z_idx:, :] = exp_speed[z_idx:, :]
+
         cond_potential = calc_cond_potential(exp_speed, bins, c)
         potential.append(cond_potential)
 
         mean_act.append(cond_mean)
     mean_act = np.stack(mean_act, axis=0)
+
     return potential, mean_act
 
 
 def merge_choice_potential(potential_li, bins):
-    potential = np.nan * np.ones(potential_li.shape)
+    potential = np.nan * np.ones(potential_li[0].shape)
     z_idx = np.digitize(0, bins) - 1
     for c in range(len(potential_li)):
         cond_potential = potential_li[c]
@@ -223,37 +247,59 @@ def calc_all_potential(all_proj_li, bins, rerun_calc=True):
         all_mean_act_li: list, len=#models, each element is a list, len=#reps, each element is 2d array, shape=(#conditions, # time)
     """
     if rerun_calc:
-        all_potential_li = []
-        all_mean_act_li = []
+        all_potential_dict = {"all": [], "H": [], "M": [], "L": [], "Z": []}
+        all_mean_act_dict = {"all": [], "H": [], "M": [], "L": [], "Z": []}
         for m_idx, model_proj_li in enumerate(all_proj_li):
-            model_potential_li = []
-            model_mean_act_li = []
+            model_potential_dict = {"all": [], "H": [], "M": [], "L": [], "Z": []}
+            model_mean_act_dict = {"all": [], "H": [], "M": [], "L": [], "Z": []}
             for rep in tqdm(range(len(model_proj_li))):
                 proj = model_proj_li[rep]
                 _, _, label = load_sac_act(f_dirs[m_idx], rep, reload=False)
+                coh_idx = load_coh_dict(f_dirs[m_idx], rep)
                 potential, mean_act = calc_model_potential(proj, label, bins)
                 potential = merge_choice_potential(potential, bins)
-                model_potential_li.append(potential)
-                model_mean_act_li.append(mean_act)
-            all_potential_li.append(model_potential_li)
-            all_mean_act_li.append(model_mean_act_li)
+                model_potential_dict["all"].append(potential)
+                model_mean_act_dict["all"].append(mean_act)
+                for coh in list(coh_idx.keys()):
+                    coh_label = label[coh_idx[coh]]
+                    coh_proj = proj[coh_idx[coh]]
+                    coh_potential, coh_mean_act = calc_model_potential(
+                        coh_proj, coh_label, bins
+                    )
+                    coh_potential = merge_choice_potential(coh_potential, bins)
+                    model_potential_dict[coh].append(coh_potential)
+                    model_mean_act_dict[coh].append(coh_mean_act)
+
+            for k in all_potential_dict.keys():
+                all_potential_dict[k].append(model_potential_dict[k])
+                all_mean_act_dict[k].append(model_mean_act_dict[k])
+
         # save data
-        with open(os.path.join(data_dir, "all_potential_li.pkl"), "wb") as f:
-            dump(all_potential_li, f)
-        with open(os.path.join(data_dir, "all_mean_act_li.pkl"), "wb") as f:
-            dump(all_mean_act_li, f)
+        with open(os.path.join(data_dir, "all_potential_dict.pkl"), "wb") as f:
+            dump(all_potential_dict, f)
+        with open(os.path.join(data_dir, "all_mean_act_dict.pkl"), "wb") as f:
+            dump(all_mean_act_dict, f)
     else:
-        with open(os.path.join(data_dir, "all_potential_li.pkl"), "rb") as f:
-            all_potential_li = load(f)
-        with open(os.path.join(data_dir, "all_mean_act_li.pkl"), "rb") as f:
-            all_mean_act_li = load(f)
-    return all_potential_li, all_mean_act_li
+        with open(os.path.join(data_dir, "all_potential_dict.pkl"), "rb") as f:
+            all_potential_dict = load(f)
+        with open(os.path.join(data_dir, "all_mean_act_dict.pkl"), "rb") as f:
+            all_mean_act_dict = load(f)
+    return all_potential_dict, all_mean_act_dict
+
+
+def load_coh_dict(f_dir, rep):
+    n = SimpleNamespace(
+        **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (0.02, rep))
+    )
+    coh_dict = find_coh_idx(n.stim_level)
+    return coh_dict
 
 
 ################### plotting functions ####################
 def min_max_scaler(X, min, max):
-    X_std = (X - min) / (max - min)
-    return X_std * (1 - (-1)) + (-1)  # scale to (-1, 1)
+    # X_std = (X - min) / (max - min)
+    # return X_std * (1 - (-1)) + (-1)  # scale to (-1, 1)
+    return X / np.abs(min)
 
 
 # def min_max_scaler(X):
@@ -262,7 +308,13 @@ def min_max_scaler(X, min, max):
 
 
 def plot_mean_potential_heatmap(
-    all_potential_agg, all_mean_act, bins, model_fig_dir, normalize=True
+    all_potential_agg,
+    all_mean_act,
+    bins,
+    model_fig_dir,
+    coh,
+    potential_range,
+    normalize=False,
 ):
     if normalize:
         # min-max normalize potential and mean_act
@@ -279,9 +331,8 @@ def plot_mean_potential_heatmap(
     avg_all_potential_agg = np.nanmean(np.array(all_potential_agg), axis=1)
     avg_mean_act = np.nanmean(np.array(all_mean_act), axis=1)
 
-    # find max and min of avg_all_potential_agg
-    min_potential = np.nanmin(avg_all_potential_agg)
-    max_potential = np.nanmax(avg_all_potential_agg)
+    min_potential = min(potential_range)
+    max_potential = max(potential_range)
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 6))
     idx = [(0, 0), (0, 1), (1, 0), (1, 1)]
@@ -296,6 +347,36 @@ def plot_mean_potential_heatmap(
             origin="lower",
         )
         plt.colorbar(s, ax=ax1)
+
+        # if normalize:
+        # ax2 = ax1.twinx()
+        # ax2.plot(avg_mean_act[i, :, :].T, linewidth=2.5)
+        # ax2.set_ylabel("Normalzied Position")
+
+        # else:
+        # ax1.plot(avg_mean_act[i, :, :].T - 1, linewidth=2.5)
+        ax1.plot(avg_mean_act[i, :, :].T, linewidth=2.5)
+
+        # # set symmetrical ylim
+        # yl = ax1.get_ylim()
+        # y_abs_max = max(np.abs(yl))
+        # ax1.set_ylim((-y_abs_max, y_abs_max))
+
+        # set int ytick
+        # TODO: only applicable to 100 bins
+        ax1.set_ylim(-10, 100)
+        ax1.set_yticks(
+            np.linspace(-10, 100, 9),
+            labels=np.round(np.linspace(-20, 20, 9)).astype(int),
+        )
+        # ax1.set_yticks(
+        #     np.linspace(-10, 100, 9),
+        #     labels=np.round(np.linspace(-19, 19, 9)).astype(int),
+        # )
+        ax1.set_title(f_dirs[i].split("_")[-2])
+        ax1.set_xlabel("Time")
+        ax1.set_ylabel("Position")
+
         ax1.vlines(25, 0, 60, color="white", linewidth=1, linestyle="--")
         ax1.hlines(
             np.digitize(0, bins),
@@ -305,25 +386,15 @@ def plot_mean_potential_heatmap(
             linewidth=1,
             linestyle="--",
         )
-
-        # if normalize:
-        # ax2 = ax1.twinx()
-        # ax2.plot(avg_mean_act[i, :, :].T, linewidth=2.5)
-        # ax2.set_ylabel("Normalzied Position")
-
-        # else:
-        ax1.plot(np.digitize(avg_mean_act[i, :, :].T, bins) - 1, linewidth=2.5)
-        ax1.set_yticks(
-            np.linspace(0, len(bins), 10),
-            labels=np.round(np.linspace(bins[0], bins[-1], 10), 2),
-        )
-        ax1.set_title(f_dirs[i].split("_")[-2])
-        ax1.set_xlabel("Time")
-        ax1.set_ylabel("Position")
     plt.tight_layout()
+    # plt.savefig(
+    #     os.path.join(model_fig_dir, "landscape_avg.png"),
+    #     dpi=300,
+    #     bbox_inches="tight",
+    # )
     plt.savefig(
-        os.path.join(model_fig_dir, "landscape_avg.png"),
-        dpi=300,
+        os.path.join(model_fig_dir, "landscape_avg_%s.pdf" % coh),
+        format="pdf",
         bbox_inches="tight",
     )
     return
@@ -383,7 +454,7 @@ def plot_single_heatmap(potential_agg, bins, mean_act, potential_range, n_pos_bi
         linestyle="--",
     )
     for i in range(len(mean_act)):
-        plt.plot(np.digitize(mean_act[i], bins) - 1, linewidth=2.5)
+        plt.plot(mean_act[i], linewidth=2.5)
     plt.yticks(
         np.linspace(0, n_pos_bin, 10),
         labels=np.round(np.linspace(bins[0], bins[-1], 10), 2),
