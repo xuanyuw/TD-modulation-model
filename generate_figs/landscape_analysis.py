@@ -37,19 +37,31 @@ f_dirs = [
     "cutSpec_model",
 ]
 pic_dir = os.path.join("new_dyn_analysis", "plots")
-proj_data_dir = os.path.join("new_dyn_analysis", "data")
+# proj_data_dir = os.path.join("new_dyn_analysis", "data", "correct_trials")
+# data_dir = os.path.join("new_dyn_analysis", "data", "correct_trials")
 data_dir = os.path.join("new_dyn_analysis", "data")
-# data_dir = os.path.join("new_dyn_analysis", "data", "50bins")
+proj_data_dir = data_dir
+
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
+if not os.path.exists(proj_data_dir):
+    os.makedirs(proj_data_dir)
 
 total_rep = 50
 replot_single_model = False
+normalize_single_trial = False
 
 
 def main():
-    all_act_mat_pca = run_pca_all_model(f_dirs, False)
-    all_model_acc_li, all_coef_li, all_intercept_li = run_SVM_all_model(
-        f_dirs, all_act_mat_pca, rerun_calc=False
+    all_act_mat_pca = run_pca_all_model(
+        f_dirs, n_components=5, rerun_calc=False, reload_data=False
     )
+    all_model_acc_li, all_coef_li, all_intercept_li = run_SVM_all_model(
+        f_dirs,
+        all_act_mat_pca,
+        rerun_calc=False,
+    )
+
     # plot_SVM_example(all_act_mat_pca, all_coef_li, all_intercept_li, 3)
     all_proj_li = project_all_data(
         all_act_mat_pca,
@@ -58,6 +70,9 @@ def main():
         all_model_acc_li,
         rerun_calc=False,
     )
+
+    if normalize_single_trial:
+        all_proj_li = normalize_trial(all_proj_li)
 
     # find max and min in all_pos_li, define spatial bins
     min_pos = np.inf
@@ -72,7 +87,8 @@ def main():
     all_potential_dict, all_mean_act_dict = calc_all_potential(
         all_proj_li, bins, rerun_calc=False
     )
-    model_fig_dir = os.path.join(pic_dir, "temp_landscape_50bins")
+
+    model_fig_dir = os.path.join(pic_dir, "landscape_correct_trials_norm_models")
     if not os.path.exists(model_fig_dir):
         os.makedirs(model_fig_dir)
         # for rep in tqdm(range(total_rep)):
@@ -90,6 +106,21 @@ def main():
         #         )
         # plot mean potential heatmap
         # find max and min of avg_all_potential_agg
+
+    # normalize each model
+    for i in range(len(all_potential_dict["all"][0])):
+        max_potential = -np.inf
+        for j in range(len(all_potential_dict["all"])):
+            max_potential = max(
+                max_potential,
+                np.nanmax(np.abs(np.vstack(all_potential_dict["all"][j][i]))),
+            )
+        for j in range(len(all_potential_dict["all"])):
+            for k in list(all_potential_dict.keys()):
+                all_potential_dict[k][j][i] = max_scaler(
+                    all_potential_dict[k][j][i], max_potential
+                )
+
     avg_all_potential_agg = np.nanmean(np.array(all_potential_dict["all"]), axis=1)
     min_potential = np.nanmin(avg_all_potential_agg)
     max_potential = np.nanmax(avg_all_potential_agg)
@@ -106,6 +137,20 @@ def main():
 
 
 ################################# data projection #################################
+
+
+def normalize_trial(data):
+    """
+    normalize all trials to the same range
+    """
+    for i in range(len(data)):
+        for j in range(len(data[i])):
+            act = data[i][j]
+            act = (act.T / np.max(np.abs(np.vstack(act)), axis=1)).T
+            data[i][j] = act
+    return data
+
+
 def project_to_choice_axis(choice_axis, model_intercept, data):
     """
     project data to the choice axis
@@ -158,12 +203,15 @@ def project_all_data(
 
 def calc_exp_speed(binned_pos, speed, n_bins):
     exp_speed = np.ones((n_bins, speed.shape[1])) * np.nan
+
+    trial_num = np.ones((n_bins, speed.shape[1])) * np.nan
     for t in range(speed.shape[1]):
         for pos in np.unique(binned_pos):
             idx = binned_pos[:, t] == pos
             if np.sum(idx) == 0:
                 continue
             exp_speed[pos, t] = np.nanmean(speed[idx, t])
+            trial_num[pos, t] = np.sum(idx)
     return exp_speed
 
 
@@ -287,19 +335,20 @@ def calc_all_potential(all_proj_li, bins, rerun_calc=True):
     return all_potential_dict, all_mean_act_dict
 
 
-def load_coh_dict(f_dir, rep):
+def load_coh_dict(f_dir, rep, use_correct=True):
     n = SimpleNamespace(
         **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (0.02, rep))
     )
-    coh_dict = find_coh_idx(n.stim_level)
+    idx = combine_idx(n.correct_idx, n.stim_level != "Z")
+    coh_dict = find_coh_idx(np.array(n.stim_level)[idx])
     return coh_dict
 
 
 ################### plotting functions ####################
-def min_max_scaler(X, min, max):
+def max_scaler(X, max):
     # X_std = (X - min) / (max - min)
     # return X_std * (1 - (-1)) + (-1)  # scale to (-1, 1)
-    return X / np.abs(min)
+    return X / np.abs(max)
 
 
 # def min_max_scaler(X):
@@ -314,19 +363,19 @@ def plot_mean_potential_heatmap(
     model_fig_dir,
     coh,
     potential_range,
-    normalize=False,
+    # normalize=False,
 ):
-    if normalize:
-        # min-max normalize potential and mean_act
-        for j in range(len(all_potential_agg[0])):
-            min_p = np.nanmin(np.array(all_potential_agg)[:, j, :, :])
-            max_p = np.nanmax(np.array(all_potential_agg)[:, j, :, :])
-            for i in range(len(all_potential_agg)):
-                all_potential_agg[i][j] = min_max_scaler(
-                    all_potential_agg[i][j], min_p, max_p
-                )
-                # all_potential_agg[i][j] = min_max_scaler(all_potential_agg[i][j])
-                # all_mean_act[i][j] = min_max_scaler(all_mean_act[i][j])
+    # if normalize:
+    #     # min-max normalize potential and mean_act
+    #     for j in range(len(all_potential_agg[0])):
+    #         min_p = np.nanmin(np.array(all_potential_agg)[:, j, :, :])
+    #         max_p = np.nanmax(np.abs(np.array(all_potential_agg)[:, j, :, :]))
+    #         for i in range(len(all_potential_agg)):
+    #             all_potential_agg[i][j] = max_scaler(
+    #                 all_potential_agg[i][j], min_p, max_p
+    #             )
+    #             # all_potential_agg[i][j] = min_max_scaler(all_potential_agg[i][j])
+    #             # all_mean_act[i][j] = min_max_scaler(all_mean_act[i][j])
 
     avg_all_potential_agg = np.nanmean(np.array(all_potential_agg), axis=1)
     avg_mean_act = np.nanmean(np.array(all_mean_act), axis=1)

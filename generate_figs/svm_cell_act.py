@@ -159,7 +159,7 @@ def run_pca_all_model(
 
 
 def run_SVM_all_model(
-    f_dirs, act_all_pca, rerun_calc, total_rep=50, k=10, decision_win_size=5
+    f_dirs, act_all_pca, rerun_calc, total_rep=50, k=10, decision_win_size=5, use_correct_only=False
 ):
     all_model_acc_li = []
     all_coef_li = []
@@ -268,7 +268,7 @@ def load_sac_act(
     lr=0.02,
     normalize=True,
     plot_sel=True,
-    plot_correct=False,
+    use_correct = True
 ):
     """
     return:
@@ -276,6 +276,14 @@ def load_sac_act(
     single trial activity: a 3D matrix (cell x rep x time)
     the label choice
     """
+    if use_correct:
+        fn = os.path.join(
+                    data_dir, "sac_act_%s_rep%d_correct.pkl" % (f_dir.split("_")[-2], rep)
+                )
+    else:
+        fn = os.path.join(
+                    data_dir, "sac_act_%s_rep%d.pkl" % (f_dir.split("_")[-2], rep)
+                )
     if reload:
         n = SimpleNamespace(
             **load_test_data(f_dir, "test_output_lr%f_rep%d.h5" % (lr, rep))
@@ -295,12 +303,9 @@ def load_sac_act(
         else:
             saccade_selective = None
 
-        if plot_correct:
-            h = temp_h[:, n.correct_idx, :]
-            label = n.choice[n.correct_idx]
-        else:
-            h = temp_h
-            label = n.choice
+
+        h = temp_h
+        label = n.choice
 
         targ_rng = np.zeros(200)
         targ_rng[
@@ -319,6 +324,10 @@ def load_sac_act(
         else:
             selective_idx = combine_idx(1 - targ_rng, saccade_selective)
         act_mat = h[selective_idx, :, :]
+        if use_correct:
+            idx = combine_idx(n.correct_idx, n.stim_level != 'Z')
+            act_mat = act_mat[:, idx, :]
+            label = label[idx]
 
         coh_dict = find_coh_idx(n.stim_level)
         mean_act_mat = []
@@ -328,8 +337,9 @@ def load_sac_act(
                     temp_idx = combine_idx(
                         coh_dict[coh], n.stim_dir == stim, n.choice == choice
                     )
-                    if plot_correct:
+                    if use_correct and coh is not 'Z':
                         temp_idx = combine_idx(temp_idx, n.correct_idx)
+                    
                     if sum(temp_idx) > 0:
                         mean_act_mat.append(
                             np.mean(temp_h[selective_idx, :, :][:, temp_idx, :], axis=1)
@@ -337,23 +347,14 @@ def load_sac_act(
 
         mean_act_mat = np.swapaxes(np.stack(mean_act_mat, axis=0), 0, 1)
         mean_act_mat = ravel_mat(mean_act_mat).T
-
+        
+        
         dump(
             (mean_act_mat, act_mat, label),
-            open(
-                os.path.join(
-                    data_dir, "sac_act_%s_rep%d.pkl" % (f_dir.split("_")[-2], rep)
-                ),
-                "wb",
-            ),
+            open(fn, "wb"),
         )
     else:
-        with open(
-            os.path.join(
-                data_dir, "sac_act_%s_rep%d.pkl" % (f_dir.split("_")[-2], rep)
-            ),
-            "rb",
-        ) as f:
+        with open(fn,"rb",) as f:
             mean_act_mat, act_mat, label = load(f)
     return mean_act_mat, act_mat, label
 
