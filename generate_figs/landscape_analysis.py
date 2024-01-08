@@ -12,6 +12,7 @@ import matplotlib as mpl
 from utils import *
 from pickle import load, dump
 from tqdm import tqdm
+from scipy.stats import ttest_rel
 
 
 from svm_cell_act import run_pca_all_model, run_SVM_all_model, load_sac_act
@@ -108,18 +109,42 @@ def main():
         # find max and min of avg_all_potential_agg
 
     # normalize each model
+    # for i in range(len(all_potential_dict["all"][0])):
+    #     max_potential = -np.inf
+    #     for j in range(len(all_potential_dict["all"])):
+    #         max_potential = max(
+    #             max_potential,
+    #             np.nanmax(np.abs(np.vstack(all_potential_dict["all"][j][i]))),
+    #         )
+    #     for j in range(len(all_potential_dict["all"])):
+    #         for k in list(all_potential_dict.keys()):
+    #             all_potential_dict[k][j][i] = max_scaler(
+    #                 all_potential_dict[k][j][i], max_potential
+    #             )
+
+    # paired ttest on min potential between full model and no feedback model
+    full_min = []
+    no_feedback_min = []
+    cut_nonspec_min = []
+    cut_spec_min = []
     for i in range(len(all_potential_dict["all"][0])):
-        max_potential = -np.inf
-        for j in range(len(all_potential_dict["all"])):
-            max_potential = max(
-                max_potential,
-                np.nanmax(np.abs(np.vstack(all_potential_dict["all"][j][i]))),
-            )
-        for j in range(len(all_potential_dict["all"])):
-            for k in list(all_potential_dict.keys()):
-                all_potential_dict[k][j][i] = max_scaler(
-                    all_potential_dict[k][j][i], max_potential
-                )
+        full_min.append(np.nanmin(np.vstack(all_potential_dict["all"][0][i])))
+        no_feedback_min.append(np.nanmin(np.vstack(all_potential_dict["all"][1][i])))
+        cut_nonspec_min.append(np.nanmin(np.vstack(all_potential_dict["all"][2][i])))
+        cut_spec_min.append(np.nanmin(np.vstack(all_potential_dict["all"][3][i])))
+
+    # t, p = ttest_rel(full_min, no_feedback_min)
+    print("paired ttest on min potential between full model and no feedback model")
+    print(ttest_rel(full_min, no_feedback_min))
+
+    # paired ttest between difference of cut spec and cut nonspec v.s. full model
+    print("paired ttest between difference of cut nonspec and cut spec v.s. full model")
+    print(
+        ttest_rel(
+            np.array(cut_nonspec_min) - np.array(full_min),
+            np.array(cut_spec_min) - np.array(full_min),
+        )
+    )
 
     avg_all_potential_agg = np.nanmean(np.array(all_potential_dict["all"]), axis=1)
     min_potential = np.nanmin(avg_all_potential_agg)
