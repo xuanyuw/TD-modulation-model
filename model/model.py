@@ -1,4 +1,4 @@
-from init_weight import initialize_weights
+from model.init_weight import initialize_weights
 from utils import cut_conn, shuffle_conn, load_test_data, cut_fb_weight
 from types import SimpleNamespace
 import brainpy as bp

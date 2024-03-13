@@ -22,7 +22,7 @@ from utils import (
     recover_targ_loc,
     relu,
 )
-from calc_params import par
+from model.calc_params import par
 from statannotations.Annotator import Annotator
 from matplotlib.collections import PolyCollection
 from matplotlib.legend_handler import HandlerTuple

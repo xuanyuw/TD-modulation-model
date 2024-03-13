@@ -1,6 +1,6 @@
 import numpy as np
-from calc_params import par, update_parameters
-from model_func import trial
+from model.calc_params import par, update_parameters
+from model.model_func import trial
 from os import makedirs
 from os.path import dirname, exists
 import time

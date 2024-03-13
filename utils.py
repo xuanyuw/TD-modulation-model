@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from calc_params import par
+from model.calc_params import par
 import os
 import tables
 from scipy.stats import f_oneway

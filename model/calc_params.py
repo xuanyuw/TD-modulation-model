@@ -2,9 +2,100 @@ import numpy as np
 import json
 
 print("Initializing Parameters...")
+par = {
+    "save_dir": "../test_output_noFeedback_model/", # directory for saving the testing (and training) result
+    "model_dir": "full_model/", # directory of the trained model, for ablation testing of the trained model
+    "save_fn": "model_results.pkl", # file name for saving model training performance
+    "save_train_out": True,
+    "save_test_out": True,
+    "rep_num": 50, # number of models to train
+    "rep": 0, # iteration number of the model, for breakpoints
+    "shuffle_num": 0, # number of shuffling weights 
+    "shuffle": 0,# iteration number of the shuffle model, for breakpoints
+    "cut_spec": [], # can take values of True, False, or []. True: cut selectivity-specific weights, False: cut non-selectivity-specific weights, []: no cutting
+    "cut_fb_train": True, # cut feedback weights during training
+    "cut_fb_train_factor": 1.176, # make the number of connections roughly the same before and after cutting feedback weights during training
 
-with open("./params.json", "r") as par_file:
-    par = json.load(par_file)
+    "batch_size": 1024,
+    "train_batch_size": 1024,
+    "test_batch_size": 2048,
+    "num_iterations": 2000,
+    "num_train_iterations": 200,
+    "num_test_iterations": 1,
+    "iters_between_outputs": 200,
+    "learning_rate_li": [2e-2],
+    "learning_rate": 2e-2,
+    "regularization": True,
+    "noisy_weight_update": False,
+    "noisy_weight_coef": 0.0001,
+
+    "synapse_config": "full",
+
+    "within_rf_conn_prob": 0.5,
+    "cross_rf_conn_prob": 0.25,
+    "cross_module_conn_prob": 0.1,
+    "input_conn_prob": 0.32,
+    "output_conn_prob": 0.32,
+    "cross_output_prob": 0.08,
+
+    "num_motion_tuned": 9,
+    "num_fix_tuned": 0,
+    "num_color_tuned": 8,
+    "n_choices": 2,
+    "n_output": 2,
+    "decay_const": 0.33,
+
+    "output_fixation": False,
+    "num_receptive_fields": 4,
+    "RF_perc": [0.25, 0.25, 0.25, 0.25],
+    "input_idx": [0, 1, 0, 2],
+    "output_rf": [1, 3],
+    "n_hidden": 200,
+    "n_inter": 0,
+
+    "exc_inh_prop": 0.8,
+    "dt": 20,
+    "membrane_time_constant": 100,
+    "tau_fast": 200,
+    "tau_dep": 1000,
+    "tau_fac": 2000,
+    "U_stf": 0.1,
+    "U_std": 0.3,
+
+    "input_mean": 0.0,
+    "noise_in_sd": 0.07,
+    "stim_noise_sd": 0.2,
+    "noise_rnn_sd": 0.08,
+    "pure_visual_val": 2,
+    "motion_noise_mult": 1,
+    "motion_mult": 2,
+    "dynamic_input_noise": False,
+    "inout_weight_mean": 0.2,
+    "inout_weight_std": 0.05,
+
+    "num_motion_dirs": 2,
+    "tuning_height": 2,
+    "kappa": 2,
+
+    "spike_regularization": "L2",
+    "spike_cost": 0.004,
+    "clip_max_grad_val": 0.1,
+    "lambda_omega": 2,
+    "lambda_weight": 1,
+
+    "time_fixation": 500,
+    "time_target": 400,
+    "time_stim": 500,
+    "time_decision": 100,
+    "test_cost_multiplier": 1.0,
+    "var_delay": False,
+    "num_targets": 2,
+    "coherence_levels": [0, 0.25, 0.5, 0.75, 0.6, 0.9],
+    "train_coherence_levels": [0.6, 0.9],
+    "test_coherence_levels": [0, 0.35, 0.55, 0.75],
+    "decision_threshold": 0.8,
+    "n_level_scale": 3
+}
 
 
 def calc_parameters():

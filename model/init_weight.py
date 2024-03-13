@@ -1,4 +1,4 @@
-from calc_params import par
+from model.calc_params import par
 
 import numpy as np
 import brainpy.math as bm

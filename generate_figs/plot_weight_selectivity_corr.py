@@ -15,7 +15,7 @@ import numpy as np
 import tables
 from utils import pick_selective_neurons, min_max_normalize, recover_targ_loc, relu
 from generate_figs.plot_weight_comp import locate_neurons
-from calc_params import par
+from model.calc_params import par
 from scipy.stats import rankdata, ttest_1samp
 from tqdm import tqdm
 

@@ -6,7 +6,7 @@ import brainpy as bp
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import TwoSlopeNorm
-from calc_params import par
+from model.calc_params import par
 
 
 fdir = 'crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model'

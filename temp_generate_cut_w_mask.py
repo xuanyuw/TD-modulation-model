@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from init_weight import fill_mask
+from model.init_weight import fill_mask
 from utils import calculate_rf_rngs
 import brainpy.math as bm
 

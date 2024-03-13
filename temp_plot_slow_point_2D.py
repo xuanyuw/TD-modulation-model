@@ -6,8 +6,8 @@ import brainpy.math as bm
 
 from types import SimpleNamespace
 from utils import *
-from model import Model
-from calc_params import par, update_parameters
+from model.model import Model
+from model.calc_params import par, update_parameters
 
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt

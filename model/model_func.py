@@ -1,6 +1,6 @@
 from glob import has_magic
-from model import Model
-from stimulus import Stimulus
+from model.model import Model
+from model.stimulus import Stimulus
 from analysis import get_perf, get_reaction_time
 from os.path import join
 import tables

@@ -1,4 +1,4 @@
-from init_weight import initialize_weights
+from model.init_weight import initialize_weights
 from utils import *
 from types import SimpleNamespace
 import brainpy as bp
@@ -6,7 +6,7 @@ import brainpy.math as bm
 from numpy import load, tile, save, ndarray
 from numpy.random import normal
 from os.path import join
-from calc_params import par
+from model.calc_params import par
 from tqdm import tqdm
 from scipy.stats import ttest_rel
 

@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from pickle import load
-from calc_params import par
+from model.calc_params import par
 
 
 # plot settings
