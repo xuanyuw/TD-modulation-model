@@ -1,3 +1,6 @@
+"""
+this file contains functions to initialize the weights of the model
+"""
 from model.calc_params import par
 
 import numpy as np
@@ -27,21 +30,6 @@ def fill_mask(rf_rngs, conn_probs, mask):
         for j in range(len(rf_rngs)):
             mask = fill_rand_conn(mask, rf_rngs[i], rf_rngs[j], conn_probs[i, j])
     return mask
-
-
-# def add_interneuron_mask(rnn_mask_init, rf_rngs, conn_prob):
-#     new_rnn_mask = np.pad(rnn_mask_init, ((0, par["n_inter"]), (0, par["n_inter"])))
-#     toInter_sz = (rf_rngs[3][1], par["n_inter"])
-#     fromInter_sz = (par["n_inter"], par["n_hidden"])
-#     # only excitatory neurons can project to interneurons.
-#     new_rnn_mask[: toInter_sz[0], par["n_hidden"] : par["n_total"]] = np.random.choice(
-#         [0, 1], size=toInter_sz, p=(1 - conn_prob, conn_prob)
-#     )
-#     # interneurons randomly connect to two modules
-#     new_rnn_mask[
-#         par["n_hidden"] : par["n_total"], : par["n_hidden"]
-#     ] = np.random.choice([0, 1], size=fromInter_sz, p=(1 - conn_prob, conn_prob))
-#     return new_rnn_mask
 
 
 def generate_rnn_mask():
@@ -293,10 +281,7 @@ def generate_raw_weights():
     w_rnn0 = bm.relu(w_rnn0)
     # w_rnn0 =  par['EI_matrix'] @  bm.relu(w_rnn0)
 
-    # Effective synaptic weights are stronger when no short-term synaptic plasticity
-    # is used, so the strength of the recurrent weights is reduced to compensate
-    if par["synapse_config"] == "none":
-        w_rnn0 = w_rnn0 / 3.0
+ 
     # w_out0 = initialize(0.1, (par["n_total"], par["n_output"]))
     w_out0 = np.random.normal(
         par["inout_weight_mean"],

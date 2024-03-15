@@ -1,15 +1,19 @@
+"""
+this file contains the class Stimulus, which is used to generate the input for the model
+"""
 import numpy as np
 import matplotlib.pyplot as plt
-
 
 class Stimulus:
     def __init__(self, par):
         self.par = par
 
     def generate_trial(self):
-        # print('Initializing Stimuli...')
+        """
+        Generate a single trial of the task
+        """
         self.move_dirs = [135, 315]
-        self.all_motion_tunings, self.fix_tuning = self.create_tuning_functions(
+        self.all_motion_tunings = self.create_tuning_functions(
             self.par["coherence_levels"]
         )
         trial_info = self.generate_MDD_trial()
@@ -53,10 +57,8 @@ class Stimulus:
             ).astype(np.float32),
         }
 
-        fix_time_rng = self.par["fix_time_rng"]
         target_time_rng = self.par["target_time_rng"]
         stim_time_rng = self.par["stim_time_rng"]
-
 
         # generate stimulus directions for each trial in batch
         trial_info["stim_dir"] = np.random.choice(
@@ -94,9 +96,7 @@ class Stimulus:
         mask_one_rng = np.arange((self.par["time_fixation"] + self.par["time_target"] + self.par["time_decision"]) // self.par["dt"], stim_time_rng[-1])
         # set the mask equal to zero during the fixation time
         trial_info["train_mask"][mask_zero_rng, :] = 0
-        # can use a greater weight for test period if needed
-        trial_info["train_mask"][mask_one_rng, :] *= self.par["test_cost_multiplier"]
-
+        
         # initialize coherences
         trial_info["coherence"] = np.random.choice(
             self.par["coherence_levels"], size=(self.par["batch_size"],)
@@ -162,11 +162,7 @@ class Stimulus:
                     np.hstack([target_time_rng, stim_time_rng]), t, color_cell_rng[0]:color_cell_rng[1]
                 ] += target_decay[:, np.newaxis] 
 
-            if self.par["num_fix_tuned"] > 0:
-                # fixation is always on screen
-                trial_info["neural_input"][
-                    np.hstack([fix_time_rng, target_time_rng, stim_time_rng]), t, :
-                ] += self.fix_tuning[:, 0]
+           
         # add noise to neural input
         overall_noise = np.random.normal(
             self.par["input_mean"],
@@ -190,10 +186,9 @@ class Stimulus:
 
     def create_tuning_functions(self, coh_list):
         """
-        Generate tuning functions for the Postle task
+        Generate tuning functions for the task
         """
         all_motion_tunings = []
-        fix_tuning = np.zeros((self.par["n_input"], 1))
 
         # generate list of prefered directions
         pref_dirs = np.arange(0, 360, 360 // self.par["num_motion_tuned"])
@@ -206,7 +201,7 @@ class Stimulus:
             #     self.par['input_mean'], self.par['noise_in'], size=(self.par['num_motion_tuned'], len(self.move_dirs))).astype(np.float32)
             motion_tuning[: self.par["num_motion_tuned"], :] = np.random.normal(
                 self.par["input_mean"],
-                self.par["noise_in"] * self.par["motion_noise_mult"],
+                self.par["noise_in"] ,
                 size=(self.par["num_motion_tuned"], len(self.move_dirs)),
             ).astype(np.float32)
             if coh != 0:
@@ -230,13 +225,7 @@ class Stimulus:
                         )
                 motion_tuning += pk * 0.1
             all_motion_tunings.append(motion_tuning)
-
-        for n in range(self.par["num_fix_tuned"]):
-            fix_tuning[
-                self.par["num_motion_tuned"] + self.par["num_color_tuned"] + n, 0
-            ] = self.par["tuning_height"]
-
-        return all_motion_tunings, fix_tuning
+        return all_motion_tunings
 
     def create_color_tuning(self, targ_loc):
         # targ_loc: 0 = green contralateral, 1 = red contralateral

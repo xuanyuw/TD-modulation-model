@@ -152,7 +152,6 @@ class Model(bp.dyn.DynamicalSystem):
         self.spike_regularization = par["spike_regularization"]
         self.weight_cost = par["weight_cost"]
         self.spike_cost = par["spike_cost"]
-        self.synapse_config = par["synapse_config"]
 
     def __setitem__(self, k, v):
         setattr(self, k, v)
@@ -177,23 +176,19 @@ class Model(bp.dyn.DynamicalSystem):
         self.y = bm.ones((bs, self.n_output))
 
     def update(self, sha, input):
-        if self.synapse_config != "none":
-            # implement both synaptic short term facilitation and depression
 
-            self.syn_x += (
-                self.alpha_std * (1 - self.syn_x)
-                - self.dt_sec * self.syn_u * self.syn_x * self.h
-            ) * self.dynamic_synapse
-            self.syn_u += (
-                self.alpha_stf * (self.u - self.syn_u)
-                + self.dt_sec * self.u * (1 - self.syn_u) * self.h
-            ) * self.dynamic_synapse
-            self.syn_x.value = bm.minimum(1.0, bm.relu(self.syn_x))
-            self.syn_u.value = bm.minimum(1.0, bm.relu(self.syn_u))
-            h_post = self.syn_u * self.syn_x * self.h
-        else:
-            # no synaptic plasticity
-            h_post = self.h
+        self.syn_x += (
+            self.alpha_std * (1 - self.syn_x)
+            - self.dt_sec * self.syn_u * self.syn_x * self.h
+        ) * self.dynamic_synapse
+        self.syn_u += (
+            self.alpha_stf * (self.u - self.syn_u)
+            + self.dt_sec * self.u * (1 - self.syn_u) * self.h
+        ) * self.dynamic_synapse
+        self.syn_x.value = bm.minimum(1.0, bm.relu(self.syn_x))
+        self.syn_u.value = bm.minimum(1.0, bm.relu(self.syn_u))
+        h_post = self.syn_u * self.syn_x * self.h
+
 
         # Update the hidden state. Only use excitatory projections from input layer to RNN
         # All input and RNN activity will be non-negative

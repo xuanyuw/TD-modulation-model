@@ -1,5 +1,7 @@
+"""
+This file contains the parameters for the model. It also contains the function to update the parameters.
+"""
 import numpy as np
-import json
 
 print("Initializing Parameters...")
 par = {
@@ -16,21 +18,17 @@ par = {
     "cut_fb_train": True, # cut feedback weights during training
     "cut_fb_train_factor": 1.176, # make the number of connections roughly the same before and after cutting feedback weights during training
 
-    "batch_size": 1024,
+    # Training parameters
+    "batch_size": 1024, 
     "train_batch_size": 1024,
     "test_batch_size": 2048,
-    "num_iterations": 2000,
-    "num_train_iterations": 200,
+    "num_iterations": 2000, 
+    "num_train_iterations": 200, # Number of maximum iterations for training
     "num_test_iterations": 1,
-    "iters_between_outputs": 200,
-    "learning_rate_li": [2e-2],
+    "iters_between_outputs": 200, # Print out the training performance every 200 iterations
     "learning_rate": 2e-2,
-    "regularization": True,
-    "noisy_weight_update": False,
-    "noisy_weight_coef": 0.0001,
 
-    "synapse_config": "full",
-
+    # Connection probabilities
     "within_rf_conn_prob": 0.5,
     "cross_rf_conn_prob": 0.25,
     "cross_module_conn_prob": 0.1,
@@ -38,22 +36,19 @@ par = {
     "output_conn_prob": 0.32,
     "cross_output_prob": 0.08,
 
+    # Model structure parameters
     "num_motion_tuned": 9,
-    "num_fix_tuned": 0,
     "num_color_tuned": 8,
+    "n_hidden": 200,
     "n_choices": 2,
     "n_output": 2,
-    "decay_const": 0.33,
-
-    "output_fixation": False,
+    "exc_inh_prop": 0.8, # proportion of excitatory neurons
     "num_receptive_fields": 4,
-    "RF_perc": [0.25, 0.25, 0.25, 0.25],
-    "input_idx": [0, 1, 0, 2],
-    "output_rf": [1, 3],
-    "n_hidden": 200,
-    "n_inter": 0,
-
-    "exc_inh_prop": 0.8,
+    "RF_perc": [0.25, 0.25, 0.25, 0.25], # percentage of neurons in each receptive field
+    "input_idx": [0, 1, 0, 2], # input index for each receptive field
+    "output_rf": [1, 3], # receptive field index for each output neuron
+    
+    # STSP parameters
     "dt": 20,
     "membrane_time_constant": 100,
     "tau_fast": 200,
@@ -62,55 +57,51 @@ par = {
     "U_stf": 0.1,
     "U_std": 0.3,
 
+    # Input parameters
     "input_mean": 0.0,
     "noise_in_sd": 0.07,
-    "stim_noise_sd": 0.2,
-    "noise_rnn_sd": 0.08,
+    "decay_const": 0.33, # stimulus input decaying constant
     "pure_visual_val": 2,
-    "motion_noise_mult": 1,
-    "motion_mult": 2,
-    "dynamic_input_noise": False,
+    "motion_mult": 2, # stronger motion signal and noise since motion stimuli are more complex than simple color signals of targets
+    "tuning_height": 2, # tuning height of the input neurons
+    "kappa": 2, # concentration parameter of the tuning curve
+    "coherence_levels": [0, 0.35, 0.55, 0.75, 0.6, 0.9],
+    "train_coherence_levels": [0.6, 0.9], # coherence levels for training
+    "test_coherence_levels": [0, 0.35, 0.55, 0.75], # coherence levels for testing
+
+    # Weight parameters
     "inout_weight_mean": 0.2,
     "inout_weight_std": 0.05,
 
-    "num_motion_dirs": 2,
-    "tuning_height": 2,
-    "kappa": 2,
-
+    # RNN parameters
+    "noise_rnn_sd": 0.08,
     "spike_regularization": "L2",
     "spike_cost": 0.004,
     "clip_max_grad_val": 0.1,
-    "lambda_omega": 2,
     "lambda_weight": 1,
 
+    # Task parameters
     "time_fixation": 500,
     "time_target": 400,
     "time_stim": 500,
     "time_decision": 100,
-    "test_cost_multiplier": 1.0,
-    "var_delay": False,
-    "num_targets": 2,
-    "coherence_levels": [0, 0.25, 0.5, 0.75, 0.6, 0.9],
-    "train_coherence_levels": [0.6, 0.9],
-    "test_coherence_levels": [0, 0.35, 0.55, 0.75],
     "decision_threshold": 0.8,
-    "n_level_scale": 3
 }
 
 
 def calc_parameters():
-    """Calculate parameters"""
+    """Calculate other parameters"""
     trial_length = par["time_fixation"] + par["time_target"] + par["time_stim"]
     # Length of each trial in time steps
     par["num_time_steps"] = trial_length // par["dt"]
     # Number of input neurons
     par["n_input"] = (
-        par["num_motion_tuned"] + par["num_fix_tuned"] + par["num_color_tuned"]
+        par["num_motion_tuned"] + par["num_color_tuned"]
     )
     # The time step in seconds
     par["dt_sec"] = par["dt"] / 1000
     # Length of each trial in ms
-    par["fix_time_rng"] = np.arange(par["time_fixation"] // par["dt"])
+    # par["fix_time_rng"] = np.arange(par["time_fixation"] // par["dt"])
     par["target_time_rng"] = np.arange(
         par["time_fixation"] // par["dt"],
         (par["time_fixation"] + par["time_target"]) // par["dt"],
@@ -120,7 +111,7 @@ def calc_parameters():
         trial_length // par["dt"],
     )
     # EI matrix
-    par["n_total"] = par["n_hidden"] + par["n_inter"]
+    par["n_total"] = par["n_hidden"] 
     par["EI_list"] = np.ones([par["n_total"]], dtype=np.float32)
     par["ind_inh"] = np.arange(
         par["n_hidden"] * par["exc_inh_prop"], par["n_total"]
@@ -143,25 +134,9 @@ def calc_parameters():
 
 def update_synaptic_config():
     # 1 = facilitating, -1 =  depressing, 0 = static
-    # synaptic_configurations = {
-    #     'full': [1 if i % 2 == 0 else -1 for i in range(par['n_hidden'])],
-    #     'fac': [1] * par['n_hidden'],
-    #     'dep': [-1] * par['n_hidden'],
-    #     'exc_fac': [1 if par['EI_list'][i] == 1 else 0 for i in range(par['n_hidden'])],
-    #     'exc_dep': [-1 if par['EI_list'][i] == 1 else 0 for i in range(par['n_hidden'])],
-    #     'inh_fac': [1 if par['EI_list'][i] == -1 else 0 for i in range(par['n_hidden'])],
-    #     'inh_dep': [-1 if par['EI_list'][i] == -1 else 0 for i in range(par['n_hidden'])],
-    #     'exc_dep_inh_fac': [-1 if par['EI_list'][i] == 1 else 1 for i in range(par['n_hidden'])],
-    #     'none': [0] * par['n_hidden']
-    # }
-
-    # need to be filled if use other configurations
-    if par["synapse_config"] == "full":
-        synaptic_configurations = [
-            1 if i % 2 == 0 else -1 for i in range(par["n_total"])
-        ]
-    else:
-        synaptic_configurations = [0] * par["n_total"]
+    synaptic_configurations = [
+        1 if i % 2 == 0 else -1 for i in range(par["n_total"])
+    ]
 
     # initialize synaptic values d
     fac_idx = np.where(np.array(synaptic_configurations) == 1)[0]
@@ -200,7 +175,6 @@ def update_parameters(updates):
         mask calculation, need to call initialize_weight and update_weight after this function
     """
 
-    # np.random.seed(10)
     for key, val in updates.items():
         par[key] = val
     # re-calculate the params given the new value
