@@ -17,6 +17,8 @@ def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
         from_rng: source neurons of the projection (start, end)
         to_rng: target neurons of the projection (start, end)
         conn_prob: float,  the connection probability of this block
+    output:
+        mask: 2D array, the mask with the block filled
     """
     sz = (from_rng[1] - from_rng[0], to_rng[1] - to_rng[0])
     mask[from_rng[0] : from_rng[1], to_rng[0] : to_rng[1]] = np.random.choice(
@@ -26,6 +28,15 @@ def fill_rand_conn(mask, from_rng, to_rng, conn_prob):
 
 
 def fill_mask(rf_rngs, conn_probs, mask):
+    """
+    Fills the mask with random connections
+    input:
+        rf_rngs: list of tuples, the ranges of the receptive fields
+        conn_probs: 2D array, the connection probabilities between the receptive fields
+        mask: 2D array, the mask to be filled
+    output:
+        mask: 2D array, the filled mask
+    """
     for i in range(len(rf_rngs)):
         for j in range(len(rf_rngs)):
             mask = fill_rand_conn(mask, rf_rngs[i], rf_rngs[j], conn_probs[i, j])
@@ -33,6 +44,13 @@ def fill_mask(rf_rngs, conn_probs, mask):
 
 
 def generate_rnn_mask():
+    """
+    Generates a mask for the recurrent connections
+    input:
+        None
+    output:
+        rnn_mask_init: 2D array, the mask for the recurrent connections
+    """
     rnn_mask_init = np.zeros((par["n_hidden"], par["n_hidden"]))
     h_prob, m_prob, l_prob = (
         par["within_rf_conn_prob"],
@@ -40,22 +58,6 @@ def generate_rnn_mask():
         par["cross_module_conn_prob"],
     )
 
-    # temp_probs = np.array(
-    #     [
-    #         [h_prob, m_prob, l_prob, 0],
-    #         [0, h_prob, 0, l_prob],
-    #         [l_prob, 0, h_prob, m_prob],
-    #         [0, l_prob, 0, h_prob],
-    #     ]
-    # )
-    # inh_probs = np.array(
-    #     [
-    #         [h_prob, m_prob, 0, 0],
-    #         [0, h_prob, 0, 0],
-    #         [0, 0, h_prob, m_prob],
-    #         [0, 0, 0, h_prob],
-    #     ]
-    # )
     if par["cut_fb_train"]:
         # cut out feedback connection from target module to motion module
         # increase connection probability when training model without feeedback connection
@@ -97,11 +99,9 @@ def generate_rnn_mask():
             ]
         )
 
-    # conn_probs = np.tile(temp_probs, (1, 2))
     conn_probs = np.vstack([np.tile(temp_probs, (1, 2)), np.tile(inh_probs, (1, 2))])
     rf_rngs = calculate_rf_rngs()
     rnn_mask_init = fill_mask(rf_rngs, conn_probs, rnn_mask_init)
-    # rnn_mask_init = add_interneuron_mask(rnn_mask_init, rf_rngs, l_prob)
 
     # remove self_connections
     temp_mask = bm.ones((par["n_total"], par["n_total"])) - bm.eye(par["n_total"])
@@ -110,6 +110,15 @@ def generate_rnn_mask():
 
 
 def get_fix_conn_mask(in_rng, rf_rng, conn_prob):
+    """
+    Generates a fixed mask for input or output connections
+    input:
+        in_rng: tuple, the range of the neurons with outwards connections
+        rf_rng: tuple, the range of the neurons receiving the connections
+        conn_prob: float, the connection probability
+    output:
+        temp_mask: 2D array, the fixed mask
+    """
     sz = (in_rng[1] - in_rng[0], rf_rng[1] - rf_rng[0])
     temp = np.zeros(sz).flatten()
     conn_idx = np.random.choice(
@@ -121,6 +130,13 @@ def get_fix_conn_mask(in_rng, rf_rng, conn_prob):
 
 
 def generate_in_mask():
+    """
+    Generates a mask for the input connections
+    input:
+        None
+    output:
+        in_mask_init: 2D array, the mask for the input connections
+    """
     in_mask_init = np.zeros((par["n_input"], par["n_total"]))
     rf_rngs = calculate_rf_rngs()
     in_rngs = [
@@ -135,16 +151,13 @@ def generate_in_mask():
     in_idx = par["input_idx"]
     for i in range(len(in_idx)):
         # exc conn
-
         temp_mask = get_fix_conn_mask(
             in_rngs[in_idx[i]], rf_rngs[i], par["input_conn_prob"]
         )
         in_mask_init[
             in_rngs[in_idx[i]][0] : in_rngs[in_idx[i]][1], rf_rngs[i][0] : rf_rngs[i][1]
         ] = temp_mask
-        # in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i][0]:rf_rngs[i][1]] = np.random.choice(
-        #     [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
-        # # inh conn
+        # inh conn
         temp_mask = get_fix_conn_mask(
             in_rngs[in_idx[i]], rf_rngs[i + n], par["input_conn_prob"]
         )
@@ -152,20 +165,24 @@ def generate_in_mask():
             in_rngs[in_idx[i]][0] : in_rngs[in_idx[i]][1],
             rf_rngs[i + n][0] : rf_rngs[i + n][1],
         ] = temp_mask
-        # in_mask_init[in_rngs[in_idx[i]][0]:in_rngs[in_idx[i]][1], rf_rngs[i+n][0]:rf_rngs[i+n][1]] = np.random.choice(
-        #     [0, 1], size=sz, p=(1-par['input_conn_prob'], par['input_conn_prob']))
     return in_mask_init
 
 
 def generate_out_mask():
+    """
+    Generates a mask for the output connections
+    input:
+        None
+    output:
+        out_mask_init: 2D array, the mask for the output connections
+    """
     out_mask_init = np.zeros((par["n_total"], par["n_output"]))
     rf_rngs = calculate_rf_rngs()
     for idx in range(par["n_output"]):
         i = par["output_rf"][idx]
         temp_mask = get_fix_conn_mask(rf_rngs[i], (0, 1), par["output_conn_prob"])
         out_mask_init[rf_rngs[i][0] : rf_rngs[i][1], idx] = temp_mask.flatten()
-        # out_mask_init[rf_rngs[i][0]:rf_rngs[i][1], idx] = np.random.choice(
-        #     [0, 1], size=(rf_rngs[i][1] - rf_rngs[i][0], ), p=(1-par['output_conn_prob'], par['output_conn_prob']))
+      
     if par["cross_output_prob"] > 0:
         o1, o2 = par["output_rf"]
         o1xo2 = get_fix_conn_mask(rf_rngs[o1], (0, 1), par["cross_output_prob"])
