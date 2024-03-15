@@ -14,6 +14,8 @@ from types import SimpleNamespace
 from pickle import load, dump
 from tqdm import tqdm
 from scipy.stats import sem
+from statsmodels.formula.api import ols
+import statsmodels.api as sm
 import seaborn as sns
 import pandas as pd
 
@@ -73,13 +75,101 @@ def main():
         all_potential_li,
         _,
         stim_label_map,
-    ) = calc_all_stim_potential(all_proj_li, bins, rerun_calc=True)
+    ) = calc_all_stim_potential(all_proj_li, bins, rerun_calc=False)
+
+    ANOVA2_pos_depth(all_potential_li, (40, 41))
+
     model_fig_dir = os.path.join(pic_dir, "stim_potential_stimOn200ms")
     if not os.path.exists(model_fig_dir):
         os.makedirs(model_fig_dir)
     plot_all_stim_potential(
         all_potential_li, bins, (40, 41), stim_label_map, model_fig_dir
     )
+
+
+def ANOVA2_pos_depth(all_potential_li, time_range):
+    all_potential_li = np.array(all_potential_li)[
+        :, :, :, :, time_range[0] : time_range[1]
+    ]
+    potential_t = np.nanmean(all_potential_li, axis=4)
+    df = pd.DataFrame(columns=["model", "coh", "min_potential", "max_pos"])
+    for i in range(2):
+        for rep in range(potential_t.shape[1]):
+            for j in range(potential_t.shape[2]):
+                max_pos = np.nanargmin(potential_t[i, rep, j, :])
+                min_potential = np.nanmin(potential_t[i, rep, j, :])
+                df = df.append(
+                    {
+                        "model": f_dirs[i].split("_")[-2],
+                        "coh": j + 1,
+                        "min_potential": min_potential,
+                        "max_pos": max_pos,
+                    },
+                    ignore_index=True,
+                )
+    # 2way anova with coh and model
+    model_potential = ols(
+        "min_potential ~ C(coh) + C(model) + C(coh):C(model)", data=df
+    ).fit()
+    result1 = sm.stats.anova_lm(model_potential, type=2)
+    print("\n")
+    print(
+        "Two-way ANOVA compare min potential: \n",
+    )
+    print(result1)
+    # 2way anova with coh and model
+    df["max_pos"] = df["max_pos"].astype(int)
+    model_pos = ols("max_pos ~ C(coh) + C(model) + C(coh):C(model)", data=df).fit()
+    result = sm.stats.anova_lm(model_pos, type=2)
+    print("\n")
+    print(
+        "Two-way ANOVA compare max pos: \n",
+    )
+    print(result)
+
+    df_diff = pd.DataFrame(columns=["model", "coh", "potential_diff", "pos_diff"])
+    for i in range(2, 4):
+        for rep in range(potential_t.shape[1]):
+            for j in range(potential_t.shape[2]):
+                max_pos_full = np.nanargmin(potential_t[0, rep, j, :])
+                min_potential_full = np.nanmin(potential_t[0, rep, j, :])
+
+                max_pos = np.nanargmin(potential_t[i, rep, j, :])
+                min_potential = np.nanmin(potential_t[i, rep, j, :])
+
+                pos_diff = max_pos_full - max_pos
+                potential_diff = min_potential_full - min_potential
+
+                df_diff = df_diff.append(
+                    {
+                        "model": f_dirs[i].split("_")[-2],
+                        "coh": j + 1,
+                        "potential_diff": potential_diff,
+                        "pos_diff": pos_diff,
+                    },
+                    ignore_index=True,
+                )
+
+    model_potential_diff = ols(
+        "potential_diff ~ C(coh) + C(model) + C(coh):C(model)", data=df_diff
+    ).fit()
+    result_potential_diff = sm.stats.anova_lm(model_potential_diff, type=2)
+    print("\n")
+    print(
+        "Two-way ANOVA compare potential diff: \n",
+    )
+    print(result_potential_diff)
+
+    df_diff["pos_diff"] = df_diff["pos_diff"].astype(int)
+    model_pos_diff = ols(
+        "pos_diff ~ C(coh) + C(model) + C(coh):C(model)", data=df_diff
+    ).fit()
+    result_pos_diff = sm.stats.anova_lm(model_pos_diff, type=2)
+    print("\n")
+    print(
+        "Two-way ANOVA compare pos diff: \n",
+    )
+    print(result_pos_diff)
 
 
 def flip_arr(arr, bins):

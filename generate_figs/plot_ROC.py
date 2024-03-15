@@ -37,10 +37,10 @@ mpl.rcParams.update({"font.size": 15})
 mpl.rcParams["lines.linewidth"] = 2
 
 
-f_dir = "F:\\Github\\TD-modulation-model\\full_model_ROC_recalc_withNorm"
+f_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 data_dir = "F:\Github\TD-modulation-model\crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 # f_dir = data_dir
-total_rep = 50
+total_rep = 1
 # f_dir = "/Users/xuanyuwu/Documents/GitHub/TD-modulation-model/crossOutput_noInterneuron_noMTConn_gaussianInOut_WeightLambda1_highTestCoh_model"
 all_rep = range(total_rep)
 lr = 0.02
@@ -48,7 +48,7 @@ n_jobs = 8
 
 stim_st_time = 45
 target_st_time = 25
-rerun_calc = True
+rerun_calc = False
 normalize = True
 sep_sac = False
 plot_sel = True
@@ -486,10 +486,10 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
     # if mode == "sac":
     # perform t-test for sacade selectivity
     if total_rep == 1:
-        H_mean = np.nanmean(H_ROC[0, -10:, :], axis=1)
-        M_mean = np.nanmean(M_ROC[0, -10:, :], axis=1)
-        L_mean = np.nanmean(L_ROC[0, -10:, :], axis=1)
-        Z_mean = np.nanmean(Z_ROC[0, -10:, :], axis=1)
+        H_mean = np.nanmean(H_ROC[0, -10:, :], axis=0)
+        M_mean = np.nanmean(M_ROC[0, -10:, :], axis=0)
+        L_mean = np.nanmean(L_ROC[0, -10:, :], axis=0)
+        Z_mean = np.nanmean(Z_ROC[0, -10:, :], axis=0)
     else:
         H_mean = np.nanmean(H_ROC[:, -10:, :], axis=(1, 2))
         M_mean = np.nanmean(M_ROC[:, -10:, :], axis=(1, 2))
@@ -498,13 +498,13 @@ def plot_all_avg_ROC(H_ROC, M_ROC, L_ROC, Z_ROC, mode, cell_idx=None, save_plt=T
     # print("One sample t-test result for saccade selectivity:")
     print("One sample t-test result for %s selectivity:" % mode)
     print("H:")
-    print(ttest_1samp(H_mean, 0.5))
+    print(ttest_1samp(H_mean[~np.isnan(H_mean)], 0.5))
     print("M:")
-    print(ttest_1samp(M_mean, 0.5))
+    print(ttest_1samp(M_mean[~np.isnan(M_mean)], 0.5))
     print("L:")
-    print(ttest_1samp(L_mean, 0.5))
+    print(ttest_1samp(L_mean[~np.isnan(L_mean)], 0.5))
     print("Z:")
-    print(ttest_1samp(Z_mean, 0.5))
+    print(ttest_1samp(Z_mean[~np.isnan(Z_mean)], 0.5))
 
     fig, ax = plt.subplots()
     ax.plot(H_line, label="H", color="r")
